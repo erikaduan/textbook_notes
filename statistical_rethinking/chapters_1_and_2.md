@@ -18,20 +18,6 @@ Erika Duan
         models</a>
 -   <a href="#chapter-2-notes" id="toc-chapter-2-notes">Chapter 2 notes</a>
 
-
-      There is a binary version available but the source version is later:
-          binary source needs_compilation
-    rstan 2.21.7 2.21.8              TRUE
-
-    package 'brms' successfully unpacked and MD5 sums checked
-
-    The downloaded binary packages are in
-        C:\Users\Erika\AppData\Local\Temp\RtmpWIV8zM\downloaded_packages
-
-      There is a binary version available but the source version is later:
-          binary source needs_compilation
-    rstan 2.21.7 2.21.8              TRUE
-
 # Chapter 1 notes
 
 ## What is the purpose of statistical models?
@@ -127,5 +113,14 @@ like population dynamics or social networks.
 **uncertainty in the face of incomplete knowledge**.
 
 ## Multi-level models
+
+Multi-level models should be considered as the default statistical model
+rather than single-level models i.e. when you recognise clusters of
+groups that differ from each other i.e. the same patient responding to
+multiple different treatments or some patients being re-sampled more
+than others.
+
+Multi-level models are also used to explicitly model variation among
+individuals or subgroups within the data.
 
 # Chapter 2 notes

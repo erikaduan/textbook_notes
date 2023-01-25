@@ -25,6 +25,7 @@ if (!require("pacman")) install.packages("pacman")
 pacman::p_load(here,
                tidyverse,
                reticulate,
+               rstantools, 
                brms,
                rstan,
                tidybayes) 
@@ -100,6 +101,10 @@ Frequentist statistics is interested in:
 **Note:** In Bayesian statistics, randomness really just describes **uncertainty in the face of incomplete knowledge**.    
 
 ## Multi-level models    
+
+Multi-level models should be considered as the default statistical model rather than single-level models i.e. when you recognise clusters of groups that differ from each other i.e. the same patient responding to multiple different treatments or some patients being re-sampled more than others.     
+
+Multi-level models are also used to explicitly model variation among individuals or subgroups within the data.  
 
 
 # Chapter 2 notes   

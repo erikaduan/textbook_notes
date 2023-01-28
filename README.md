@@ -2,7 +2,7 @@
 This repository contains personal notes made whilst reading publically available statistical and machine learning textbooks.
 
 + Statistical Rethinking notes     
-    + Chapters 1 & 2 notes
+    + [Chapters 1 & 2 notes](./statistical_rethinking/chapters_1_and_2.md)
     + Chapter 3 notes  
 
 <br>  

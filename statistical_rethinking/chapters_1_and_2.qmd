@@ -98,7 +98,7 @@ Frequentist statistics is interested in:
   - Defining measurements (or sampling distributions) based on an imaginary resampling from a very large pool of data. 
   - Mathematically, a null model often takes the form $Y= \alpha + C$ from the specification of a null hypothesis $H_0: B_1 = 0$ for a model $Y= \alpha + \beta_1X + C$. This is not possible for natural phenomenon like population dynamics or social networks.     
   
-**Note:** In Bayesian statistics, randomness really just describes **uncertainty in the face of incomplete knowledge**.    
+**Note:** In Bayesian statistics, randomness really just describes **uncertainty in the face of incomplete knowledge**.     
 
 ## Multi-level models    
 
@@ -107,4 +107,17 @@ Multi-level models should be considered as the default statistical model rather 
 Multi-level models are also used to explicitly model variation among individuals or subgroups within the data.  
 
 
-# Chapter 2 notes   
+# Chapter 2 notes      
+
+## Counting possibilities      
+
+Bayesian statistics and probability theory share one thing in common: in order to find the best possible answer (the answer that occurs the most often), **it helps to count every possibility of how something could have happened**.      
+
+![](../figures/sr_chapter_2_counting_events.svg)
+The approach above requires:    
+
+  - defining a generative model of the sample (mapping all the possible ways that sample generation occurs i.e. drawing all the possible forking paths)          
+  - defining all the possible scenarios, to compare how likely they are to have occurred (similar to designing a specific estimand and describing the range of values the estimand may take)    
+  - designing a statistical way to produce an estimate (there must be a statistical method of testing your generative model).    
+  
+With this approach, the emphasis is on identifying a sound data generation process (or process model) and applying statistical tests against the model to identify the most likely scenario.    

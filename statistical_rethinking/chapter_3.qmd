@@ -1,0 +1,44 @@
+---
+title: "Statistical Rethinking - Chapters 3 notes"
+author: "Erika Duan"
+date: "`r Sys.Date()`"
+
+execute:
+  echo: true
+  output: true 
+  message: false 
+  warning: false 
+  
+format:
+  gfm:
+    toc: true
+---
+
+```{r}
+#| echo: false 
+
+# Set up global environment ----------------------------------------------------
+knitr::opts_chunk$set(echo=TRUE, results="markdown", message=FALSE, warning=FALSE)  
+
+# Load required R packages -----------------------------------------------------
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(here,
+               tidyverse,
+               reticulate,
+               rstantools, 
+               brms,
+               rstan,
+               tidybayes) 
+
+# Check Python configurations --------------------------------------------------
+# I first created & activated my Python virtual environment using venv [via terminal]
+# I then installed pandas inside my virtual environment using pip [via terminal]      
+
+# Force R to use my Python virtual environment
+use_virtualenv("C:/Windows/system32/py_396_data_science")
+
+# Use reticulate::py_discover_config() to check Python environment settings 
+```
+
+
+# Chapter 3 notes    

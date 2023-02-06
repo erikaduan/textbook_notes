@@ -1,7 +1,7 @@
 Statistical Rethinking - Chapters 1 and 2 notes
 ================
 Erika Duan
-2023-02-04
+2023-02-06
 
 -   <a href="#chapter-1-notes" id="toc-chapter-1-notes">Chapter 1 notes</a>
     -   <a href="#what-is-the-purpose-of-statistical-models"
@@ -24,6 +24,8 @@ Erika Duan
         components</a>
         -   <a href="#grid-approximation" id="toc-grid-approximation">Grid
             approximation</a>
+        -   <a href="#quadratic-approximation"
+            id="toc-quadratic-approximation">Quadratic approximation</a>
 
 # Chapter 1 notes
 
@@ -55,7 +57,7 @@ as:
 -   One hypothesis can be represented by multiple process models.
 -   Two process models (describing two different hypotheses) can be
     consistent with the same statistical model. Statistical models tend
-    to all rely on distributions from the exponential family.  
+    to all rely on distributions from the exponential family.
 -   Statistical models describe associations between variables and not a
     causal pathway (also why one statistical model can correspond to
     multiple different process models).
@@ -80,7 +82,8 @@ tibble(length = 1:20,
   labs(title = "Length versus area of a square")
 ```
 
-![](chapters_1_and_2_files/figure-gfm/unnamed-chunk-2-1.png)
+<img src="chapters_1_and_2_files/figure-gfm/unnamed-chunk-2-1.png"
+style="width:50.0%" />
 
 ``` r
 tibble(length = 1:20, 
@@ -92,7 +95,8 @@ tibble(length = 1:20,
   labs(title = "Log length versus log area of a square")
 ```
 
-![](chapters_1_and_2_files/figure-gfm/unnamed-chunk-2-2.png)
+<img src="chapters_1_and_2_files/figure-gfm/unnamed-chunk-2-2.png"
+style="width:50.0%" />
 
 ## Relationship between statistical modelling and measurement error
 
@@ -106,17 +110,20 @@ as a major limitation by scientists.
 
 Frequentist statistics is interested in:
 
--   Rejecting a null hypothesis (which usually corresponds to a neutral
-    process model). However, multiple neutral process models exist and
-    it is not clear which one should be picked. Also, failing to reject
-    the null hypothesis is different to verifying that the null
-    hypothesis is true.  
+-   Rejecting a null hypothesis ($H_0$) that usually corresponds to a
+    neutral process model. However, multiple neutral process models
+    exist and it is not always clear which one should be selected as
+    $H_0$. Also, failing to reject the null hypothesis is different to
+    verifying that the null hypothesis is true.  
 -   Defining measurements (or sampling distributions) based on an
     imaginary resampling from a very large pool of data.  
--   Mathematically, a null model often takes the form $Y= \alpha + C$
-    from the specification of a null hypothesis $H_0: B_1 = 0$ for a
-    model $Y= \alpha + \beta_1X + C$. This is not possible for natural
-    phenomenon like population dynamics or social networks.
+-   Mathematically, a model $Y= \alpha + \beta_1X + \epsilon$ exists
+    where $H_0: B_1 = 0$ and the null model therefore takes the form
+    $Y= \alpha + \epsilon$. However, these null models do not usually
+    exist for natural phenomenon like population dynamics or social
+    networks. Is the null model that all network connections have an
+    equal chance of being formed? Even so, how useful is this in terms
+    of validating a neutral process model?
 
 **Note:** In Bayesian statistics, randomness really just describes
 **uncertainty in the face of incomplete knowledge**.
@@ -138,8 +145,13 @@ individuals or subgroups within the data.
 
 Bayesian statistics and probability theory share one thing in common: in
 order to find the most plausible answer (the answer that occurs the most
-often), **it helps to count every possibility of how something could
-have happened**.
+often or the **posterior count**), **it helps to count every possibility
+of how something could have happened**.
+
+Let’s discuss the textbook example where we need to estimate $p$, the
+proportion of water that covers the surface of a globe, by randomly
+tossing the globe $n$ times and observing whether our finger lands on
+water (W) or land (L).
 
 ![](../figures/sr_chapter_2_counting_events.svg)
 
@@ -148,43 +160,42 @@ are updated to provide the new posterior counts. For example, if the
 next observation was **L**, the new posterior counts for seeing **W W L
 L** would be:
 
-| Scenario   | Prior counts | Chances of obtaining L | Posterior counts |
-|:-----------|:-------------|:-----------------------|:-----------------|
-| 0% water   | 0            | 4                      | 0                |
-| 25% water  | 3            | 3                      | 9                |
-| 50% water  | 8            | 2                      | 16               |
-| 75% water  | 9            | 1                      | 9                |
-| 100% water | 0            | 0                      | 0                |
+| Scenario   | Prior counts | Ways to obtain L | Posterior counts |
+|:-----------|:-------------|:-----------------|:-----------------|
+| 0% water   | 0            | 4                | 0                |
+| 25% water  | 3            | 3                | 9                |
+| 50% water  | 8            | 2                | 16               |
+| 75% water  | 9            | 1                | 9                |
+| 100% water | 0            | 0                | 0                |
 
-The approach above requires:
+The emphasis is first on identifying a sound data generation model of
+the sample. This allows us to map all the possible ways that sample
+generation occurs and obtain the **prior counts**. In this example, we
+assume that each fork is equally likely to occur but with real life
+processes, we usually have reason to assume that one pathway is more
+plausible than another.
 
--   Defining a data generation model of the sample (mapping all the
-    possible ways that sample generation occurs i.e. drawing all the
-    possible forking paths).  
--   Defining all the possible scenarios to calculate and compare how
-    likely each scenario is to have occurred (similar to defining a
-    specific estimand and describing the range of values that the
-    estimand may take).  
--   Designing a statistical test so we can confidently identify whether
-    one outcome is statistically more plausible than the others.
+The unobserved variable that we want to estimate (the estimand) is $p$,
+the proportion of water that covers the surface of a globe. In real
+life, identifying the most appropriate estimand is not necessarily
+obvious or there may be multiple estimates. When defining the estimand,
+specify the range of values that the estimand may take.
 
-**Note:** The emphasis is first on identifying a sound data generation
-process (or process model). In the example above, we assume that each
-fork is equally likely to occur but with real life processes, we usually
-have reason to assume that one pathway is more plausible than another.
+Instead of prior and posterior counts, it is easier to use **prior and
+posterior probabilities** as we may encounter scenarios with extremely
+high counts. To convert prior counts into probabilities, we simply
+divide the counts by the sum of counts. To convert posterior counts into
+probabilities, we multiple the prior probability by the plausibility of
+generating the newest observation and divide each product by the sum of
+all possible products.
 
-Instead of counts, it is easier to use **probabilities** (as we may
-encounter scenarios with extremely high counts). To convert prior and
-posterior counts into probabilities, we simply divide the counts by the
-sum of counts.
-
-| Scenario   | Prior prob | Prior prob $\times$ ways to generate **W W L L** | Posterior prob (standardised) |
-|:-----------|:-----------|:-------------------------------------------------|:------------------------------|
-| 0% water   | 0          | 0 $\times$ 4 = 0                                 | 0                             |
-| 25% water  | 0.15       | 0.15 $\times$ 3 = 0.45                           | 0.265                         |
-| 50% water  | 0.4        | 0.4 $\times$ 2 = 0.8                             | 0.471                         |
-| 75% water  | 0.45       | 0.45 $\times$ 1 = 0.45                           | 0.265                         |
-| 100% water | 0          | 0 $\times$ 0 = 0                                 | 0                             |
+| Scenario   | Prior probability | Prior prob $\times$ ways to obtain L | Posterior probability |
+|:-----------|:------------------|:-------------------------------------|:----------------------|
+| 0% water   | 0                 | 0 $\times$ 4 = 0                     | 0                     |
+| 25% water  | 0.15              | 0.15 $\times$ 3 = 0.45               | 0.265                 |
+| 50% water  | 0.4               | 0.4 $\times$ 2 = 0.8                 | 0.471                 |
+| 75% water  | 0.45              | 0.45 $\times$ 1 = 0.45               | 0.265                 |
+| 100% water | 0                 | 0 $\times$ 0 = 0                     | 0                     |
 
 ``` r
 # Calculate prior probabilities ------------------------------------------------
@@ -197,6 +208,7 @@ priors/sum(priors)
 ``` r
 #> [1] 0.00 0.15 0.40 0.45 0.00  
 
+# Calculate posterior probabilities from earlier count table  
 posteriors <- c(0, 9, 16, 9, 0)
 posteriors/sum(posteriors)
 ```
@@ -206,6 +218,7 @@ posteriors/sum(posteriors)
 ``` r
 #> [1] 0.0000000 0.2647059 0.4705882 0.2647059 0.0000000  
 
+# Calculate posterior probabilities via standardisation  
 products <- c(0, 0.45, 0.8, 0.45)  
 products/sum(products)
 ```
@@ -216,15 +229,16 @@ products/sum(products)
 #> [1] 0.0000000 0.2647059 0.4705882 0.2647059  
 ```
 
-**Parameter:** the true proportion of Earth covered by water i.e. an
-unobserved variable.  
-**Likelihood:** the relative number of ways that the observed data could
-have been produced based on a hypothesised value of the parameter.  
-**Prior probability:** the prior plausibility of the hypothesised value
-of the parameter being observed.  
-**Posterior probability:** the updated plausibility of the hypothesised
-value of the parameter being observed, following inclusion of new
-information.
+-   **Parameter:** an unobserved variable i.e. the true proportion of
+    Earth covered by water.  
+-   **Likelihood:** the relative number of ways that the observed data
+    could have been produced per hypothesised parameter value
+    i.e. counting all the ways that a scenario is possible per
+    hypothesised parameter value.  
+-   **Prior probability:** the prior plausibility of the parameter of
+    interest.  
+-   **Posterior probability:** the updated plausibility of the parameter
+    of interest following inclusion of new information.
 
 ## Model building
 
@@ -261,18 +275,19 @@ distribution functions assigned to observed variables to calculate how
 plausible an event is (i.e. number of ways that the observed event could
 have happened out of all possible events).
 
-We therefore have two model components:
+Based on the textbook example, we therefore have two model components:
 
-| Component            | Property                                                                                                                                                                                |
-|:---------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| \$W Binomial(N,p) \$ | Model to calculate plausibility of observing W counts out of a total of N tosses, given a hypothesised probability of W.                                                                |
-| \$p Uniform(0,1) \$  | A flat prior (when no observations exist, the probability of W is equally likely to exist between 0 and 1). We can improve the model for the prior based on other scientific knowledge. |
+| Component            | Property                                                                                                                               |
+|:---------------------|:---------------------------------------------------------------------------------------------------------------------------------------|
+| \$W Binomial(N,p) \$ | A mathematical model to calculate the plausibility of observing W counts out of a total of N tosses, given a hypothesised value of $p$ |
+| \$p Uniform(0,1) \$  | A flat prior (when no observations exist, the probability of W is equally likely to exist between 0 and 1)                             |
 
 ``` r
-# Counts of W and L are distributed binomially with p = probability of W -------
-# This is the prior plausibility of your Bayesian model  
+# Counts of W and L are distributed binomially conditional on parameter p ------
+# This is the plausibility (or likelihood) of your Bayesian model    
 
-# Calculate probability of observing 6 W out of 9 tosses, where p = 0.5  
+# Calculate probability of observing 6 W out of 9 tosses, where p = 0.2  
+# Less plausible event
 dbinom(6, size = 9, prob = 0.2)  
 ```
 
@@ -281,6 +296,8 @@ dbinom(6, size = 9, prob = 0.2)
 ``` r
 #> [1] 0.002752512 
 
+# Calculate probability of observing 6 W out of 9 tosses, where p = 0.6
+# More plausible event
 dbinom(6, size = 9, prob = 0.6)  
 ```
 
@@ -289,6 +306,8 @@ dbinom(6, size = 9, prob = 0.6)
 ``` r
 #> [1] 0.2508227  
 
+# Calculate probability of observing 6 W out of 9 tosses, where p = 0.9
+# Less plausible event
 dbinom(6, size = 9, prob = 0.9)  
 ```
 
@@ -298,15 +317,16 @@ dbinom(6, size = 9, prob = 0.9)
 #> [1] 0.04464104
 ```
 
-The posterior distribution $Pr(p\,|\,W,\,L)$ contains the relative
-plausibility of different parameter values **conditional on the data and
-model**.
+**Note:** The posterior distribution $Pr(p\,|\,W,\,L)$ contains the
+relative plausibility of parameter $p$ **conditional on the data and
+selected models**. The choice of a sound mathematical model to represent
+plausibility is therefore important.
 
 ### Grid approximation
 
-Although $p$ is a continuous parameter, we can still achieve a good
-approximation of this continuous posterior distribution using a finite
-grid of parameter values.
+Although $p$ is a continuous parameter (proportion of globe covered by
+water), we can still achieve a good approximation of this continuous
+posterior distribution using a finite grid of possible parameter values.
 
 The weakness of grid approximation is that it does not scale well when
 there are a large number of parameter.
@@ -315,7 +335,7 @@ there are a large number of parameter.
 # Grid approximation to condition the data on the prior distribution -----------
 
 # Define how many points to use to estimate the posterior and create a list  
-# p = proportion of global covered by water  
+# p = proportion of globe covered by water  
 p_grid <- seq(from = 0, to = 1, length.out = 20)
 
 # Define flat prior for each parameter value on the grid
@@ -340,3 +360,9 @@ tibble(p_grid,
 
 <img src="chapters_1_and_2_files/figure-gfm/unnamed-chunk-5-1.png"
 style="width:50.0%" />
+
+``` r
+# Replicate figure 2.5 ---------------------------------------------------------
+```
+
+### Quadratic approximation

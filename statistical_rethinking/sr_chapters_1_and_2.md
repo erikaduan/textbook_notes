@@ -82,7 +82,7 @@ tibble(length = 1:20,
   labs(title = "Length versus area of a square")
 ```
 
-<img src="chapters_1_and_2_files/figure-gfm/unnamed-chunk-2-1.png"
+<img src="sr_chapters_1_and_2_files/figure-gfm/unnamed-chunk-2-1.png"
 style="width:50.0%" />
 
 ``` r
@@ -95,7 +95,7 @@ tibble(length = 1:20,
   labs(title = "Log length versus log area of a square")
 ```
 
-<img src="chapters_1_and_2_files/figure-gfm/unnamed-chunk-2-2.png"
+<img src="sr_chapters_1_and_2_files/figure-gfm/unnamed-chunk-2-2.png"
 style="width:50.0%" />
 
 ## Relationship between statistical modelling and measurement error
@@ -153,7 +153,7 @@ proportion of water that covers the surface of a globe, by randomly
 tossing the globe $n$ times and observing whether our finger lands on
 water (W) or land (L).
 
-![](../figures/sr_chapter_2_counting_events.svg)
+![](../statistical_rethinking/figures/sr_chapter_2_counting_events.svg)
 
 When another observation is made, the prior counts of possible scenarios
 are updated to provide the new posterior counts. For example, if the
@@ -358,7 +358,7 @@ tibble(p_grid,
   labs(title = "Estimation of posterior distribution of p using 20 points")
 ```
 
-<img src="chapters_1_and_2_files/figure-gfm/unnamed-chunk-5-1.png"
+<img src="sr_chapters_1_and_2_files/figure-gfm/unnamed-chunk-5-1.png"
 style="width:50.0%" />
 
 ``` r

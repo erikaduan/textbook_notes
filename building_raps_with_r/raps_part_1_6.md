@@ -1,6 +1,6 @@
 # Building RAPs with R - Part 1.6
 Erika Duan
-2023-07-17
+2023-07-28
 
 - [Writing good functions](#writing-good-functions)
   - [Good functions do not alter the state of your global
@@ -16,11 +16,14 @@ Erika Duan
   - [Write safe functions](#write-safe-functions)
   - [Avoid recursive functions in R as they are
     slow](#avoid-recursive-functions-in-r-as-they-are-slow)
-  - [Use anonymous functions when you need to include them in a pipe
-    once](#use-anonymous-functions-when-you-need-to-include-them-in-a-pipe-once)
-  - [Write small functions are are easier to
-    maintain](#write-small-functions-are-are-easier-to-maintain)
-- [Using lists with functions](#using-lists-with-functions)
+  - [Use anonymous functions](#use-anonymous-functions)
+  - [Write small functions that are easy to
+    maintain](#write-small-functions-that-are-easy-to-maintain)
+- [Use lists with functions](#use-lists-with-functions)
+  - [Map functions across data
+    frames](#map-functions-across-data-frames)
+- [Useful R functions for functional
+  programming](#useful-r-functions-for-functional-programming)
 
 # Writing good functions
 
@@ -125,7 +128,7 @@ ls()
 # The global environment remains unchanged after we execute add_ten()  
 ```
 
-Interestingly, when an R object is covertly created inside a function (a
+Note that when an R object is covertly created inside a function (a
 property of a bad function) and that function is run, the global
 environment is not altered. This important global environment behaviour
 protects us from having intermediate objects inside functions overwrite
@@ -176,14 +179,14 @@ ls()
 ## Good functions are predictable
 
 The mathematical definition of a function is a relation that always
-assigns an input element to the same output element. In programming,
-this is a crucial property of a good function. An example of a bad
-function is therefore one which does not generate the same output for a
-given input.
+assigns the same input element to the same output element. In
+programming, this is a crucial property of a good function. An example
+of a bad function is therefore one which does not generate the same
+output for a given input.
 
 ``` r
 # Run print_random_statement() -------------------------------------------------
-# This function is bad as it can output different values for the same input  
+# This function is bad as it outputs different values for the same input  
 
 print_random_statement <- function(day) {
   weather_list <- c("sunny",
@@ -215,7 +218,10 @@ print_good_random_statement <- function(day, seed) {
                     "cloudy",
                     "raining frogs",
                     "raining cats and dogs")
-  paste0(day, " is ", sample(weather_list, 1))
+  return(paste0(day, " is ", sample(weather_list, 1)))
+  
+  # Unset the seed otherwise the seed will stay set for the RSession
+  set.seed(NULL) 
 }
 
 print_good_random_statement("tomorrow", seed = 111)
@@ -225,9 +231,8 @@ print_good_random_statement("tomorrow", seed = 111)
 #> [1] "tomorrow is cloudy"  
 
 # Note that if users forgot to specify a seed, the function outputs the error
-# message: Error in set.seed(seed) : argument "seed" is missing, with no default
-# This is good function behaviour as it prevents unpredictable functions from 
-# executing by accident. 
+# message: Error in set.seed(seed) : argument "seed" is missing, with no default.
+# This is good error handling as it prevents users from forgetting to set seed 
 ```
 
 ## Good functions are referentially transparent and pure
@@ -240,13 +245,13 @@ functions.
 # Run opaque_sum() -------------------------------------------------------------
 # This function is bad i.e. not referentially transparent as the parameter y is 
 # not specified as a function argument. This forces the function to look for an
-# object named y in the global environment, which is an unstable dependency.  
+# object named y in the global environment, which is unexpected behaviour and 
+# and introduces an unpredictable dependency.  
 
 opaque_sum <- function(x) {sum(x + y)}  
 
 y <- 4
 opaque_sum(x = 3)
-
 #> [1] 7  
 
 y <- 1 
@@ -264,6 +269,30 @@ transparent_sum(x = 3, y = 1) # A consistent function output is guaranteed
 Note that the function `transparent_sum()` is also a pure function, as
 it does not write anything to or require anything from the global
 environment. Pure functions are referentially transparent by default.
+
+The `withr` package can also be used to purify bad functions without the
+need to rewrite the function body.
+
+``` r
+# Alternatively use withr::with_seed() and print_random_statement() ------------
+# Unpredictable i.e. bad function that outputs random responses
+print_random_statement("tomorrow")
+#> [1] "tomorrow is raining cats and dogs"
+
+print_random_statement("tomorrow")
+#> [1] "tomorrow is raining frogs"
+
+# Predictable i.e. good version of the function
+# This function is also pure as it ends with set.seed(NULL) so no new changes
+# are introduced in the global environment.  
+print_good_random_statement("tomorrow", seed = 111)
+#> [1] "tomorrow is cloudy"
+
+# withr::with_seed purifies bad functions with functions needing to be rewritten
+withr::with_seed(seed = 111,
+                 print_random_statement("tomorrow"))
+#> [1] "tomorrow is cloudy"
+```
 
 # Using functions in a workflow
 
@@ -314,8 +343,8 @@ run_function_flexible(number = c(2, 5, 1), fun = sort, decreasing = TRUE)
 #> [1] 5 2 1  
 ```
 
-As functions are first-class objects, we can create functions that
-return functions (instead of returning an object like an integer or
+As functions are first-class objects, we can also create functions that
+return functions (instead of returning a data object like an integer or
 string or data frame). An example provided by the textbook is a function
 that converts warning into errors and stops code execution.
 
@@ -401,7 +430,10 @@ nchar(100000)
 ```
 
 Writing explicitly safe functions is also referred to as the practice of
-assertive programming.
+assertive programming. Note that the use of assertive programming is
+subjective as it also decreases the readability of the function body. An
+alternative suggestion is to create specific functions to assert object
+properties and run those assertions earlier in the script.
 
 ## Avoid recursive functions in R as they are slow
 
@@ -412,8 +444,8 @@ function.
 # Compare iterative and recursive functions ------------------------------------
 # n! = 1 * 2 * ... * (n-1) * n  
 
-# The only downside to a recursive function is that it also contains an 
-# additional parameter i.  
+# The downside to an iterative function is that it relies on constantly changing 
+# the program state and requires an additional parameter i.  
 factorial_iterative <- function(n){
   result = 1
   for(i in 1:n) {
@@ -428,17 +460,18 @@ factorial_recursive <- function(n){
   if(n == 0 || n == 1) {
   result = 1
   } else {
-    n * factorial_recursive(n - 1)
+    n * factorial_recursive(n - 1) # factorial_recursive() is called in the body
   }
 }
 ```
 
-## Use anonymous functions when you need to include them in a pipe once
+## Use anonymous functions
 
 Anonymous functions are functions which do not have a name assigned to
 them. This may feel redundant as the function cannot be reused by the
-global environment. However, anonymous functions are useful when you are
-using a pipe to perform a series of transformations.
+global environment. However, anonymous functions are useful when you
+need to map a function across multiple objexts or are using a pipe to
+perform a series of transformations.
 
 ``` r
 # Run anonymous function -------------------------------------------------------
@@ -468,23 +501,302 @@ c(1:5) |>
 #> [1] 2 3 4 5 6
 ```
 
-## Write small functions are are easier to maintain
+## Write small functions that are easy to maintain
 
-Small functions that only perform one task are easier to maintain, test,
-document and debug. For example, instead of writing `big_function(a)`,
-it is better to chain a series of smaller functions together
-i.e. `a |> function_1() |> function_2() |> function_3()`.
+Small functions that only perform one task each are much easier to
+maintain, test, document and debug. For example, instead of writing
+`big_function(a)`, it is better to chain a series of smaller functions
+together i.e. `a |> function_1() |> function_2() |> function_3()`.
 
-# Using lists with functions
+# Use lists with functions
 
 We want to write functions that handle lists, because lists are a
-universal interface in R and therefore when we chain a series of
-functions, we can be sure that they work in sequence as they are
-manipulating the same object type.
+universal interface in R. This means that when we chain a series of
+functions together, we are sure that they work in sequence as they are
+manipulating the same object type. This explains why higher order
+functions that apply a function across multiple objects, such as
+`lapply()` or `purr::map()`, operate on lists.
 
 In R, data frames, fitted models and ggplot objects are actually all
 lists.
 
 ``` r
 # Properties of lists ---------------------------------------------------------- 
+typeof(datasets::mtcars)
+#> [1] "list"
+
+plot <- ggplot(datasets::mtcars, aes(x = mpg, y = hp)) +
+  geom_line()
+
+typeof(plot)
+#> 1] "list"
+
+# Extract objects from lists ---------------------------------------------------     
+list_1 <- list(
+  author = c("Erika", "Duan"),
+  dataset = datasets::mtcars,
+  plot = plot
+)
+
+# List objects can be subset into lists via [] and elements via [[]]
+
+list_1[1]
+#> $author
+#> [1] "Erika" "Duan" 
+
+list_1[[1]] 
+#> [1] "Erika" "Duan" 
+
+list_1[[1]][[1]] 
+#> [1] "Erika" 
+
+list_1$author # Produces same output as list_1[[1]]
+#> [1] "Erika" "Duan" 
+
+# Check list output type
+
+typeof(list_1[1])
+#> [1] "list"
+
+typeof(list_1[[1]][[1]])
+#> [1] "character"
+
+typeof(list_1$author)
+#> [1] "character"
+```
+
+Functions like `reduce()`, `lapply()` and `purrr:map()` work based on
+the principle that we can use lists to create function factories that
+remove the requirement for writing for loops (which are less reliable as
+they rely on iterative changes to the program state).
+
+``` r
+# looping() is equivalent to Reduce() in behaviour ----------------------------- 
+looping <- function(a_list, a_func, init = NULL, ...){
+
+  # If the user does not provide an `init` value,
+  # set the head of the list as the initial value
+  if(is.null(init)){
+    init <- a_list[[1]]
+    a_list <- tail(a_list, -1)
+  }
+
+  # Separate the head from the tail of the list
+  # and apply the function to the initial value and the head of the list
+  head_list = a_list[[1]]
+  tail_list = tail(a_list, -1)
+  init = a_func(init, head_list, ...)
+
+  # Check if we are done: if there is still some tail, then
+  # rerun the whole thing until there is no tail left.
+  if(length(tail_list) != 0){
+    looping(tail_list, a_func, init, ...)
+  }
+  else {
+    init
+  }
+}
+
+# Run looping() instead of iterating across the list ---------------------------
+# as.list(seq(1:10)) outputs a single value per list element
+looping(as.list(seq(1:10)), sum)
+#> [1] 55  
+```
+
+``` r
+# applying() is equivalent to lapply() in behaviour ----------------------------
+# Equivalent to applying a function to each element of a list
+applying <- function(a_list, a_func, ...){
+  
+  # Separate the head from the rest i.e. tail of the list
+  head_list = a_list[[1]]
+  tail_list = tail(a_list, -1)
+  result = a_func(head_list, ...)
+  
+  # Check if we are done: if there is still some tail, rerun the whole thing 
+  # until there is no tail left.  
+  if(length(tail_list) != 0){
+    append(result, applying(tail_list, a_func, ...))
+  }
+  else {
+    result
+  }
+}
+
+# Run applying() instead of using a for loop on each list element --------------
+applying(as.list(seq(1:10)), log10)
+#> [1] 0.0000000 0.3010300 0.4771213 0.6020600 0.6989700 0.7781513 0.8450980 0.9030900 0.9542425 1.0000000
+```
+
+## Map functions across data frames
+
+A data frame is a special type of list, where each column is a list of
+atomic vectors of the same length. This means that we can easily map
+functions across the columns of a data frame using `lapply()`,
+`vapply()` or `purrr::map()`. The `purrr` package is extremely versatile
+for functional programming and contains variations of `purrr::map()`
+such as `purrr::map_chr()`, `purrr::walk()` and `purrr::insistently()`.
+
+``` r
+# Apply a function across each column of a data frame --------------------------
+vapply(mtcars[1:5], mean, FUN.VALUE = numeric(1))
+#>        mpg        cyl       disp         hp       drat 
+#>  20.090625   6.187500 230.721875 146.687500   3.596563 
+```
+
+By extension, we can also split a data frame into a series of smaller
+data frames (or nested data frames) and apply the same function across
+them using `mutate(object = purrr::map(data, fun))`. The list object
+produced by each function is associated with its corresponding nested
+data frame subset.
+
+``` r
+# Append information about data frame subsets using group_nest() ---------------
+iris %>%
+  group_by(Species) %>%
+  filter(row_number() < 6) %>% # Extract first 5 rows of data per species
+  group_nest() %>%
+  mutate(col_names = purrr::map(data, colnames),
+         col_sum = purrr::map(data, colMeans)) %>%
+  knitr::kable() # Visualise outputs in tidy table format
+```
+
+| Species    | data                                                                                               | col_names                                             | col_sum                |
+|:-----------|:---------------------------------------------------------------------------------------------------|:------------------------------------------------------|:-----------------------|
+| setosa     | 5.1, 4.9, 4.7, 4.6, 5.0, 3.5, 3.0, 3.2, 3.1, 3.6, 1.4, 1.4, 1.3, 1.5, 1.4, 0.2, 0.2, 0.2, 0.2, 0.2 | Sepal.Length, Sepal.Width , Petal.Length, Petal.Width | 4.86, 3.28, 1.40, 0.20 |
+| versicolor | 7.0, 6.4, 6.9, 5.5, 6.5, 3.2, 3.2, 3.1, 2.3, 2.8, 4.7, 4.5, 4.9, 4.0, 4.6, 1.4, 1.5, 1.5, 1.3, 1.5 | Sepal.Length, Sepal.Width , Petal.Length, Petal.Width | 6.46, 2.92, 4.54, 1.44 |
+| virginica  | 6.3, 5.8, 7.1, 6.3, 6.5, 3.3, 2.7, 3.0, 2.9, 3.0, 6.0, 5.1, 5.9, 5.6, 5.8, 2.5, 1.9, 2.1, 1.8, 2.2 | Sepal.Length, Sepal.Width , Petal.Length, Petal.Width | 6.40, 2.98, 5.68, 2.10 |
+
+``` r
+# Plot of Petal.Width versus Petal.Length per species using group_nest() -------
+plot_scatterplot <- function(df, group) {
+  ggplot(data = df, aes(x = Petal.Width, y = Petal.Length)) +
+    geom_point() +
+    lims(x = c(0, 3),
+         y = c(0, 9)) + 
+    labs(title = paste("Petal width versus petal length for", group)) +
+    theme_minimal()
+}
+
+nested_iris <- iris |> 
+  group_nest(Species) |> 
+  mutate(plots = purrr::map2(
+    .x = data,
+    .y = Species,
+    .f = plot_scatterplot
+  ))
+
+nested_iris$plots
+```
+
+    [[1]]
+
+<img src="raps_part_1_6_files/figure-commonmark/unnamed-chunk-23-1.png"
+style="width:65.0%" />
+
+
+    [[2]]
+
+<img src="raps_part_1_6_files/figure-commonmark/unnamed-chunk-23-2.png"
+style="width:65.0%" />
+
+
+    [[3]]
+
+<img src="raps_part_1_6_files/figure-commonmark/unnamed-chunk-23-3.png"
+style="width:65.0%" />
+
+This property of R is powerful and allows us to produce grouped
+statistical models, as described further
+[here](https://yuzar-blog.netlify.app/posts/2022-09-12-manymodels/).
+
+``` r
+# Model relationship between Petal.Width versus Petal.Length per species -------
+# This can be a more intuitive way of presenting models than using 
+# lm(Petal.Width ~ Petal.Length * Species, data = iris), which outputs the same
+# model coefficients.  
+
+nested_iris <- iris |> 
+  group_nest(Species) |>
+  mutate(lr_model = purrr::map(
+    data,
+    ~ lm(Petal.Width ~ Petal.Length, data = .x)
+  ))
+
+nested_iris$lr_model
+```
+
+    [[1]]
+
+    Call:
+    lm(formula = Petal.Width ~ Petal.Length, data = .x)
+
+    Coefficients:
+     (Intercept)  Petal.Length  
+        -0.04822       0.20125  
+
+
+    [[2]]
+
+    Call:
+    lm(formula = Petal.Width ~ Petal.Length, data = .x)
+
+    Coefficients:
+     (Intercept)  Petal.Length  
+        -0.08429       0.33105  
+
+
+    [[3]]
+
+    Call:
+    lm(formula = Petal.Width ~ Petal.Length, data = .x)
+
+    Coefficients:
+     (Intercept)  Petal.Length  
+          1.1360        0.1603  
+
+# Useful R functions for functional programming
+
+Similar to the concept of `dplyr::filter()`, the base R function
+`Filter()` works on lists and can be used with `Negate()` to return the
+opposite condition.
+
+``` r
+# Apply Filter() to extract relevant list elements -----------------------------
+list_2 <- list(
+  a = 1:10,
+  b = letters[1:10],
+  c = TRUE
+)
+
+Filter(is.logical, list_2)
+#> $c
+#> [1] TRUE
+
+Filter(Negate(is.logical), list_2)
+#> $a
+#>  [1]  1  2  3  4  5  6  7  8  9 10
+
+#> $b
+#>  [1] "a" "b" "c" "d" "e" "f" "g" "h" "i" "j"
+```
+
+The function `local()` allows you to run code in a temporary environment
+that gets discarded in the end. This is useful when you need to run code
+with potential side effects but want to avoid any interactions with the
+global environment.
+
+``` r
+# Code run inside local() does not appear in the global environment ------------
+var_1 <- 1
+
+local({
+  var_2 <- 1
+})
+
+exists("var_1")
+#> [1] TRUE  
+
+exists("var_2")
+#> [1] FALSE
 ```

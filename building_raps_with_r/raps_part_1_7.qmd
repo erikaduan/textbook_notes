@@ -1,0 +1,27 @@
+---
+title: "Building RAPs with R - Part 1.7"
+author: "Erika Duan"
+date: "`r Sys.Date()`"
+
+execute:
+  echo: true
+  output: false
+  message: false
+  warning: false
+
+format:
+  gfm:
+    toc: true
+---
+
+```{r}
+#| echo: false 
+
+# Load required R packages -----------------------------------------------------
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(here,
+               dplyr,
+               ggplot2) 
+```
+
+

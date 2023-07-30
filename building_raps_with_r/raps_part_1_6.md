@@ -1,6 +1,6 @@
 # Building RAPs with R - Part 1.6
 Erika Duan
-2023-07-28
+2023-07-30
 
 - [Writing good functions](#writing-good-functions)
   - [Good functions do not alter the state of your global
@@ -266,9 +266,9 @@ transparent_sum(x = 3, y = 1) # A consistent function output is guaranteed
 #> [1] 4 
 ```
 
-Note that the function `transparent_sum()` is also a pure function, as
-it does not write anything to or require anything from the global
-environment. Pure functions are referentially transparent by default.
+**Note:** `transparent_sum()` is also a pure function, as it does not
+write anything to or require anything from the global environment. Pure
+functions are referentially transparent by default.
 
 The `withr` package can also be used to purify bad functions without the
 need to rewrite the function body.
@@ -378,6 +378,15 @@ class(strict_sqrt)
 # strict_sqrt(-1)
 #> Error in value[[3L]](cond) : Unexpected output. Code has stopped running.
 ```
+
+**Note:** Functions like
+[`purrr::insistently()`](https://purrr.tidyverse.org/reference/insistently.html),
+[`purrr::quietly()`](https://purrr.tidyverse.org/reference/quietly.html),
+[`purrr::safely()`](https://purrr.tidyverse.org/reference/safely.html)
+and
+[purrr::possibly()](https://purrr.tidyverse.org/reference/possibly.html)
+are also function factories that behave like the `strictly()` function
+above.
 
 ## Function arguments can be optional
 
@@ -634,8 +643,12 @@ A data frame is a special type of list, where each column is a list of
 atomic vectors of the same length. This means that we can easily map
 functions across the columns of a data frame using `lapply()`,
 `vapply()` or `purrr::map()`. The `purrr` package is extremely versatile
-for functional programming and contains variations of `purrr::map()`
-such as `purrr::map_chr()`, `purrr::walk()` and `purrr::insistently()`.
+for functional programming and contains variations of
+[`purrr::map()`](https://purrr.tidyverse.org/reference/map.html) such as
+`purrr::map_chr()` and `purrr::walk()`.
+
+**Note:** In contrast to `lapply()`, `purrr::map()` also accepts an
+atomic vector of elements as its input.
 
 ``` r
 # Apply a function across each column of a data frame --------------------------

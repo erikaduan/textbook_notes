@@ -4,6 +4,7 @@ This repository contains personal notes made whilst reading open-source statisti
 + [Building Reproducible Analytical Pipelines with R](https://raps-with-r.dev/) by Bruno Rodrigues    
     + [Part 1.3](./building_raps_with_r/raps_part_1_3.md)  
     + [Part 1.6](./building_raps_with_r/raps_part_1_6.md)  
+    + [Part 1.7](./building_raps_with_r/raps_part_1_7.md)  
 
 + [Statistical Rethinking](https://xcelab.net/rm/statistical-rethinking/) by Richard McElreath       
     + [Chapters 1 & 2](./statistical_rethinking/sr_chapters_1_and_2.md)   

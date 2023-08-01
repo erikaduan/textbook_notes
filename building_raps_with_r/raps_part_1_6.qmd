@@ -237,7 +237,7 @@ transparent_sum(x = 3, y = 1) # A consistent function output is guaranteed
 
 **Note:** `transparent_sum()` is also a pure function, as it does not write anything to or require anything from the global environment. Pure functions are referentially transparent by default.
 
-The `withr` package can also be used to purify bad functions without the need to rewrite the function body.
+The `withr` package can also be used to purify bad functions without rewriting the function body.
 
 ```{r}
 # Alternatively use withr::with_seed() and print_random_statement() ------------
@@ -254,7 +254,7 @@ print_random_statement("tomorrow")
 print_good_random_statement("tomorrow", seed = 111)
 #> [1] "tomorrow is cloudy"
 
-# withr::with_seed purifies bad functions with functions needing to be rewritten
+# withr::with_seed purifies bad functions without rewriting the function body 
 withr::with_seed(seed = 111,
                  print_random_statement("tomorrow"))
 #> [1] "tomorrow is cloudy"
@@ -337,7 +337,7 @@ class(strict_sqrt)
 #> Error in value[[3L]](cond) : Unexpected output. Code has stopped running.
 ```
 
-**Note:** Functions like [`purrr::insistently()`](https://purrr.tidyverse.org/reference/insistently.html), [`purrr::quietly()`](https://purrr.tidyverse.org/reference/quietly.html), [`purrr::safely()`](https://purrr.tidyverse.org/reference/safely.html) and [purrr::possibly()](https://purrr.tidyverse.org/reference/possibly.html) are also function factories that behave like the `strictly()` function above.  
+**Note:** Functions like [`purrr::insistently()`](https://purrr.tidyverse.org/reference/insistently.html), [`purrr::quietly()`](https://purrr.tidyverse.org/reference/quietly.html), [`purrr::safely()`](https://purrr.tidyverse.org/reference/safely.html) and [`purrr::possibly()`](https://purrr.tidyverse.org/reference/possibly.html) are also function factories that behave like the `strictly()` function above.  
 
 ## Function arguments can be optional
 

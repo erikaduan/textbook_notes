@@ -1,6 +1,6 @@
 # Building RAPs with R - Part 1.6
 Erika Duan
-2023-07-30
+2023-07-31
 
 - [Writing good functions](#writing-good-functions)
   - [Good functions do not alter the state of your global
@@ -270,8 +270,8 @@ transparent_sum(x = 3, y = 1) # A consistent function output is guaranteed
 write anything to or require anything from the global environment. Pure
 functions are referentially transparent by default.
 
-The `withr` package can also be used to purify bad functions without the
-need to rewrite the function body.
+The `withr` package can also be used to purify bad functions without
+rewriting the function body.
 
 ``` r
 # Alternatively use withr::with_seed() and print_random_statement() ------------
@@ -288,7 +288,7 @@ print_random_statement("tomorrow")
 print_good_random_statement("tomorrow", seed = 111)
 #> [1] "tomorrow is cloudy"
 
-# withr::with_seed purifies bad functions with functions needing to be rewritten
+# withr::with_seed purifies bad functions without rewriting the function body 
 withr::with_seed(seed = 111,
                  print_random_statement("tomorrow"))
 #> [1] "tomorrow is cloudy"
@@ -384,7 +384,7 @@ class(strict_sqrt)
 [`purrr::quietly()`](https://purrr.tidyverse.org/reference/quietly.html),
 [`purrr::safely()`](https://purrr.tidyverse.org/reference/safely.html)
 and
-[purrr::possibly()](https://purrr.tidyverse.org/reference/possibly.html)
+[`purrr::possibly()`](https://purrr.tidyverse.org/reference/possibly.html)
 are also function factories that behave like the `strictly()` function
 above.
 

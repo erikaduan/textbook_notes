@@ -1,0 +1,37 @@
+---
+title: "Child document template"
+format: html
+
+execute:
+  echo: false
+  output: false
+  message: false
+  warning: false
+---
+
+```{r}
+# Load R library ---------------------------------------------------------------
+library(ggplot2)
+```
+
+### Frequency table for variable: `r x`
+
+```{r}
+#| output: asis
+
+# Generate child document ------------------------------------------------------
+# We would like to generate a:
+# 1. section title which states the dataset used
+# 2. a ggplot   
+
+# To do this, we can make use of a child document that gets knitted separately
+# and embedded into the parent document. 
+
+# Output table -----------------------------------------------------------------
+iris |>
+    dplyr::count(!!rlang::ensym(x)) |>
+    knitr::kable()
+```
+
+
+

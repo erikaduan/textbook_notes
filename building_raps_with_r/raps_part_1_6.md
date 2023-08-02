@@ -1,6 +1,6 @@
 # Building RAPs with R - Part 1.6
 Erika Duan
-2023-07-31
+2023-08-02
 
 - [Writing good functions](#writing-good-functions)
   - [Good functions do not alter the state of your global
@@ -304,12 +304,13 @@ treated just like other objects and can be manipulated as such. For
 example, functions can take other functions as inputs similar to the way
 that functions can take individual values as inputs.
 
-Higher order functions are functions which take other functions as an
-input.
+**Higher order** functions are functions which take other functions as
+an input.
 
 ``` r
 # run_function() is an example of a higher order function ---------------------- 
 # The input fun is actually another function i.e. to create fun()  
+# The input function is then returned i.e. as fun(number)   
 
 run_function <- function(number, fun) {
   fun(number)
@@ -332,7 +333,7 @@ run_function(number = c(2, 5, 1), fun = sort)
 #> Error in run_function(number = c(2, 5, 1), fun = sort, decreasing = TRUE) : 
 #>   unused argument (decreasing = TRUE)
 
-# However, if we add the non-specific argument ... in our higher order function,
+# However, if we add the non-specific argument ... in our function,
 # we can access additional arguments from our input function.  
 
 run_function_flexible <- function(number, fun, ...) {
@@ -348,7 +349,7 @@ return functions (instead of returning a data object like an integer or
 string or data frame). An example provided by the textbook is a function
 that converts warning into errors and stops code execution.
 
-Functions that return other functions are called function factories.
+Functions that return other functions are called **function factories**.
 
 ``` r
 # strict_sqrt() is a function that returns another function --------------------
@@ -575,9 +576,10 @@ typeof(list_1$author)
 ```
 
 Functions like `reduce()`, `lapply()` and `purrr:map()` work based on
-the principle that we can use lists to create function factories that
-remove the requirement for writing for loops (which are less reliable as
-they rely on iterative changes to the program state).
+the principle that we can use lists to create function factories (in the
+function body) that remove the requirement for writing for loops.
+Writing for loops is considered to be less reliable as it relies on
+making iterative changes to the program state.
 
 ``` r
 # looping() is equivalent to Reduce() in behaviour ----------------------------- 

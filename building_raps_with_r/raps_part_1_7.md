@@ -1,15 +1,16 @@
 # Building RAPs with R - Part 1.7
 Erika Duan
-2023-08-01
+2023-08-02
 
 - [Writing reports for data
   projects](#writing-reports-for-data-projects)
   - [Basic `knitr` tips](#basic-knitr-tips)
 - [Minimise code repetition for report
   generation](#minimise-code-repetition-for-report-generation)
-  - [Generate simple code templates](#generate-simple-code-templates)
-  - [Generate code templates outputting
-    text](#generate-code-templates-outputting-text)
+  - [Generate simple report templates using
+    functions](#generate-simple-report-templates-using-functions)
+  - [Generate report templates using
+    `knitr::knit_expand()`](#generate-report-templates-using-knitrknit_expand)
     - [Frequency table for variable:
       Species](#frequency-table-for-variable-species)
     - [Frequency table for variable:
@@ -22,9 +23,16 @@ Erika Duan
       Petal.Width](#frequency-table-for-variable-petal.width)
     - [Frequency table for variable:
       Species](#frequency-table-for-variable-species-1)
-- [TODO](#todo)
-  - [Generate child documents for reports with
-    plots](#generate-child-documents-for-reports-with-plots)
+  - [Generate report templates using child
+    documents](#generate-report-templates-using-child-documents)
+    - [Frequency table for variable:
+      Petal.Width](#frequency-table-for-variable-petal.width-1)
+    - [Plot for variable: Petal.Width](#plot-for-variable-petal.width)
+    - [Frequency table for variable:
+      Species](#frequency-table-for-variable-species-2)
+    - [Plot for variable: Species](#plot-for-variable-species)
+  - [Good packages for printing
+    tables](#good-packages-for-printing-tables)
 
 # Writing reports for data projects
 
@@ -108,7 +116,7 @@ rendered for PDF and HTML outputs.
 
 # Minimise code repetition for report generation
 
-## Generate simple code templates
+## Generate simple report templates using functions
 
 We can create report templates using functions that, for example, output
 different tables given different function inputs.
@@ -122,7 +130,15 @@ print_count_table <- function(dataset, count_by) {
 }
 
 # When print_count_table() is executed inside a code chunk with echo: false, 
-# only the table is outputted when the notebook is rendered. 
+# only the table is outputted when the notebook is rendered. For documentation
+# purposes, we will set echo: true so the code remains visible.  
+
+# We can also apply print_count_table() to multiple variables using lapply() or
+# purrr::map() i.e. lapply(colnames(iris), print_count_table, dataset = iris)
+```
+
+``` r
+print_count_table(iris, Species)
 ```
 
 | Species    |   n |
@@ -131,7 +147,7 @@ print_count_table <- function(dataset, count_by) {
 | versicolor |  50 |
 | virginica  |  50 |
 
-## Generate code templates outputting text
+## Generate report templates using `knitr::knit_expand()`
 
 We can extend our code template further by creating a function that
 first generates a subheading for the variable of interest and then
@@ -146,7 +162,6 @@ print_count_table_section <- function(dataset, count_by) {
     text = c(
       # Print subheading  
       "### Frequency table for variable: {{variable}}",
-      
       # Print count table under the subheading
       print_count_table(dataset, !!rlang::ensym(count_by))
     ),
@@ -156,8 +171,8 @@ print_count_table_section <- function(dataset, count_by) {
 }
 
 # When print_count_table_section() is executed inside a code chunk with 
-# echo: false and output: asis, the subheading and table is outputted when the 
-# notebook is rendered. 
+# echo: false and output: asis, only the subheading and table are outputted when 
+# the notebook is rendered. 
 
 # output: asis allows us to output literal R Markdown code (without rendering)
 ```
@@ -192,31 +207,32 @@ invisible( # Suppresses NULL outputs from print_count_table_section()
 
 | Sepal.Length |   n |
 |-------------:|----:|
-|          4.6 |   1 |
-|          5.1 |   1 |
-|          6.3 |   1 |
-|          6.5 |   1 |
-|          6.7 |   1 |
-|          6.9 |   1 |
+|          4.8 |   1 |
+|          5.0 |   1 |
+|          5.4 |   2 |
+|          5.9 |   1 |
+|          7.3 |   1 |
 
 ### Frequency table for variable: Sepal.Width
 
 | Sepal.Width |   n |
 |------------:|----:|
-|         2.8 |   1 |
-|         3.0 |   1 |
-|         3.1 |   3 |
-|         3.8 |   1 |
+|         2.9 |   1 |
+|         3.0 |   2 |
+|         3.2 |   1 |
+|         3.4 |   1 |
+|         3.9 |   1 |
 
 ### Frequency table for variable: Petal.Length
 
 | Petal.Length |   n |
 |-------------:|----:|
-|          1.5 |   2 |
-|          4.4 |   1 |
-|          4.9 |   1 |
-|          5.1 |   1 |
-|          5.2 |   1 |
+|          1.2 |   1 |
+|          1.4 |   1 |
+|          1.5 |   1 |
+|          1.7 |   1 |
+|          4.2 |   1 |
+|          6.3 |   1 |
 
 ### Frequency table for variable: Petal.Width
 
@@ -224,41 +240,114 @@ invisible( # Suppresses NULL outputs from print_count_table_section()
 |------------:|----:|
 |         0.2 |   1 |
 |         0.3 |   1 |
-|         1.4 |   1 |
-|         1.5 |   2 |
-|         2.0 |   1 |
+|         0.4 |   2 |
+|         1.5 |   1 |
+|         1.8 |   1 |
 
 ### Frequency table for variable: Species
 
 | Species    |   n |
 |:-----------|----:|
-| setosa     |   2 |
-| versicolor |   2 |
-| virginica  |   2 |
+| setosa     |   4 |
+| versicolor |   1 |
+| virginica  |   1 |
 
-# TODO
+**Note:** `knitr::knit_expand` does not work predictably with additional
+text inserted in between the section heading and table, so
+`knitr::knit_child()` is recommended for creating report template
+functions.
 
-## Generate child documents for reports with plots
+## Generate report templates using child documents
 
 [Child
 documents](https://bookdown.org/yihui/rmarkdown-cookbook/child-document.html)
-are smaller `.Rmd` or `.Qmd` documents that can be embedded into the
-parent i.e. final report document. These are useful when we need to
-print more complex objects like ggplots, which cannot be rendered using
-`knitr::knit_expand()`.
-
-An example of a standalone [child
-document](./raps_part_1_7_child_notebook.qmd) is linked.
-
-\#TODO
-
-\#TODO
+are smaller `.Rmd` or `.Qmd` notebooks that can be embedded into the
+parent notebook i.e. the final report template. Child documents are
+useful when we need to print more complex objects like ggplots, which
+cannot be rendered using `knitr::knit_expand()`.
 
 The function `knitr::knit_child()` can be used to compile child
-notebooks inside a code chunk in the parent notebook. We can go one step
-further, however, and combine `lapply()` with `knitr::knit_child()`.
+documents inside a code chunk in the parent notebook. We can combine
+`lapply()` with `knitr::knit_child()` to output the same template for
+multiple variables.
+
+An example of a standalone [child
+document](./raps_part_1_7_child_notebook.qmd) is linked. The value `x`
+is used in place of hard-coded variables.
+
+**Note:** For outputs to be printed correctly, the parent document code
+chunk must be set to `output: asis` and the relevant child document code
+chunks set to `output: asis` for tables and `output: true` for plots.
 
 ``` r
-# When the child document is compiled inside a code chunk with 
-# echo: false and output: asis, the entire child document is rendered.   
+output <- lapply(c("Petal.Width", "Species"), function(x) {
+  knitr::knit_child(
+    'raps_part_1_7_child_notebook.qmd',
+    envir = environment(),
+    quiet = TRUE
+  )
+})
+
+cat(unlist(output), sep = '\n')
 ```
+
+### Frequency table for variable: Petal.Width
+
+The frequency table for Petal.Width is displayed below.
+
+<div class="cell-output-display">
+
+| Petal.Width |   n |
+|------------:|----:|
+|         0.1 |   5 |
+|         0.2 |  29 |
+|         0.3 |   7 |
+|         0.4 |   7 |
+|         0.5 |   1 |
+|         0.6 |   1 |
+|         1.0 |   7 |
+|         1.1 |   3 |
+|         1.2 |   5 |
+|         1.3 |  13 |
+|         1.4 |   8 |
+|         1.5 |  12 |
+|         1.6 |   4 |
+|         1.7 |   2 |
+|         1.8 |  12 |
+|         1.9 |   5 |
+|         2.0 |   6 |
+|         2.1 |   6 |
+|         2.2 |   3 |
+|         2.3 |   8 |
+|         2.4 |   3 |
+|         2.5 |   3 |
+
+</div>
+
+### Plot for variable: Petal.Width
+
+The plot for Petal.Width is displayed below.
+
+![](raps_part_1_7_files/figure-commonmark/unnamed-chunk-11-1.png)
+
+### Frequency table for variable: Species
+
+The frequency table for Species is displayed below.
+
+<div class="cell-output-display">
+
+| Species    |   n |
+|:-----------|----:|
+| setosa     |  50 |
+| versicolor |  50 |
+| virginica  |  50 |
+
+</div>
+
+### Plot for variable: Species
+
+The plot for Species is displayed below.
+
+![](raps_part_1_7_files/figure-commonmark/unnamed-chunk-13-1.png)
+
+## Good packages for printing tables

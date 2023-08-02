@@ -3,30 +3,17 @@ title: "Child document template"
 format: html
 
 execute:
-  echo: false
-  output: false
   message: false
   warning: false
 ---
 
-```{r}
-# Load R library ---------------------------------------------------------------
-library(ggplot2)
-```
+### Frequency table for variable: `r x`   
 
-### Frequency table for variable: `r x`
+The frequency table for `r x` is displayed below.  
 
 ```{r}
+#| echo: false
 #| output: asis
-
-# Generate child document ------------------------------------------------------
-# We would like to generate a:
-# 1. section title which states the dataset used
-# 2. a ggplot   
-
-# To do this, we can make use of a child document that gets knitted separately
-# and embedded into the parent document. 
-
 # Output table -----------------------------------------------------------------
 iris |>
     dplyr::count(!!rlang::ensym(x)) |>
@@ -34,4 +21,29 @@ iris |>
 ```
 
 
+### Plot for variable: `r x`   
 
+The plot for `r x` is displayed below.  
+
+```{r}
+#| echo: false
+#| output: true
+# Output histogram if variable is numeric and bar plot if otherwise ------------
+library(ggplot2)
+
+plot_iris <- function(x) {
+  if (is.numeric(iris[[x]])) {
+    iris |> 
+      ggplot() +
+      geom_histogram(aes(x = !!rlang::ensym(x))) +
+      theme_minimal()
+  } else {
+    iris |> 
+      ggplot() +
+      geom_bar(aes(x = !!rlang::ensym(x))) +
+      theme_minimal()
+  }
+}
+
+print(plot_iris(x))
+```

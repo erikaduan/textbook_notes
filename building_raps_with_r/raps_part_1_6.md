@@ -1,6 +1,6 @@
 # Building RAPs with R - Part 1.6
 Erika Duan
-2023-08-02
+2023-08-06
 
 - [Writing good functions](#writing-good-functions)
   - [Good functions do not alter the state of your global

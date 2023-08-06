@@ -1,11 +1,21 @@
 ---
 title: "Child document template"
-format: html
+format: gfm
 
 execute:
   message: false
   warning: false
 ---
+
+```{r}
+#| echo: false
+# Extract data set of interest ------------------------------------------------- 
+sample_iris_data <- withr::with_seed(
+  seed = 111,
+  dplyr::sample_n(iris, 6)
+)
+```
+
 
 ### Frequency table for variable: `r x`   
 
@@ -15,9 +25,9 @@ The frequency table for `r x` is displayed below.
 #| echo: false
 #| output: asis
 # Output table -----------------------------------------------------------------
-iris |>
-    dplyr::count(!!rlang::ensym(x)) |>
-    knitr::kable()
+sample_iris_data |>
+  dplyr::count(!!rlang::ensym(x)) |>
+  knitr::kable()
 ```
 
 
@@ -32,18 +42,19 @@ The plot for `r x` is displayed below.
 library(ggplot2)
 
 plot_iris <- function(x) {
-  if (is.numeric(iris[[x]])) {
-    iris |> 
+  if (is.numeric(sample_iris_data[[x]])) {
+    sample_iris_data |> 
       ggplot() +
       geom_histogram(aes(x = !!rlang::ensym(x))) +
       theme_minimal()
   } else {
-    iris |> 
+    sample_iris_data |> 
       ggplot() +
       geom_bar(aes(x = !!rlang::ensym(x))) +
       theme_minimal()
   }
 }
 
+# ggplot object needs to be explicitly printed 
 print(plot_iris(x))
 ```

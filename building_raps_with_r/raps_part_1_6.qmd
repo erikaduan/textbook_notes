@@ -677,4 +677,3 @@ exists("var_1")
 exists("var_2")
 #> [1] FALSE
 ```
-

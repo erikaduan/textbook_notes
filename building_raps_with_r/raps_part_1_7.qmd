@@ -5,7 +5,7 @@ date: "`r Sys.Date()`"
 
 execute:
   echo: true
-  output: false
+  output: true
   message: false
   warning: false
 
@@ -21,7 +21,9 @@ format:
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(here,
                dplyr,
-               ggplot2) 
+               ggplot2,
+               flextable,
+               modelsummary) 
 ```
 
 # Writing reports for data projects
@@ -99,7 +101,6 @@ print_count_table <- function(dataset, count_by) {
 ```
 
 ```{r}
-#| output: true
 print_count_table(iris, Species)
 ```
 
@@ -138,10 +139,13 @@ If we need to apply the same template created by `print_count_table_section()` t
 
 ```{r}
 #| output: asis
-invisible( # Suppresses NULL outputs from print_count_table_section()
-  lapply(colnames(iris),
-         print_count_table_section,
-         dataset = sample_n(iris, 6))) 
+withr::with_seed(
+  seed = 111, 
+  invisible( # Suppresses NULL outputs from print_count_table_section()
+    lapply(colnames(iris),
+           print_count_table_section,
+           dataset = sample_n(iris, 6))) 
+)
 ```
 
 **Note:** `knitr::knit_expand` does not work predictably with additional text inserted in between the section heading and table, so `knitr::knit_child()` is recommended for creating report template functions.    
@@ -152,7 +156,7 @@ invisible( # Suppresses NULL outputs from print_count_table_section()
 
 The function `knitr::knit_child()` can be used to compile child documents inside a code chunk in the parent notebook. We can combine `lapply()` with `knitr::knit_child()` to output the same template for multiple variables.   
 
-An example of a standalone [child document](./raps_part_1_7_child_notebook.qmd) is linked. The value `x` is used in place of hard-coded variables.
+An example of a standalone child document can be found [here](./raps_part_1_7_child_notebook.qmd). The value `x` is used in place of a hard-coded variable.
 
 **Note:** For outputs to be printed correctly, the parent document code chunk must be set to `output: asis` and the relevant child document code chunks set to `output: asis` for tables and `output: true` for plots.  
 
@@ -169,5 +173,86 @@ output <- lapply(c("Petal.Width", "Species"), function(x) {
 cat(unlist(output), sep = '\n')
 ```
 
+## Generate report templates using parameterised reports  
+
+Parameterised reports are useful when you want to generate separate reports for each parameter of interest. An example of a standardised parameterised report can be found [here](./raps_part_1_7_parameterised_report.qmd).    
+
+To set up report parameterisation:    
+
+1. Replace hard-coded variable inputs with parameter keys throughout your report template. In contrast to child documents, parameterised report can store multiple parameters that must be explicitly assigned key-value pairs and referred to in the document body as `params$key`.            
+2. List all parameters and set a default value for each parameter key in your global code chunk options. 
+  
+```{r}
+#| eval: false
+---
+title: "Analysis of `r params$dataset` by `r params$var`"
+format: gfm
+date: "`r Sys.Date()`"
+
+execute:
+  message: false
+  warning: false
+
+params:
+  dataset: iris
+  var: "Petal.Width"
+---
+```
+  
+3. Render the report template using a separate R script. The code below uses `lapply()` to apply the same `rmarkdown::render()` function for each continuous variable from the iris data set.     
+
+```{r}  
+#| eval: false
+
+# Create function that renders an input report template ------------------------
+# rmarkdown::render() renders an input report template as an output file and 
+# accepts multiple parameters  
+iris_variables <- setdiff(colnames(iris), "Species") 
+
+render_report_by_var <- function(variable) {
+  rmarkdown::render(
+    input = "raps_part_1_7_parameterised_report.qmd",
+    output_file = paste0(
+      "./raps_part_1_7_files/iris_report_", snakecase::to_snake_case(variable), ".md"
+    ),
+    params = list(
+      dataset = "iris",
+      var = variable))
+}
+
+# Apply render_report_by_var() to every iris variable excepting Species --------
+lapply(
+  iris_variables, 
+  render_report_by_var
+)
+```
+
 ## Good packages for printing tables   
 
+These packages work consistently across HTML, PDF or Microsoft Word outputs.   
+
++ The package `flextable` for any table type.  
++ The package `modelsummary` for regression and summary tables.  
+
+```{r}
+#| out-width: 60%
+# Use flextable to output html table -------------------------------------------
+iris |>
+  group_by(Species) |> 
+  summarise(across(everything(), mean)) |>
+  flextable() |>
+  set_caption(caption = "Mean value by iris species") |>
+  theme_booktabs()
+```
+
+```{r}
+# Use modelsummary to output regression results --------------------------------
+model_1 <- lm(mpg ~ hp + am, data = mtcars)
+model_2 <- lm(mpg ~ hp, data = mtcars)
+
+# Store model results as list object
+models <- list("Model 1" = model_1,
+               "Model 2" = model_2)
+
+modelsummary(models)
+```

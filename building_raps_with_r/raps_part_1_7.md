@@ -1,6 +1,6 @@
 # Building RAPs with R - Part 1.7
 Erika Duan
-2023-08-02
+2023-08-06
 
 - [Writing reports for data
   projects](#writing-reports-for-data-projects)
@@ -31,6 +31,8 @@ Erika Duan
     - [Frequency table for variable:
       Species](#frequency-table-for-variable-species-2)
     - [Plot for variable: Species](#plot-for-variable-species)
+  - [Generate report templates using parameterised
+    reports](#generate-report-templates-using-parameterised-reports)
   - [Good packages for printing
     tables](#good-packages-for-printing-tables)
 
@@ -197,10 +199,13 @@ object but prints outputs to the console, we need to use `invisible()`
 or `purrr:walk()` to remove NULL outputs.
 
 ``` r
-invisible( # Suppresses NULL outputs from print_count_table_section()
-  lapply(colnames(iris),
-         print_count_table_section,
-         dataset = sample_n(iris, 6))) 
+withr::with_seed(
+  seed = 111, 
+  invisible( # Suppresses NULL outputs from print_count_table_section()
+    lapply(colnames(iris),
+           print_count_table_section,
+           dataset = sample_n(iris, 6))) 
+)
 ```
 
 ### Frequency table for variable: Sepal.Length
@@ -209,48 +214,47 @@ invisible( # Suppresses NULL outputs from print_count_table_section()
 |-------------:|----:|
 |          4.8 |   1 |
 |          5.0 |   1 |
-|          5.4 |   2 |
-|          5.9 |   1 |
-|          7.3 |   1 |
+|          5.1 |   1 |
+|          5.3 |   1 |
+|          6.1 |   1 |
+|          6.2 |   1 |
 
 ### Frequency table for variable: Sepal.Width
 
 | Sepal.Width |   n |
 |------------:|----:|
-|         2.9 |   1 |
-|         3.0 |   2 |
-|         3.2 |   1 |
+|         2.2 |   1 |
+|         2.8 |   1 |
+|         3.0 |   1 |
 |         3.4 |   1 |
-|         3.9 |   1 |
+|         3.7 |   1 |
+|         3.8 |   1 |
 
 ### Frequency table for variable: Petal.Length
 
 | Petal.Length |   n |
 |-------------:|----:|
-|          1.2 |   1 |
-|          1.4 |   1 |
 |          1.5 |   1 |
-|          1.7 |   1 |
-|          4.2 |   1 |
-|          6.3 |   1 |
+|          1.6 |   1 |
+|          1.9 |   2 |
+|          4.0 |   1 |
+|          4.5 |   1 |
 
 ### Frequency table for variable: Petal.Width
 
 | Petal.Width |   n |
 |------------:|----:|
-|         0.2 |   1 |
-|         0.3 |   1 |
-|         0.4 |   2 |
+|         0.2 |   3 |
+|         0.4 |   1 |
+|         1.3 |   1 |
 |         1.5 |   1 |
-|         1.8 |   1 |
 
 ### Frequency table for variable: Species
 
 | Species    |   n |
 |:-----------|----:|
 | setosa     |   4 |
-| versicolor |   1 |
-| virginica  |   1 |
+| versicolor |   2 |
 
 **Note:** `knitr::knit_expand` does not work predictably with additional
 text inserted in between the section heading and table, so
@@ -271,9 +275,9 @@ documents inside a code chunk in the parent notebook. We can combine
 `lapply()` with `knitr::knit_child()` to output the same template for
 multiple variables.
 
-An example of a standalone [child
-document](./raps_part_1_7_child_notebook.qmd) is linked. The value `x`
-is used in place of hard-coded variables.
+An example of a standalone child document can be found
+[here](./raps_part_1_7_child_notebook.qmd). The value `x` is used in
+place of a hard-coded variable.
 
 **Note:** For outputs to be printed correctly, the parent document code
 chunk must be set to `output: asis` and the relevant child document code
@@ -299,28 +303,10 @@ The frequency table for Petal.Width is displayed below.
 
 | Petal.Width |   n |
 |------------:|----:|
-|         0.1 |   5 |
-|         0.2 |  29 |
-|         0.3 |   7 |
-|         0.4 |   7 |
-|         0.5 |   1 |
-|         0.6 |   1 |
-|         1.0 |   7 |
-|         1.1 |   3 |
-|         1.2 |   5 |
-|         1.3 |  13 |
-|         1.4 |   8 |
-|         1.5 |  12 |
-|         1.6 |   4 |
-|         1.7 |   2 |
-|         1.8 |  12 |
-|         1.9 |   5 |
-|         2.0 |   6 |
-|         2.1 |   6 |
-|         2.2 |   3 |
-|         2.3 |   8 |
-|         2.4 |   3 |
-|         2.5 |   3 |
+|         0.2 |   3 |
+|         0.4 |   1 |
+|         1.3 |   1 |
+|         1.5 |   1 |
 
 </div>
 
@@ -328,7 +314,7 @@ The frequency table for Petal.Width is displayed below.
 
 The plot for Petal.Width is displayed below.
 
-![](raps_part_1_7_files/figure-commonmark/unnamed-chunk-11-1.png)
+![](raps_part_1_7_files/figure-commonmark/unnamed-chunk-16-1.png)
 
 ### Frequency table for variable: Species
 
@@ -338,9 +324,8 @@ The frequency table for Species is displayed below.
 
 | Species    |   n |
 |:-----------|----:|
-| setosa     |  50 |
-| versicolor |  50 |
-| virginica  |  50 |
+| setosa     |   4 |
+| versicolor |   2 |
 
 </div>
 
@@ -348,6 +333,115 @@ The frequency table for Species is displayed below.
 
 The plot for Species is displayed below.
 
-![](raps_part_1_7_files/figure-commonmark/unnamed-chunk-13-1.png)
+![](raps_part_1_7_files/figure-commonmark/unnamed-chunk-19-1.png)
+
+## Generate report templates using parameterised reports
+
+Parameterised reports are useful when you want to generate separate
+reports for each parameter of interest. An example of a standardised
+parameterised report can be found
+[here](./raps_part_1_7_parameterised_report.qmd).
+
+To set up report parameterisation:
+
+1.  Replace hard-coded variable inputs with parameter keys throughout
+    your report template. In contrast to child documents, parameterised
+    report can store multiple parameters that must be explicitly
+    assigned key-value pairs and referred to in the document body as
+    `params$key`.  
+2.  List all parameters and set a default value for each parameter key
+    in your global code chunk options.
+
+``` r
+---
+title: "Analysis of `r params$dataset` by `r params$var`"
+format: gfm
+date: "`r Sys.Date()`"
+
+execute:
+  message: false
+  warning: false
+
+params:
+  dataset: iris
+  var: "Petal.Width"
+---
+```
+
+3.  Render the report template using a separate R script. The code below
+    uses `lapply()` to apply the same `rmarkdown::render()` function for
+    each continuous variable from the iris data set.
+
+``` r
+# Create function that renders an input report template ------------------------
+# rmarkdown::render() renders an input report template as an output file and 
+# accepts multiple parameters  
+iris_variables <- setdiff(colnames(iris), "Species") 
+
+render_report_by_var <- function(variable) {
+  rmarkdown::render(
+    input = "raps_part_1_7_parameterised_report.qmd",
+    output_file = paste0(
+      "./raps_part_1_7_files/iris_report_", snakecase::to_snake_case(variable), ".md"
+    ),
+    params = list(
+      dataset = "iris",
+      var = variable))
+}
+
+# Apply render_report_by_var() to every iris variable excepting Species --------
+lapply(
+  iris_variables, 
+  render_report_by_var
+)
+```
 
 ## Good packages for printing tables
+
+These packages work consistently across HTML, PDF or Microsoft Word
+outputs.
+
+- The package `flextable` for any table type.  
+- The package `modelsummary` for regression and summary tables.
+
+``` r
+# Use flextable to output html table -------------------------------------------
+iris |>
+  group_by(Species) |> 
+  summarise(across(everything(), mean)) |>
+  flextable() |>
+  set_caption(caption = "Mean value by iris species") |>
+  theme_booktabs()
+```
+
+<img src="raps_part_1_7_files/figure-commonmark/unnamed-chunk-12-1.png"
+style="width:60.0%" />
+
+``` r
+# Use modelsummary to output regression results --------------------------------
+model_1 <- lm(mpg ~ hp + am, data = mtcars)
+model_2 <- lm(mpg ~ hp, data = mtcars)
+
+# Store model results as list object
+models <- list("Model 1" = model_1,
+               "Model 2" = model_2)
+
+modelsummary(models)
+```
+
+|             | Model 1 | Model 2 |
+|:------------|--------:|--------:|
+| (Intercept) |  26.585 |  30.099 |
+|             | (1.425) | (1.634) |
+| hp          |  -0.059 |  -0.068 |
+|             | (0.008) | (0.010) |
+| am          |   5.277 |         |
+|             | (1.080) |         |
+| :————       |    ——–: |    ——–: |
+| Num.Obs.    |      32 |      32 |
+| R2          |   0.782 |   0.602 |
+| R2 Adj.     |   0.767 |   0.589 |
+| AIC         |   164.0 |   181.2 |
+| BIC         |   169.9 |   185.6 |
+| Log.Lik.    | -78.003 | -87.619 |
+| RMSE        |    2.77 |    3.74 |

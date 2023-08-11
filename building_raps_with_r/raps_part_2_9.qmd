@@ -1,0 +1,16 @@
+---
+title: "Building RAPs with R - Part 2.9"
+author: "Erika Duan"
+date: "`r Sys.Date()`"   
+
+execute:
+  echo: true
+  output: false
+  message: false
+  warning: false
+
+format:
+  gfm:
+    toc: true
+---
+

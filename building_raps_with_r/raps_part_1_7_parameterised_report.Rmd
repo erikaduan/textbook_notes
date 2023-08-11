@@ -1,0 +1,49 @@
+---
+title: "Analysis of `r params$dataset` by `r params$var`"
+output: github_document
+date: "`r Sys.Date()`"  
+
+params:
+  dataset: iris
+  var: "Petal.Width"
+---
+
+```{r setup, include=FALSE}
+# Default option to suppress code display, messages and warnings ---------------
+knitr::opts_chunk$set(echo=FALSE, message=FALSE, warning=FALSE)
+```
+
+```{r}
+# Extract data set of interest ------------------------------------------------- 
+sample_iris_data <- withr::with_seed(
+  seed = 111,
+  sample_n(iris, 6)
+)
+```
+
+### Frequency table for variable: `r params$var`   
+
+The frequency table for `r params$var` is displayed below.  
+
+```{r, results='markup'}
+# Output table -----------------------------------------------------------------
+sample_iris_data |>
+  dplyr::group_by(Species) |>
+  dplyr::summarise(mean = mean(params$var)) |>
+  knitr::kable()
+```
+
+
+### Plot for variable: `r params$var`   
+
+The plot for `r params$var` is displayed below.  
+
+```{r, results='markup'}
+# Output histogram if variable is numeric and bar plot if otherwise ------------
+library(ggplot2)
+
+sample_iris_data |> 
+  ggplot() +
+  geom_boxplot(aes(x = params$var, fill = Species)) +
+  theme_minimal()
+```

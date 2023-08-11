@@ -175,7 +175,9 @@ cat(unlist(output), sep = '\n')
 
 ## Generate report templates using parameterised reports  
 
-Parameterised reports are useful when you want to generate separate reports for each parameter of interest. An example of a standardised parameterised report can be found [here](./raps_part_1_7_parameterised_report.qmd).    
+Parameterised reports are useful when you want to generate separate reports for each parameter of interest. An example of a standardised parameterised report can be found [here](./raps_part_1_7_parameterised_report.Rmd).   
+
+**Note:** I currently recommend using `.Rmd` rather than `.Qmd` notebooks for generating parameterised reports, as the former solution is more stables.  
 
 To set up report parameterisation:    
 
@@ -186,12 +188,8 @@ To set up report parameterisation:
 #| eval: false
 ---
 title: "Analysis of `r params$dataset` by `r params$var`"
-format: gfm
-date: "`r Sys.Date()`"
-
-execute:
-  message: false
-  warning: false
+output: github_document
+date: "`r Sys.Date()`"  
 
 params:
   dataset: iris
@@ -199,7 +197,7 @@ params:
 ---
 ```
   
-3. Render the report template using a separate R script. The code below uses `lapply()` to apply the same `rmarkdown::render()` function for each continuous variable from the iris data set.     
+3. Render the report template using a separate R script. The code below uses `lapply()` to apply the same `rmarkdown::render()` function for each continuous variable from the iris data set. The output files can be accessed [from this subdirectory](./output).      
 
 ```{r}  
 #| eval: false
@@ -211,9 +209,10 @@ iris_variables <- setdiff(colnames(iris), "Species")
 
 render_report_by_var <- function(variable) {
   rmarkdown::render(
-    input = "raps_part_1_7_parameterised_report.qmd",
+    input = "raps_part_1_7_parameterised_report.Rmd",
+    output_format = rmarkdown::github_document(html_preview = FALSE), 
     output_file = paste0(
-      "./raps_part_1_7_files/iris_report_", snakecase::to_snake_case(variable), ".md"
+      "./output/iris_report_", snakecase::to_snake_case(variable), ".md"
     ),
     params = list(
       dataset = "iris",
@@ -235,7 +234,6 @@ These packages work consistently across HTML, PDF or Microsoft Word outputs.
 + The package `modelsummary` for regression and summary tables.  
 
 ```{r}
-#| out-width: 60%
 # Use flextable to output html table -------------------------------------------
 iris |>
   group_by(Species) |> 
@@ -254,5 +252,5 @@ model_2 <- lm(mpg ~ hp, data = mtcars)
 models <- list("Model 1" = model_1,
                "Model 2" = model_2)
 
-modelsummary(models)
+modelsummary(models, output = "flextable")
 ```

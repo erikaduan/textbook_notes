@@ -1,6 +1,6 @@
 # Building RAPs with R - Part 1.7
 Erika Duan
-2023-08-06
+2023-08-12
 
 - [Writing reports for data
   projects](#writing-reports-for-data-projects)
@@ -185,11 +185,44 @@ print_count_table_section(iris, "Species")
 
 ### Frequency table for variable: Species
 
-| Species    |   n |
-|:-----------|----:|
-| setosa     |  50 |
-| versicolor |  50 |
-| virginica  |  50 |
+<table>
+<thead>
+<tr>
+<th style="text-align:left;">
+Species
+</th>
+<th style="text-align:right;">
+n
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+setosa
+</td>
+<td style="text-align:right;">
+50
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+versicolor
+</td>
+<td style="text-align:right;">
+50
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+virginica
+</td>
+<td style="text-align:right;">
+50
+</td>
+</tr>
+</tbody>
+</table>
 
 If we need to apply the same template created by
 `print_count_table_section()` to multiple different variables in the
@@ -210,51 +243,272 @@ withr::with_seed(
 
 ### Frequency table for variable: Sepal.Length
 
-| Sepal.Length |   n |
-|-------------:|----:|
-|          4.8 |   1 |
-|          5.0 |   1 |
-|          5.1 |   1 |
-|          5.3 |   1 |
-|          6.1 |   1 |
-|          6.2 |   1 |
+<table>
+<thead>
+<tr>
+<th style="text-align:right;">
+Sepal.Length
+</th>
+<th style="text-align:right;">
+n
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+4.8
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+5.0
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+5.1
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+5.3
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+6.1
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+6.2
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+</tbody>
+</table>
 
 ### Frequency table for variable: Sepal.Width
 
-| Sepal.Width |   n |
-|------------:|----:|
-|         2.2 |   1 |
-|         2.8 |   1 |
-|         3.0 |   1 |
-|         3.4 |   1 |
-|         3.7 |   1 |
-|         3.8 |   1 |
+<table>
+<thead>
+<tr>
+<th style="text-align:right;">
+Sepal.Width
+</th>
+<th style="text-align:right;">
+n
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+2.2
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2.8
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+3.0
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+3.4
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+3.7
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+3.8
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+</tbody>
+</table>
 
 ### Frequency table for variable: Petal.Length
 
-| Petal.Length |   n |
-|-------------:|----:|
-|          1.5 |   1 |
-|          1.6 |   1 |
-|          1.9 |   2 |
-|          4.0 |   1 |
-|          4.5 |   1 |
+<table>
+<thead>
+<tr>
+<th style="text-align:right;">
+Petal.Length
+</th>
+<th style="text-align:right;">
+n
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+1.5
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+1.6
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+1.9
+</td>
+<td style="text-align:right;">
+2
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+4.0
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+4.5
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+</tbody>
+</table>
 
 ### Frequency table for variable: Petal.Width
 
-| Petal.Width |   n |
-|------------:|----:|
-|         0.2 |   3 |
-|         0.4 |   1 |
-|         1.3 |   1 |
-|         1.5 |   1 |
+<table>
+<thead>
+<tr>
+<th style="text-align:right;">
+Petal.Width
+</th>
+<th style="text-align:right;">
+n
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+0.2
+</td>
+<td style="text-align:right;">
+3
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.4
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+1.3
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+1.5
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+</tbody>
+</table>
 
 ### Frequency table for variable: Species
 
-| Species    |   n |
-|:-----------|----:|
-| setosa     |   4 |
-| versicolor |   2 |
+<table>
+<thead>
+<tr>
+<th style="text-align:left;">
+Species
+</th>
+<th style="text-align:right;">
+n
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+setosa
+</td>
+<td style="text-align:right;">
+4
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+versicolor
+</td>
+<td style="text-align:right;">
+2
+</td>
+</tr>
+</tbody>
+</table>
 
 **Note:** `knitr::knit_expand` does not work predictably with additional
 text inserted in between the section heading and table, so
@@ -340,7 +594,11 @@ The plot for Species is displayed below.
 Parameterised reports are useful when you want to generate separate
 reports for each parameter of interest. An example of a standardised
 parameterised report can be found
-[here](./raps_part_1_7_parameterised_report.qmd).
+[here](./raps_part_1_7_parameterised_report.Rmd).
+
+**Note:** I currently recommend using `.Rmd` rather than `.Qmd`
+notebooks for generating parameterised reports, as the former solution
+is more stables.
 
 To set up report parameterisation:
 
@@ -355,12 +613,8 @@ To set up report parameterisation:
 ``` r
 ---
 title: "Analysis of `r params$dataset` by `r params$var`"
-format: gfm
-date: "`r Sys.Date()`"
-
-execute:
-  message: false
-  warning: false
+output: github_document
+date: "`r Sys.Date()`"  
 
 params:
   dataset: iris
@@ -370,7 +624,8 @@ params:
 
 3.  Render the report template using a separate R script. The code below
     uses `lapply()` to apply the same `rmarkdown::render()` function for
-    each continuous variable from the iris data set.
+    each continuous variable from the iris data set. The output files
+    can be accessed [from this subdirectory](./output).
 
 ``` r
 # Create function that renders an input report template ------------------------
@@ -380,9 +635,10 @@ iris_variables <- setdiff(colnames(iris), "Species")
 
 render_report_by_var <- function(variable) {
   rmarkdown::render(
-    input = "raps_part_1_7_parameterised_report.qmd",
+    input = "raps_part_1_7_parameterised_report.Rmd",
+    output_format = rmarkdown::github_document(html_preview = FALSE), 
     output_file = paste0(
-      "./raps_part_1_7_files/iris_report_", snakecase::to_snake_case(variable), ".md"
+      "./output/iris_report_", snakecase::to_snake_case(variable), ".md"
     ),
     params = list(
       dataset = "iris",
@@ -414,8 +670,7 @@ iris |>
   theme_booktabs()
 ```
 
-<img src="raps_part_1_7_files/figure-commonmark/unnamed-chunk-12-1.png"
-style="width:60.0%" />
+![](raps_part_1_7_files/figure-commonmark/unnamed-chunk-12-1.png)
 
 ``` r
 # Use modelsummary to output regression results --------------------------------
@@ -426,22 +681,7 @@ model_2 <- lm(mpg ~ hp, data = mtcars)
 models <- list("Model 1" = model_1,
                "Model 2" = model_2)
 
-modelsummary(models)
+modelsummary(models, output = "flextable")
 ```
 
-|             | Model 1 | Model 2 |
-|:------------|--------:|--------:|
-| (Intercept) |  26.585 |  30.099 |
-|             | (1.425) | (1.634) |
-| hp          |  -0.059 |  -0.068 |
-|             | (0.008) | (0.010) |
-| am          |   5.277 |         |
-|             | (1.080) |         |
-| :————       |    ——–: |    ——–: |
-| Num.Obs.    |      32 |      32 |
-| R2          |   0.782 |   0.602 |
-| R2 Adj.     |   0.767 |   0.589 |
-| AIC         |   164.0 |   181.2 |
-| BIC         |   169.9 |   185.6 |
-| Log.Lik.    | -78.003 | -87.619 |
-| RMSE        |    2.77 |    3.74 |
+![](raps_part_1_7_files/figure-commonmark/unnamed-chunk-13-1.png)

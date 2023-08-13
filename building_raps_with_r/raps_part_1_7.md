@@ -632,8 +632,8 @@ params:
 
 3.  Render the report template using a separate R script. The code below
     uses `lapply()` to apply the same `rmarkdown::render()` function for
-    each continuous variable from the iris data set. The output files
-    can be accessed [from this subdirectory](./output).
+    each continuous variable from the iris data set. An example of a
+    rendered report can be accessed [here](./report_iris_setosa.md).
 
 ``` r
 # Create function that renders an input report template ------------------------

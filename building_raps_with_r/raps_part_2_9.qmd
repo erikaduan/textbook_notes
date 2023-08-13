@@ -14,3 +14,17 @@ format:
     toc: true
 ---
 
+```{r}
+#| echo: false 
+
+# Load required R packages -----------------------------------------------------
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(here,
+               dplyr,
+               ggplot2) 
+```
+
+# Rewriting our analytical project    
+
+We now return back to the example code from [part 1.3](./raps_part_1_3.md).  
+

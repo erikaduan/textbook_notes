@@ -1,17 +1,17 @@
-Analysis of Iris data set by virginica species
+Analysis of Iris data set by versicolor species
 ================
 2023-08-13
 
-### Summary table for species `params$species`
+### Summary table for species `r`params\$species\`
 
-The summary table for `params$species` irises is displayed below.
+The summary table for versicolor irises is displayed below.
 
 | Sepal.Length_mean | Sepal.Length_sd | Sepal.Width_mean | Sepal.Width_sd | Petal.Length_mean | Petal.Length_sd | Petal.Width_mean | Petal.Width_sd |
 |------------------:|----------------:|-----------------:|---------------:|------------------:|----------------:|-----------------:|---------------:|
-|          6.857143 |       0.7143736 |         3.035714 |      0.2924884 |          5.657143 |       0.6489213 |         1.992857 |      0.2464027 |
+|            5.9125 |       0.5076052 |              2.7 |      0.3120758 |          4.233333 |       0.4565148 |         1.258333 |      0.1998188 |
 
 ### Plot for species
 
 The plot for sepal length versus sepal width is displayed below.
 
-![](output/report_iris_virginica_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+![](report_iris_versicolor_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->

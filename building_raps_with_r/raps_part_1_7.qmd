@@ -214,7 +214,7 @@ render_report_by_var <- function(variable) {
     input = "raps_part_1_7_parameterised_report.Rmd",
     output_format = rmarkdown::github_document(html_preview = FALSE), 
     output_file = paste0(
-      "./output/report_iris_", snakecase::to_snake_case(variable), ".md"
+      "report_iris_", snakecase::to_snake_case(variable), ".md"
     ),
     params = list(
       species = variable))
@@ -259,4 +259,4 @@ modelsummary(models, output = "flextable")
 
 # Other resources  
 
-+ [An in-depth tutorial on creating parameterised reports using `purrr::map()`](https://book.rwithoutstatistics.com/parameterized-reports-chapter.html)   
++ An in-depth [tutorial](https://book.rwithoutstatistics.com/parameterized-reports-chapter.html) on creating parameterised reports using `purrr::map()`.      

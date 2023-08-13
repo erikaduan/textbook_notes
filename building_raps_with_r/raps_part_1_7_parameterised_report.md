@@ -1,4 +1,4 @@
-Analysis of iris by Petal.Width
+Analysis of Iris data set by Petal.Width
 ================
 2023-08-12
 
@@ -15,4 +15,4 @@ The frequency table for Petal.Width is displayed below.
 
 The plot for Petal.Width is displayed below.
 
-![](output/iris_report_petal_width_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+![](raps_part_1_7_parameterised_report_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->

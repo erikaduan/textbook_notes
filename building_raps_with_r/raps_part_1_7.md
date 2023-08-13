@@ -1,6 +1,6 @@
 # Building RAPs with R - Part 1.7
 Erika Duan
-2023-08-12
+2023-08-13
 
 - [Writing reports for data
   projects](#writing-reports-for-data-projects)
@@ -35,6 +35,7 @@ Erika Duan
     reports](#generate-report-templates-using-parameterised-reports)
   - [Good packages for printing
     tables](#good-packages-for-printing-tables)
+- [Other resources](#other-resources)
 
 # Writing reports for data projects
 
@@ -608,17 +609,24 @@ To set up report parameterisation:
     assigned key-value pairs and referred to in the document body as
     `params$key`.  
 2.  List all parameters and set a default value for each parameter key
-    in your global code chunk options.
+    in your global code chunk options. A quick way to check for template
+    report code errors is by rendering a temporary report using the
+    default parameter values.
+
+**Note:** When using parameterised reports with tidyverse functions,
+apply the same template across subcategories rather than across
+variables from the same dataset, as
+`dplyr::filter(var == params$condition)` works but
+`dplyr::summarise(mean = mean(params$variable))` does not.
 
 ``` r
 ---
-title: "Analysis of `r params$dataset` by `r params$var`"
+title: "Analysis of Iris data set by `r params$species` species"
 output: github_document
 date: "`r Sys.Date()`"  
 
 params:
-  dataset: iris
-  var: "Petal.Width"
+  species: "setosa"
 ---
 ```
 
@@ -631,18 +639,18 @@ params:
 # Create function that renders an input report template ------------------------
 # rmarkdown::render() renders an input report template as an output file and 
 # accepts multiple parameters  
-iris_variables <- setdiff(colnames(iris), "Species") 
+iris_variables <- unique(iris$Species) |>
+  as.character()
 
 render_report_by_var <- function(variable) {
   rmarkdown::render(
     input = "raps_part_1_7_parameterised_report.Rmd",
     output_format = rmarkdown::github_document(html_preview = FALSE), 
     output_file = paste0(
-      "./output/iris_report_", snakecase::to_snake_case(variable), ".md"
+      "./output/report_iris_", snakecase::to_snake_case(variable), ".md"
     ),
     params = list(
-      dataset = "iris",
-      var = variable))
+      species = variable))
 }
 
 # Apply render_report_by_var() to every iris variable excepting Species --------
@@ -685,3 +693,8 @@ modelsummary(models, output = "flextable")
 ```
 
 ![](raps_part_1_7_files/figure-commonmark/unnamed-chunk-13-1.png)
+
+# Other resources
+
+- [An in-depth tutorial on creating parameterised reports using
+  `purrr::map()`](https://book.rwithoutstatistics.com/parameterized-reports-chapter.html)

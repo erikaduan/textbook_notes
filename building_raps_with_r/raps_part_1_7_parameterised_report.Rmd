@@ -1,11 +1,10 @@
 ---
-title: "Analysis of `r params$dataset` by `r params$var`"
+title: "Analysis of Iris data set by `r params$species` species"
 output: github_document
 date: "`r Sys.Date()`"  
 
 params:
-  dataset: iris
-  var: "Petal.Width"
+  species: "setosa"
 ---
 
 ```{r setup, include=FALSE}
@@ -14,36 +13,37 @@ knitr::opts_chunk$set(echo=FALSE, message=FALSE, warning=FALSE)
 ```
 
 ```{r}
-# Extract data set of interest ------------------------------------------------- 
-sample_iris_data <- withr::with_seed(
+# Extract data set of interest -------------------------------------------------
+sample_data <- withr::with_seed(
   seed = 111,
-  sample_n(iris, 6)
+  dplyr::sample_n(iris, 50)
 )
 ```
 
-### Frequency table for variable: `r params$var`   
+### Summary table for species `r `params$species`   
 
-The frequency table for `r params$var` is displayed below.  
+The summary table for `r params$species` irises is displayed below.  
 
 ```{r, results='markup'}
 # Output table -----------------------------------------------------------------
-sample_iris_data |>
-  dplyr::group_by(Species) |>
-  dplyr::summarise(mean = mean(params$var)) |>
+sample_data |>
+  dplyr::filter(Species == params$species) |>
+  dplyr::summarise(across(where(is.numeric), list(mean = mean, sd = sd))) |> 
   knitr::kable()
 ```
 
 
-### Plot for variable: `r params$var`   
+### Plot for species `r params$iris_var`   
 
-The plot for `r params$var` is displayed below.  
+The plot for `r params$iris_var` sepal length versus sepal width is displayed below.   
 
 ```{r, results='markup'}
 # Output histogram if variable is numeric and bar plot if otherwise ------------
 library(ggplot2)
 
-sample_iris_data |> 
+sample_data |>
+  dplyr::filter(Species == params$species) |>
   ggplot() +
-  geom_boxplot(aes(x = params$var, fill = Species)) +
+  geom_point(aes(x = Sepal.Length, y = Sepal.Width, colour = Species)) +
   theme_minimal()
 ```

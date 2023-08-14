@@ -1,12 +1,10 @@
-Building RAPs with R - Part 1.3
-================
+# Building RAPs with R - Part 1.3
 Erika Duan
-7/14/23
+2023-08-14
 
-- <a href="#project-goal" id="toc-project-goal">Project goal</a>
-- <a href="#project-code" id="toc-project-code">Project code</a>
-- <a href="#discussion-questions" id="toc-discussion-questions">Discussion
-  questions</a>
+- [Project goal](#project-goal)
+- [Project code](#project-code)
+- [Discussion questions](#discussion-questions)
 
 # Project goal
 
@@ -83,7 +81,7 @@ sheets <- excel_sheets(raw_data)
 # column to denote year. This can be done because individual sheets are named 
 # after individual years.      
 
-read_clean <- function(..., sheet){
+read_clean <- function(..., sheet) {
   read_excel(..., sheet = sheet) |>
     mutate(year = sheet)
 }
@@ -225,7 +223,7 @@ Observations about script 2:
 
 ``` r
 # ==============================================================================
-# Script 2: Generate machine-friendly, cleaned and transformed data set   
+# Script 2: Generate price index and plots   
 # ==============================================================================
 
 library(dplyr)
@@ -361,14 +359,15 @@ obtaining raw data from external sources (which are assumed to be
 stable), some component of hardcoding to clean values and an iterative
 reporting component.
 
-Other reproducibility considerations include:  
-+ Clear documentation of package dependencies, package versions and how
-to install them would be useful.  
-+ Addition of unit tests to ensure that future updates to the raw data
-sets are seamlessly included (i.e. check whether historical data has
-been revised and needs integration, check whether new localities appear
-in the future dataset and their corresponding index is appropriately
-generated).  
-+ For true reproducibility, creating a snapshot of the original
-computational environment and making this available to other users is
-important.
+Other reproducibility considerations include:
+
+- Clear documentation of package dependencies, package versions and how
+  to install them would be useful.  
+- Addition of unit tests to ensure that future updates to the raw data
+  sets are seamlessly included (i.e. check whether historical data has
+  been revised and needs integration, check whether new localities
+  appear in the future dataset and their corresponding index is
+  appropriately generated).  
+- For true reproducibility, creating a snapshot of the original
+  computational environment and making this available to other users is
+  important.

@@ -1,0 +1,28 @@
+---
+title: "Building RAPs with R - Part 2.10"
+author: "Erika Duan"
+date: "`r Sys.Date()`"   
+
+execute:
+  eval: false
+  echo: true
+  output: false
+  message: false
+  warning: false
+
+format:
+  gfm:
+    toc: true
+---
+
+```{r}
+#| echo: false 
+
+# Load required R packages -----------------------------------------------------
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(here,
+               renv) 
+```
+
+# Recording package versions with `renv`   
+

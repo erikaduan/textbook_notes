@@ -1,6 +1,6 @@
 # Building RAPs with R - Part 2.9
 Erika Duan
-2023-08-14
+2023-08-27
 
 - [Rewriting our analytical project](#rewriting-our-analytical-project)
   - [Script 1](#script-1)
@@ -90,7 +90,10 @@ The changes are:
 
 - The addition of a detailed comment to describe the data set source.  
 - Conversion of the original code into a single large function to
-  download the source data set and to clean its column names.  
+  download the source data set and to clean its column names. Note that
+  this seems to go against previous advice to break down functions into
+  small functions that each perform a single task, but it is possible
+  that this final structure is used by packages like `targets`.  
 - Removal of the code `str(raw_data)` to check the properties of the
   cleaned raw data set.
 
@@ -391,7 +394,7 @@ current_communes <- get_current_communes()
 communes <- get_test_communes(former_communes, current_communes)  
 
 # Test whether all communes from our data set are represented  
-# If the above code doesn’t show any communes, then this means that we are
+# If the above code does not show any communes, then this means that we are
 # accounting for every commune.   
 
 setdiff(flat_data$locality, communes)
@@ -491,7 +494,10 @@ The first step of the **revised code** is below.
 The changes are:
 
 - Reduce code duplication by creating a single function which outputs
-  commune or country level Laspeyeres price indexes.
+  commune or country level Laspeyeres price indexes. Note that this
+  solution was disliked by some, as it relies on complex
+  meta-programming tricks like `deparse(substitute())` and also mixes
+  base R and `tidyr` meta-programming functions i.e. `quo()` and `!!`.
 
 ``` r
 # ==============================================================================

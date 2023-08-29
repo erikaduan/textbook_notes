@@ -25,6 +25,7 @@ pacman::p_load(here,
                ggplot2)
 ```
 
+
 # Rewriting our analytical project  
 
 ## Script 1  

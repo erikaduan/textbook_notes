@@ -7,6 +7,7 @@ This repository contains personal notes made whilst reading open-source statisti
     + [Part 1.7](./building_raps_with_r/raps_part_1_7.md)  
     + [Part 2.9](./building_raps_with_r/raps_part_2_9.md)  
     + [Part 2.10](./building_raps_with_r/raps_part_2_10.md)   
+    + [Part 2.11](./building_raps_with_r/raps_part_2_11.md)   
 
 + [Statistical Rethinking](https://xcelab.net/rm/statistical-rethinking/) by Richard McElreath       
     + Chapter 1   

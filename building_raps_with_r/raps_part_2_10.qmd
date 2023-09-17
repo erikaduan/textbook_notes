@@ -89,11 +89,12 @@ Although `renv` requires users to manually reproduce the original operating syst
 
 # What we need for full project reproducibility      
 
-| Requirement | Tools required |  
-|:------------|:---------------|  
-| Reproduce the original R version | Docker or `conda` |
-| Reproduce other operating system tools required for R package compilation | Docker or `conda` |      
+| Requirement | Tools required |    
+|:------------|:---------------|   
+| Reproduce the original R version | Docker or `conda` |   
+| Reproduce other operating system tools required for R package compilation | Docker or `conda` |       
 | Install project-specific R package dependencies | `renv` |     
+| Install project-specific Python package dependencies if our workflow uses Python via `reticulate` | ? |   
 
 
 # Other hacks   

@@ -1,0 +1,38 @@
+---
+title: "Building RAPs with R - Part 2.11"
+author: "Erika Duan"
+date: "`r Sys.Date()`"   
+
+execute:
+  eval: false
+  echo: true
+  output: false
+  message: false
+  warning: false
+
+format:
+  gfm:
+    toc: true
+---
+
+```{r}
+#| echo: false 
+
+# Load required R packages -----------------------------------------------------
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(here,
+               renv) 
+```
+
+
+# Packaging your code     
+
+When we adopt a package development mode, we can make use of tools which:
+
+-   Help document your functions    
+-   Test your functions    
+-   Define your analytical package dependencies    
+-   Turn your code into a fully reproducible pipeline   
+
+
+# Using `fusen` to create an R package    

@@ -1,10 +1,12 @@
 # Building RAPs with R - Part 2.11
 Erika Duan
-2023-09-17
+2023-09-20
 
 - [Packaging your code](#packaging-your-code)
 - [Using `fusen` to create an R
   package](#using-fusen-to-create-an-r-package)
+  - [Using the `flat_minimal_package.Rmd` template
+    file](#using-the-flat_minimal_package.rmd-template-file)
 
 # Packaging your code
 
@@ -14,6 +16,47 @@ which:
 - Help document your functions  
 - Test your functions  
 - Define your analytical package dependencies  
-- Turn your code into a fully reproducible pipeline
+- Turn your code into a fully reproducible pipeline  
+- Create clean separation between software development and analytical
+  code
 
 # Using `fusen` to create an R package
+
+The `fusen` package adopts a documentation first method and prompts
+users to start with an `.Rmd` file.
+
+``` r
+# Start from a root directory i.e. your home or git repo root directory --------
+# Make sure you start from a new R Session and not from a previous R project
+fusen::create_fusen(path = "fusen.demo",
+                    template = "minimal")
+```
+
+The following message and outputs should appear in your newly created
+`fusen.demo` subdirectory and are described
+[here](https://thinkr-open.github.io/fusen/) in further detail.
+
+- An `./dev` subdirectory which contains two `.Rmd` files
+  `0-dev_history.Rmd` and `flat_minimal_package.Rmd` and a `.gitignore`
+  file.  
+- The `flat_minimal_package.Rmd` file is a template file for our
+  analytical `.Rmd` files and contains our functions, unit tests and the
+  code for our entire analytical workflow.  
+- The `0-dev_history.Rmd` file contains code we would run via the
+  terminal to initialise Git, add dependencies, add a package
+  description file and etc. when developing a package.
+
+![](./figures/create_fusen_output.png)
+
+The intention behind `fusen` is that it simplifies the R package
+creation learning curve by helping users to store functions, unit tests,
+package documentation in the right package subdirectory locations
+automatically. It does this by relying on code chunk names in its
+template `flat_minimal_package.Rmd` file.
+
+## Using the `flat_minimal_package.Rmd` template file
+
+When we open `flat_minimal_package.Rmd`, the first header is named
+`my_fun` and contains the following three consecutive code chunks.
+
+![](./figures/fusen_my_fun.png)

@@ -1,18 +1,22 @@
 # Textbook notes
 This repository contains personal notes made whilst reading open-source statistical and machine learning textbooks.
 
+<br>  
+
++ Blog posts  
+    + [Regression, fire and dangerous things](./blog_posts/) by Richard McElreath  
+
 + [Building Reproducible Analytical Pipelines with R](https://raps-with-r.dev/) by Bruno Rodrigues    
-    + [Part 1.3](./building_raps_with_r/raps_part_1_3.md)  
-    + [Part 1.6](./building_raps_with_r/raps_part_1_6.md)  
-    + [Part 1.7](./building_raps_with_r/raps_part_1_7.md)  
-    + [Part 2.9](./building_raps_with_r/raps_part_2_9.md)  
-    + [Part 2.10](./building_raps_with_r/raps_part_2_10.md)   
-    + [Part 2.11](./building_raps_with_r/raps_part_2_11.md)   
+    + [Part 1.3](./building_raps_with_r/raps_part_1_3.md) - demo project code     
+    + [Part 1.6](./building_raps_with_r/raps_part_1_6.md) - using functions in R    
+    + [Part 1.7](./building_raps_with_r/raps_part_1_7.md) - generating report templates in R   
+    + [Part 2.9](./building_raps_with_r/raps_part_2_9.md) - code review   
+    + [Part 2.10](./building_raps_with_r/raps_part_2_10.md) - R package versioning with `renv`    
+    + [Part 2.11](./building_raps_with_r/raps_part_2_11.md) - building R packages     
 
 + [Statistical Rethinking](https://xcelab.net/rm/statistical-rethinking/) by Richard McElreath       
-    + Chapter 1   
-    + Chapter 2     
-    + Chapter 3    
+    + Chapter 1 and 2      
+
 <br>  
 
 # Publicly available textbooks

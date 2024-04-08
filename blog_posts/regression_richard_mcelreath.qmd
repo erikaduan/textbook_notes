@@ -1,0 +1,22 @@
+---
+title: "Review of Regression, Fire and Dangerous Things"
+author: "Erika Duan"
+date: "`r Sys.Date()`"
+
+execute:
+  echo: true
+  output: false
+  message: false
+  warning: false
+
+format:
+  gfm:
+    toc: true
+---
+
+https://elevanth.org/blog/2021/06/15/regression-fire-and-dangerous-things-1-3/
+
+```{r}
+
+```
+

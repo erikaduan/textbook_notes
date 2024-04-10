@@ -90,14 +90,11 @@ D[1:5]
 #> [1] 0 2 1 0 3
 ```
 
-``` r
-plot(U)
-```
+![Size of confound
+U](regression_richard_mcelreath_files/figure-gfm/unnamed-chunk-2-1.png)
 
-``` r
-plot(2*B2)
-```
+![Size of impact of B2 on D
+(2\*B2)](regression_richard_mcelreath_files/figure-gfm/unnamed-chunk-2-2.png)
 
-``` r
-plot(2*B2 + U)
-```
+![Total size (2\*B2 +
+U)](regression_richard_mcelreath_files/figure-gfm/unnamed-chunk-2-3.png)

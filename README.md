@@ -4,7 +4,7 @@ This repository contains personal notes made whilst reading open-source statisti
 <br>  
 
 + **Blog posts**  
-    + [Regression, fire and dangerous things](./blog_posts/) by Richard McElreath  
+    + [Regression, fire and dangerous things](./blog_posts/regression_richard_mcelreath.md) by Richard McElreath   
 
 + **Building Reproducible Analytical Pipelines with R** by Bruno Rodrigues    
     + [Part 1.3](./building_raps_with_r/raps_part_1_3.md) - Introducing the demo project code     

@@ -84,6 +84,8 @@ D[1:5]
 
 ```{r}
 #| layout-ncol: 3
+#| echo: false
+#| output: true
 #| fig-cap: 
 #|   - "Size of confound U"
 #|   - "Size of impact of B2 on D (2*B2)"

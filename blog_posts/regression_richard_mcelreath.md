@@ -1,7 +1,7 @@
 Review of Regression, Fire and Dangerous Things
 ================
 Erika Duan
-2024-04-10
+2024-04-11
 
 -   <a href="#part-1---the-causal-salad"
     id="toc-part-1---the-causal-salad">Part 1 - the causal salad</a>
@@ -90,11 +90,44 @@ D[1:5]
 #> [1] 0 2 1 0 3
 ```
 
-![Size of confound
-U](regression_richard_mcelreath_files/figure-gfm/unnamed-chunk-2-1.png)
+In this example, the effect size of the confound is as large as the
+causal effect of the daughter’s birth order on the daughter’s family
+size.
 
-![Size of impact of B2 on D
-(2\*B2)](regression_richard_mcelreath_files/figure-gfm/unnamed-chunk-2-2.png)
+![](regression_richard_mcelreath_files/figure-gfm/unnamed-chunk-3-1.png)
 
-![Total size (2\*B2 +
-U)](regression_richard_mcelreath_files/figure-gfm/unnamed-chunk-2-3.png)
+![](regression_richard_mcelreath_files/figure-gfm/unnamed-chunk-3-2.png)
+
+![](regression_richard_mcelreath_files/figure-gfm/unnamed-chunk-3-3.png)
+
+Our synthetic data model specifies that the mother’s family size has no
+impact on the daughter’s family size. But what happens when we include
+the mother’s family size in a regression model?
+
+``` r
+# Build linear regression model D = b0 + b1*M ---------------------------------- 
+only_mother_family_size <- lm(D ~ M)
+
+# Output tidy linear regression coefficients and p-values  
+tidy(only_mother_family_size)
+```
+
+    # A tibble: 2 x 5
+      term        estimate std.error statistic  p.value
+      <chr>          <dbl>     <dbl>     <dbl>    <dbl>
+    1 (Intercept)    0.978    0.118       8.26 2.03e-14
+    2 M              0.231    0.0685      3.38 8.82e- 4
+
+``` r
+# Output model performance metrics
+glance(only_mother_family_size)
+```
+
+    # A tibble: 1 x 12
+      r.squared adj.r.squared sigma statistic  p.value    df logLik   AIC   BIC
+          <dbl>         <dbl> <dbl>     <dbl>    <dbl> <dbl>  <dbl> <dbl> <dbl>
+    1    0.0545        0.0497  1.23      11.4 0.000882     1  -324.  654.  663.
+    # i 3 more variables: deviance <dbl>, df.residual <int>, nobs <int>
+
+\#TODO \# Explain this result is because U contributes to both D AND M,
+and therefore the component of U in M is wrongly attributed to M.

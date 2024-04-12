@@ -1,10 +1,11 @@
 Review of Regression, Fire and Dangerous Things
 ================
 Erika Duan
-2024-04-11
+2024-04-12
 
 -   <a href="#part-1---the-causal-salad"
     id="toc-part-1---the-causal-salad">Part 1 - the causal salad</a>
+-   <a href="#causal-design" id="toc-causal-design">Causal design</a>
 
 This is a review of the following blog posts:
 
@@ -90,26 +91,38 @@ D[1:5]
 #> [1] 0 2 1 0 3
 ```
 
-In this example, the effect size of the confound is as large as the
-causal effect of the daughter’s birth order on the daughter’s family
-size.
+A diagram of the causal relationships in our synthetic data model can be
+drawn.
 
-![](regression_richard_mcelreath_files/figure-gfm/unnamed-chunk-3-1.png)
+``` mermaid
+flowchart LR  
+  A(Mother birth order B1) --> B(Mother family size M) 
+  C(Unknown confound U) --> B(Mother family size M) 
+  
+  D(Daughter birth order B2) --> E(Daughter family size D) 
+  C(Unknown confound U) --> E(Daughter family size D) 
+```
 
-![](regression_richard_mcelreath_files/figure-gfm/unnamed-chunk-3-2.png)
+Of note, the effect size of the confound (U) is as large as the causal
+effect of the daughter’s birth order (B2) on the daughter’s family size
+(D).
 
-![](regression_richard_mcelreath_files/figure-gfm/unnamed-chunk-3-3.png)
+![](regression_richard_mcelreath_files/figure-gfm/unnamed-chunk-4-1.png)
 
-Our synthetic data model specifies that the mother’s family size has no
-impact on the daughter’s family size. But what happens when we include
-the mother’s family size in a regression model?
+![](regression_richard_mcelreath_files/figure-gfm/unnamed-chunk-4-2.png)
+
+![](regression_richard_mcelreath_files/figure-gfm/unnamed-chunk-4-3.png)
+
+Our synthetic data model specifies that the mother’s family size has
+**no impact** on the daughter’s family size. But what happens when we
+include the mother’s family size in a regression model?
 
 ``` r
 # Build linear regression model D = b0 + b1*M ---------------------------------- 
-only_mother_family_size <- lm(D ~ M)
+only_M <- lm(D ~ M)
 
 # Output tidy linear regression coefficients and p-values  
-tidy(only_mother_family_size)
+tidy(only_M) 
 ```
 
     # A tibble: 2 x 5
@@ -120,7 +133,7 @@ tidy(only_mother_family_size)
 
 ``` r
 # Output model performance metrics
-glance(only_mother_family_size)
+glance(only_M)
 ```
 
     # A tibble: 1 x 12
@@ -129,5 +142,58 @@ glance(only_mother_family_size)
     1    0.0545        0.0497  1.23      11.4 0.000882     1  -324.  654.  663.
     # i 3 more variables: deviance <dbl>, df.residual <int>, nobs <int>
 
-\#TODO \# Explain this result is because U contributes to both D AND M,
-and therefore the component of U in M is wrongly attributed to M.
+The linear regression model indicates that the size of the mother’s
+family (M) is positively associated with the size of the daughter’s
+family (D) i.e. $E(D) = 0.98 + 0.23 M$. **This contrasts with our prior
+knowledge that M is independent of D in our data synthesis model.**
+
+What happens if we add more variables into our linear regression model?
+Does the misleading association between M and D disappear?
+
+``` r
+# Build linear regression model D = b0 + b1*M + b2*B1 + b3*B2 ------------------ 
+M_B1_B2 <- lm(D ~ M + B1 + B2)
+
+# Output tidy linear regression coefficients and p-values  
+tidy(M_B1_B2) 
+```
+
+    # A tibble: 4 x 5
+      term        estimate std.error statistic  p.value
+      <chr>          <dbl>     <dbl>     <dbl>    <dbl>
+    1 (Intercept)    0.400    0.132       3.02 2.88e- 3
+    2 M              0.373    0.0658      5.67 5.15e- 8
+    3 B1            -0.437    0.166      -2.64 9.07e- 3
+    4 B2             1.33     0.145       9.16 6.85e-17
+
+``` r
+# Output model performance metrics
+glance(M_B1_B2)
+```
+
+    # A tibble: 1 x 12
+      r.squared adj.r.squared sigma statistic  p.value    df logLik   AIC   BIC
+          <dbl>         <dbl> <dbl>     <dbl>    <dbl> <dbl>  <dbl> <dbl> <dbl>
+    1     0.352         0.343  1.02      35.6 2.15e-18     3  -286.  582.  598.
+    # i 3 more variables: deviance <dbl>, df.residual <int>, nobs <int>
+
+Unfortunately, adding the variables mother’s birth order (B1) and
+daughter’s birth order (B2) produces a model with a larger coefficient
+for M. B1 is also negatively associated with D, despite our synthetic
+model specifying M as positively dependent on B1 (so we expect B1 and M
+to at least have coefficients with the same sign).
+
+Even worse, if we examined model performance metrics like AIC and BIC,
+we would be misled into concluding that the second model was the better
+model. It is very possible that the second model is a more predictive
+model, but it is simultaneously even more misleading if we wanted to
+infer causal relationships between the predictor and response variables.
+
+This example illustrates the dangers of causal salads, where we throw
+many variables into a model and hope to identify some statistically
+significant ones. The best way to counter this practice is to explicitly
+think about the **causal relationships among predictor variables** and
+not just the causal relationships between predictor and response
+variables.
+
+# Causal design

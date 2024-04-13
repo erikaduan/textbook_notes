@@ -6,7 +6,7 @@ Erika Duan
 -   <a href="#part-1---the-causal-salad"
     id="toc-part-1---the-causal-salad">Part 1 - the causal salad</a>
 -   <a href="#part-2---causal-design" id="toc-part-2---causal-design">Part 2
-    - Causal design</a>
+    - causal design</a>
 
 This is a review of the following blog posts:
 
@@ -103,18 +103,24 @@ flowchart LR
   D(Daughter birth order B2) --> E(Daughter family size D) 
   C(Unknown confound U) --> E(Daughter family size D) 
   
-  style D fill:#Fff9e3,stroke:#333
+  style E fill:#Fff9e3,stroke:#333
 ```
 
 Of note, the effect size of the confound (U) is as large as the causal
 effect of the daughter’s birth order (B2) on the daughter’s family size
 (D).
 
-![](regression_richard_mcelreath_files/figure-gfm/unnamed-chunk-4-1.png)
+<img
+src="regression_richard_mcelreath_files/figure-gfm/unnamed-chunk-4-1.png"
+style="width:60.0%" />
 
-![](regression_richard_mcelreath_files/figure-gfm/unnamed-chunk-4-2.png)
+<img
+src="regression_richard_mcelreath_files/figure-gfm/unnamed-chunk-4-2.png"
+style="width:60.0%" />
 
-![](regression_richard_mcelreath_files/figure-gfm/unnamed-chunk-4-3.png)
+<img
+src="regression_richard_mcelreath_files/figure-gfm/unnamed-chunk-4-3.png"
+style="width:60.0%" />
 
 Our synthetic data model specifies that the mother’s family size has
 **no impact** on the daughter’s family size. But what happens when we
@@ -147,9 +153,8 @@ glance(only_M)
 
 The linear regression model indicates that the size of the mother’s
 family (M) is positively associated with the size of the daughter’s
-family (D)
-i.e. ![E(D) = 0.98 + 0.23 M](https://latex.codecogs.com/svg.latex?E%28D%29%20%3D%200.98%20%2B%200.23%20M "E(D) = 0.98 + 0.23 M").
-**This contrasts with our prior knowledge that D is independent of M.**
+family (D) i.e. $E(D) = 0.98 + 0.23 M$. **This contrasts with our prior
+knowledge that D is independent of M.**
 
 What happens if we add more variables into our linear regression model?
 Does the misleading association between M and D disappear?
@@ -201,4 +206,4 @@ think about the **causal relationships among predictor variables** and
 not just the causal relationships between predictor and response
 variables.
 
-# Part 2 - Causal design
+# Part 2 - causal design

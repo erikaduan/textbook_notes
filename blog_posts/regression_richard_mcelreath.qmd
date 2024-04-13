@@ -12,7 +12,7 @@ execute:
 format:
   gfm:
     toc: true
-    html-math-method: webtex
+    html-math-method: katex
 ---
 
 ```{r}
@@ -101,7 +101,7 @@ flowchart LR
   D(Daughter birth order B2) --> E(Daughter family size D) 
   C(Unknown confound U) --> E(Daughter family size D) 
   
-  style D fill:#Fff9e3,stroke:#333
+  style E fill:#Fff9e3,stroke:#333
 ```
 
 Of note, the effect size of the confound (U) is as large as the causal effect of the daughter's birth order (B2) on the daughter's family size (D).   
@@ -109,6 +109,7 @@ Of note, the effect size of the confound (U) is as large as the causal effect of
 ```{r}
 #| echo: false
 #| output: true
+#| out.width: "60%"
 
 plot(U, main = "Confound effect size on daughter's family size")
 plot(2*B2, main = "Daughter's birth order effect size  on daughter's family size")
@@ -152,5 +153,7 @@ If we examined model performance metrics like AIC and BIC, we would be misled in
 
 This example illustrates the dangers of causal salads, where we throw many variables into a model and hope to identify some statistically significant ones. The best way to counter this practice is to explicitly think about the **causal relationships among predictor variables** and not just the causal relationships between predictor and response variables.     
 
-# Part 2 - Causal design  
+# Part 2 - causal design    
+
+
 

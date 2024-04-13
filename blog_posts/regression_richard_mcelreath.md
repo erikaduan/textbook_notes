@@ -1,11 +1,12 @@
 Review of Regression, Fire and Dangerous Things
 ================
 Erika Duan
-2024-04-12
+2024-04-13
 
 -   <a href="#part-1---the-causal-salad"
     id="toc-part-1---the-causal-salad">Part 1 - the causal salad</a>
--   <a href="#causal-design" id="toc-causal-design">Causal design</a>
+-   <a href="#part-2---causal-design" id="toc-part-2---causal-design">Part 2
+    - Causal design</a>
 
 This is a review of the following blog posts:
 
@@ -101,6 +102,8 @@ flowchart LR
   
   D(Daughter birth order B2) --> E(Daughter family size D) 
   C(Unknown confound U) --> E(Daughter family size D) 
+  
+  style D fill:#Fff9e3,stroke:#333
 ```
 
 Of note, the effect size of the confound (U) is as large as the causal
@@ -144,8 +147,9 @@ glance(only_M)
 
 The linear regression model indicates that the size of the mother’s
 family (M) is positively associated with the size of the daughter’s
-family (D) i.e. $E(D) = 0.98 + 0.23 M$. **This contrasts with our prior
-knowledge that M is independent of D in our data synthesis model.**
+family (D)
+i.e. ![E(D) = 0.98 + 0.23 M](https://latex.codecogs.com/svg.latex?E%28D%29%20%3D%200.98%20%2B%200.23%20M "E(D) = 0.98 + 0.23 M").
+**This contrasts with our prior knowledge that D is independent of M.**
 
 What happens if we add more variables into our linear regression model?
 Does the misleading association between M and D disappear?
@@ -177,17 +181,18 @@ glance(M_B1_B2)
     1     0.352         0.343  1.02      35.6 2.15e-18     3  -286.  582.  598.
     # i 3 more variables: deviance <dbl>, df.residual <int>, nobs <int>
 
-Unfortunately, adding the variables mother’s birth order (B1) and
-daughter’s birth order (B2) produces a model with a larger coefficient
-for M. B1 is also negatively associated with D, despite our synthetic
-model specifying M as positively dependent on B1 (so we expect B1 and M
-to at least have coefficients with the same sign).
+Unfortunately, adding the variables B1 and B2 produces a model with a
+larger coefficient for M. B1 is also negatively associated with D,
+despite our synthetic model specifying M to be positively dependent on
+B1 (so we expect B1 and M to at least have coefficients with the same
+sign).
 
-Even worse, if we examined model performance metrics like AIC and BIC,
-we would be misled into concluding that the second model was the better
-model. It is very possible that the second model is a more predictive
-model, but it is simultaneously even more misleading if we wanted to
-infer causal relationships between the predictor and response variables.
+If we examined model performance metrics like AIC and BIC, we would be
+misled into concluding that the second model was the better model. It is
+likely that the second model is a more predictive model. However, the
+second model is also more misleading if we wanted to infer causal
+relationships between the predictor (B1, B2 and M) and response (D)
+variables.
 
 This example illustrates the dangers of causal salads, where we throw
 many variables into a model and hope to identify some statistically
@@ -196,4 +201,4 @@ think about the **causal relationships among predictor variables** and
 not just the causal relationships between predictor and response
 variables.
 
-# Causal design
+# Part 2 - Causal design

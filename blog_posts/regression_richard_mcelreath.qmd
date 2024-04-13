@@ -12,6 +12,7 @@ execute:
 format:
   gfm:
     toc: true
+    html-math-method: webtex
 ---
 
 ```{r}
@@ -99,6 +100,8 @@ flowchart LR
   
   D(Daughter birth order B2) --> E(Daughter family size D) 
   C(Unknown confound U) --> E(Daughter family size D) 
+  
+  style D fill:#Fff9e3,stroke:#333
 ```
 
 Of note, the effect size of the confound (U) is as large as the causal effect of the daughter's birth order (B2) on the daughter's family size (D).   
@@ -126,7 +129,7 @@ tidy(only_M)
 # Output model performance metrics
 glance(only_M)
 ```
-The linear regression model indicates that the size of the mother's family (M) is positively associated with the size of the daughter's family (D) i.e. $E(D) = 0.98 + 0.23 M$. **This contrasts with our prior knowledge that M is independent of D in our data synthesis model.**       
+The linear regression model indicates that the size of the mother's family (M) is positively associated with the size of the daughter's family (D) i.e. $E(D) = 0.98 + 0.23 M$. **This contrasts with our prior knowledge that D is independent of M.**       
 
 What happens if we add more variables into our linear regression model? Does the misleading association between M and D disappear?  
 
@@ -143,11 +146,11 @@ tidy(M_B1_B2)
 glance(M_B1_B2)
 ```
 
-Unfortunately, adding the variables mother's birth order (B1) and daughter's birth order (B2) produces a model with a larger coefficient for M. B1 is also negatively associated with D, despite our synthetic model specifying M as positively dependent on B1 (so we expect B1 and M to at least have coefficients with the same sign).    
+Unfortunately, adding the variables B1 and B2 produces a model with a larger coefficient for M. B1 is also negatively associated with D, despite our synthetic model specifying M to be positively dependent on B1 (so we expect B1 and M to at least have coefficients with the same sign).    
 
-Even worse, if we examined model performance metrics like AIC and BIC, we would be misled into concluding that the second model was the better model. It is very possible that the second model is a more predictive model, but it is simultaneously even more misleading if we wanted to infer causal relationships between the predictor and response variables.      
+If we examined model performance metrics like AIC and BIC, we would be misled into concluding that the second model was the better model. It is likely that the second model is a more predictive model. However, the second model is also more misleading if we wanted to infer causal relationships between the predictor (B1, B2 and M) and response (D) variables.      
 
 This example illustrates the dangers of causal salads, where we throw many variables into a model and hope to identify some statistically significant ones. The best way to counter this practice is to explicitly think about the **causal relationships among predictor variables** and not just the causal relationships between predictor and response variables.     
 
-# Causal design  
+# Part 2 - Causal design  
 

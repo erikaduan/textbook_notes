@@ -153,7 +153,7 @@ glance(only_M)
 
 The linear regression model indicates that the size of the mother’s
 family (M) is positively associated with the size of the daughter’s
-family (D) i.e. $E(D) = 0.98 + 0.23 M$. **This contrasts with our prior
+family (D) i.e. (D) = 0.98 + 0.23 M. **This contrasts with our prior
 knowledge that D is independent of M.**
 
 What happens if we add more variables into our linear regression model?
@@ -186,7 +186,7 @@ glance(M_B1_B2)
     1     0.352         0.343  1.02      35.6 2.15e-18     3  -286.  582.  598.
     # i 3 more variables: deviance <dbl>, df.residual <int>, nobs <int>
 
-Unfortunately, adding the variables B1 and B2 produces a model with a
+Unfortunately, adding the variables B1 and B2 produced a model with a
 larger coefficient for M. B1 is also negatively associated with D,
 despite our synthetic model specifying M to be positively dependent on
 B1 (so we expect B1 and M to at least have coefficients with the same
@@ -207,3 +207,5 @@ not just the causal relationships between predictor and response
 variables.
 
 # Part 2 - causal design
+
+Todo

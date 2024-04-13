@@ -3,10 +3,10 @@ Review of Regression, Fire and Dangerous Things
 Erika Duan
 2024-04-13
 
--   <a href="#part-1---the-causal-salad"
-    id="toc-part-1---the-causal-salad">Part 1 - the causal salad</a>
--   <a href="#part-2---causal-design" id="toc-part-2---causal-design">Part 2
-    - causal design</a>
+-   <a href="#part-1-causal-salad" id="toc-part-1-causal-salad">Part 1:
+    Causal Salad</a>
+-   <a href="#part-2-causal-design" id="toc-part-2-causal-design">Part 2:
+    Causal Design</a>
 
 This is a review of the following blog posts:
 
@@ -17,7 +17,7 @@ This is a review of the following blog posts:
 -   Regression, Fire and Dangerous Things [Part
     3](https://elevanth.org/blog/2021/06/29/regression-fire-and-dangerous-things-3-3/)
 
-# Part 1 - the causal salad
+# Part 1: Causal Salad
 
 There are a few reasons for performing regression modelling, as listed
 in [Regression and Other
@@ -153,8 +153,9 @@ glance(only_M)
 
 The linear regression model indicates that the size of the mother’s
 family (M) is positively associated with the size of the daughter’s
-family (D) i.e. (D) = 0.98 + 0.23 M. **This contrasts with our prior
-knowledge that D is independent of M.**
+family (D)
+i.e. ![E(D) = 0.98 + 0.23 M](https://latex.codecogs.com/svg.latex?E%28D%29%20%3D%200.98%20%2B%200.23%20M "E(D) = 0.98 + 0.23 M").
+**This contrasts with our prior knowledge that D is independent of M.**
 
 What happens if we add more variables into our linear regression model?
 Does the misleading association between M and D disappear?
@@ -187,10 +188,12 @@ glance(M_B1_B2)
     # i 3 more variables: deviance <dbl>, df.residual <int>, nobs <int>
 
 Unfortunately, adding the variables B1 and B2 produced a model with a
-larger coefficient for M. B1 is also negatively associated with D,
-despite our synthetic model specifying M to be positively dependent on
-B1 (so we expect B1 and M to at least have coefficients with the same
-sign).
+larger ![Beta](https://latex.codecogs.com/svg.latex?Beta "Beta")
+coefficient for M. B1 is also negatively associated with D, despite our
+synthetic model specifying M to be positively dependent on B1 (so we
+expect B1 and M to at least have
+![Beta](https://latex.codecogs.com/svg.latex?Beta "Beta") coefficients
+with the same sign).
 
 If we examined model performance metrics like AIC and BIC, we would be
 misled into concluding that the second model was the better model. It is
@@ -206,6 +209,6 @@ think about the **causal relationships among predictor variables** and
 not just the causal relationships between predictor and response
 variables.
 
-# Part 2 - causal design
+# Part 2: Causal Design
 
-Todo
+Todo blah

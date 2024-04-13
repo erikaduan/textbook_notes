@@ -12,7 +12,7 @@ execute:
 format:
   gfm:
     toc: true
-    html-math-method: mathjax
+    html-math-method: webtex
 ---
 
 ```{r}
@@ -29,7 +29,7 @@ This is a review of the following blog posts:
 + Regression, Fire and Dangerous Things [Part 2](https://elevanth.org/blog/2021/06/21/regression-fire-and-dangerous-things-2-3/)   
 + Regression, Fire and Dangerous Things [Part 3](https://elevanth.org/blog/2021/06/29/regression-fire-and-dangerous-things-3-3/)  
 
-# Part 1 - the causal salad    
+# Part 1: Causal Salad      
 
 There are a few reasons for performing regression modelling, as listed in [Regression and Other Stories](https://avehtari.github.io/ROS-Examples/) (ROS) by Gelman et al.   
 
@@ -130,7 +130,7 @@ tidy(only_M)
 # Output model performance metrics
 glance(only_M)
 ```
-The linear regression model indicates that the size of the mother's family (M) is positively associated with the size of the daughter's family (D) i.e. \E(D) = 0.98 + 0.23 M\. **This contrasts with our prior knowledge that D is independent of M.**       
+The linear regression model indicates that the size of the mother's family (M) is positively associated with the size of the daughter's family (D) i.e. $E(D) = 0.98 + 0.23 M$. **This contrasts with our prior knowledge that D is independent of M.**       
 
 What happens if we add more variables into our linear regression model? Does the misleading association between M and D disappear?  
 
@@ -147,15 +147,17 @@ tidy(M_B1_B2)
 glance(M_B1_B2)
 ```
 
-Unfortunately, adding the variables B1 and B2 produced a model with a larger \Beta coefficient for M. B1 is also negatively associated with D, despite our synthetic model specifying M to be positively dependent on B1 (so we expect B1 and M to at least have \Beta coefficients with the same sign).    
+Unfortunately, adding the variables B1 and B2 produced a model with a larger $Beta$ coefficient for M. B1 is also negatively associated with D, despite our synthetic model specifying M to be positively dependent on B1 (so we expect B1 and M to at least have $Beta$ coefficients with the same sign).    
 
 If we examined model performance metrics like AIC and BIC, we would be misled into concluding that the second model was the better model. It is likely that the second model is a more predictive model. However, the second model is also more misleading if we wanted to infer causal relationships between the predictor (B1, B2 and M) and response (D) variables.      
 
-This example illustrates the dangers of causal salads, where we throw many variables into a model and hope to identify some statistically significant ones. The best way to counter this practice is to explicitly think about the **causal relationships among predictor variables** and not just the causal relationships between predictor and response variables.     
+This example illustrates the dangers of causal salads, where we throw many variables into a model and hope to identify some statistically significant ones. The best way to counter this practice is to explicitly think about the **causal relationships among predictor variables** and not just the causal relationships between predictor and response variables.       
 
-# Part 2 - causal design    
 
-Todo  
+# Part 2: Causal Design      
+
+Todo 
+blah
 
 
 

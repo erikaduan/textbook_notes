@@ -166,8 +166,8 @@ We can turn our modelling question into the causal graph below. This graph repre
 ```{mermaid}
 flowchart TD  
   B1 -- b --> M  
-  ((U)) -- k --> M  
-  ((U)) -- k --> D   
+  (U) -- k --> M  
+  (U) -- k --> D   
   B2 -- b --> D
   
   M -- m --> D

@@ -1,7 +1,7 @@
 Review of Regression, Fire and Dangerous Things
 ================
 Erika Duan
-2024-04-13
+2024-04-16
 
 -   <a href="#part-1-causal-salad" id="toc-part-1-causal-salad">Part 1:
     Causal Salad</a>
@@ -188,12 +188,12 @@ glance(M_B1_B2)
     # i 3 more variables: deviance <dbl>, df.residual <int>, nobs <int>
 
 Unfortunately, adding the variables B1 and B2 produced a model with a
-larger ![Beta](https://latex.codecogs.com/svg.latex?Beta "Beta")
+larger ![\beta](https://latex.codecogs.com/svg.latex?%5Cbeta "\beta")
 coefficient for M. B1 is also negatively associated with D, despite our
 synthetic model specifying M to be positively dependent on B1 (so we
 expect B1 and M to at least have
-![Beta](https://latex.codecogs.com/svg.latex?Beta "Beta") coefficients
-with the same sign).
+![\beta](https://latex.codecogs.com/svg.latex?%5Cbeta "\beta")
+coefficients with the same sign).
 
 If we examined model performance metrics like AIC and BIC, we would be
 misled into concluding that the second model was the better model. It is
@@ -211,4 +211,26 @@ variables.
 
 # Part 2: Causal Design
 
-Todo blah
+Regression has no direction whereas causal models are built from
+directional relationships. The simplest model
+![X \to Y](https://latex.codecogs.com/svg.latex?X%20%5Cto%20Y "X \to Y")
+tells us that:
+
+-   A change in X will cause a change in Y.  
+-   A change in Y will not impact X.
+
+We can turn our modelling question into the causal graph below. This
+graph represents our hypothesis about what is happening, which is why we
+include an arrow from mother’s family size (M) to daughter’s family size
+(D).
+
+``` mermaid
+flowchart TD  
+  B1 -- b --> M  
+  ((U)) -- k --> M  
+  ((U)) -- k --> D   
+  B2 -- b --> D
+  
+  # We are interested in understanding the causal influence of M on D
+  M -- m --> D
+```

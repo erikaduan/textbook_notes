@@ -147,7 +147,7 @@ tidy(M_B1_B2)
 glance(M_B1_B2)
 ```
 
-Unfortunately, adding the variables B1 and B2 produced a model with a larger $Beta$ coefficient for M. B1 is also negatively associated with D, despite our synthetic model specifying M to be positively dependent on B1 (so we expect B1 and M to at least have $Beta$ coefficients with the same sign).    
+Unfortunately, adding the variables B1 and B2 produced a model with a larger $\beta$ coefficient for M. B1 is also negatively associated with D, despite our synthetic model specifying M to be positively dependent on B1 (so we expect B1 and M to at least have $\beta$ coefficients with the same sign).    
 
 If we examined model performance metrics like AIC and BIC, we would be misled into concluding that the second model was the better model. It is likely that the second model is a more predictive model. However, the second model is also more misleading if we wanted to infer causal relationships between the predictor (B1, B2 and M) and response (D) variables.      
 
@@ -156,8 +156,27 @@ This example illustrates the dangers of causal salads, where we throw many varia
 
 # Part 2: Causal Design      
 
-Todo 
-blah
+Regression has no direction whereas causal models are built from directional relationships. The simplest model $X \to Y$ tells us that:  
+
++ A change in X will cause a change in Y.  
++ A change in Y will not impact X.    
+
+We can turn our modelling question into the causal graph below. This graph represents our hypothesis about what is happening, which is why we include an arrow from mother's family size (M) to daughter's family size (D).     
+ 
+```{mermaid}
+flowchart TD  
+  B1 -- b --> M  
+  ((U)) -- k --> M  
+  ((U)) -- k --> D   
+  B2 -- b --> D
+  
+  # We are interested in understanding the causal influence of M on D
+  M -- m --> D
+```
+
+
+
+
 
 
 

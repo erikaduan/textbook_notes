@@ -227,9 +227,18 @@ include an arrow from mother’s family size (M) to daughter’s family size
 ``` mermaid
 flowchart TD  
   B1 -- b --> M  
-  (U) -- k --> M  
-  (U) -- k --> D   
+  U -- k --> M  
+  U -- k --> D   
   B2 -- b --> D
   
   M -- m --> D
 ```
+
+Other graph construction decisions:
+
+-   We assume that the influence of birth order on family size is
+    consistent over time (the same effect size for mothers and
+    daughters). This assumption may come from domain knowledge or be a
+    common sense simplification.  
+-   
+-   

@@ -227,8 +227,8 @@ include an arrow from mother’s family size (M) to daughter’s family size
 ``` mermaid
 flowchart TD  
   B1 -- b --> M  
-  ((U)) -- k --> M  
-  ((U)) -- k --> D   
+  (U) -- k --> M  
+  (U) -- k --> D   
   B2 -- b --> D
   
   M -- m --> D

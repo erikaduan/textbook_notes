@@ -207,7 +207,9 @@ many variables into a model and hope to identify some statistically
 significant ones. The best way to counter this practice is to explicitly
 think about the **causal relationships among predictor variables** and
 not just the causal relationships between predictor and response
-variables.
+variables. In this case, our scenario is impacted by the contribution of
+U (an unobserved predictor variable) on both M (another predictor
+variable) and D (the response variable).
 
 # Part 2: Causal Design
 
@@ -236,9 +238,58 @@ flowchart TD
 
 Other graph construction decisions:
 
--   We assume that the influence of birth order on family size is
-    consistent over time (the same effect size for mothers and
+-   We assume that the influence of birth order on family size ***b***
+    is consistent over time (the same effect size for mothers and
     daughters). This assumption may come from domain knowledge or be a
     common sense simplification.  
--   
--   
+-   We also assume that the influence of the unobserved confound ***k***
+    is the same for mothers and daughters.
+
+The covariance between two variables can be calculated directly from a
+causal graph.
+
+If ***b*** is the causal influence of B1 on M, then the covariance
+between B1 and M is just the causal effect ***b*** multiplied by the
+variance of B1.
+
+![cov(B_1, M) = b \times var(B_1)](https://latex.codecogs.com/svg.latex?cov%28B_1%2C%20M%29%20%3D%20b%20%5Ctimes%20var%28B_1%29 "cov(B_1, M) = b \times var(B_1)")
+
+![b = \tfrac{cov(B_1, M)}{var(B_1)}](https://latex.codecogs.com/svg.latex?b%20%3D%20%5Ctfrac%7Bcov%28B_1%2C%20M%29%7D%7Bvar%28B_1%29%7D "b = \tfrac{cov(B_1, M)}{var(B_1)}")
+
+``` r
+# Check covariance estimation using a causal graph -----------------------------
+cov(B1, M) / var(B1)
+```
+
+    [1] 1.246625
+
+``` r
+#> [1] 1.246625  
+
+# Check covariance estimation using linear regression --------------------------
+lm(M ~ B1) |>
+  tidy()
+```
+
+    # A tibble: 2 x 5
+      term        estimate std.error statistic  p.value
+      <chr>          <dbl>     <dbl>     <dbl>    <dbl>
+    1 (Intercept)    0.545     0.111      4.90 2.01e- 6
+    2 B1             1.25      0.157      7.95 1.36e-13
+
+``` r
+# Both methods provide the same estimate of b because M is only influenced 
+# by variables B1 and U  
+
+lm(M ~ B1 + U) |>
+  tidy()
+```
+
+    # A tibble: 3 x 5
+      term        estimate std.error statistic  p.value
+      <chr>          <dbl>     <dbl>     <dbl>    <dbl>
+    1 (Intercept)    0.506    0.0855      5.91 1.46e- 8
+    2 B1             1.35     0.121      11.2  9.39e-23
+    3 U              0.684    0.0579     11.8  1.06e-24
+
+We are interested in the causal influence of M and D.

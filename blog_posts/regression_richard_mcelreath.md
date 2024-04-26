@@ -1,7 +1,7 @@
 Review of Regression, Fire and Dangerous Things
 ================
 Erika Duan
-2024-04-25
+2024-04-26
 
 -   <a href="#part-1-causal-salad" id="toc-part-1-causal-salad">Part 1:
     Causal Salad</a>
@@ -9,6 +9,12 @@ Erika Duan
     Causal Design</a>
 -   <a href="#part-3-bayesian-inference"
     id="toc-part-3-bayesian-inference">Part 3: Bayesian Inference</a>
+    -   <a href="#step-1-express-the-model-as-a-joint-probability-distribution"
+        id="toc-step-1-express-the-model-as-a-joint-probability-distribution">Step
+        1: Express the model as a joint probability distribution</a>
+    -   <a href="#step-2-teach-the-distribution-to-a-computer"
+        id="toc-step-2-teach-the-distribution-to-a-computer">Step 2: Teach the
+        distribution to a computer</a>
 -   <a href="#key-messages" id="toc-key-messages">Key messages</a>
 
 This is a review of the following blog posts:
@@ -109,9 +115,9 @@ flowchart LR
   style E fill:#Fff9e3,stroke:#333
 ```
 
-Of note, the effect size of the confound (U) is as large as the causal
-effect of the daughter’s birth order (B2) on the daughter’s family size
-(D).
+Of note, the effect size of the confound (U) can be as large as the
+causal effect of the daughter’s birth order (B2) on the daughter’s
+family size (D).
 
 <img
 src="regression_richard_mcelreath_files/figure-gfm/unnamed-chunk-4-1.png"
@@ -125,9 +131,9 @@ style="width:60.0%" />
 src="regression_richard_mcelreath_files/figure-gfm/unnamed-chunk-4-3.png"
 style="width:60.0%" />
 
-Our synthetic data model specifies that the mother’s family size has
-**no impact** on the daughter’s family size. But what happens when we
-include the mother’s family size in a regression model?
+Our synthetic data model specifies that the mother’s family size (M) has
+**no impact** on the daughter’s family size (D). But what happens when
+we include M in a regression model to predict D?
 
 ``` r
 # Build linear regression model D = b0 + b1*M ---------------------------------- 
@@ -154,9 +160,8 @@ glance(only_M)
     1    0.0545        0.0497  1.23      11.4 0.000882     1  -324.  654.  663.
     # i 3 more variables: deviance <dbl>, df.residual <int>, nobs <int>
 
-The linear regression model indicates that the size of the mother’s
-family (M) is positively associated with the size of the daughter’s
-family (D)
+The linear regression model indicates that M is positively associated
+with D
 i.e. ![E(D) = 0.98 + 0.23 M](https://latex.codecogs.com/svg.latex?E%28D%29%20%3D%200.98%20%2B%200.23%20M "E(D) = 0.98 + 0.23 M").
 **This contrasts with our prior knowledge that D is independent of M.**
 
@@ -223,7 +228,9 @@ In this case, our scenario is the result of **bias amplification**:
     inference worse.  
 -   Best practice would be to add additional predictor variables which
     are hypothesised to be strong predictors of the outcome **but** not
-    the exposure.
+    the exposure (B2). In research however, it may not be easy to
+    identify such variables confidently, especially when there is
+    limited information about existing causal relationships.
 
 ``` r
 # Build linear regression model D = b0 + b1*M + b2*B2 ------------------ 
@@ -257,8 +264,7 @@ tells us that:
 
 We can turn our modelling question into the causal graph below. This
 graph represents our hypothesis about what is happening, which is why we
-include an arrow from mother’s family size (M) to daughter’s family size
-(D).
+include an arrow from M to D.
 
 ``` mermaid
 flowchart TD  
@@ -268,6 +274,8 @@ flowchart TD
   B2 -- b --> D
   
   M -- m --> D
+  
+  style D fill:#Fff9e3,stroke:#333
 ```
 
 Other graph construction decisions:
@@ -309,14 +317,9 @@ lm(M ~ B1) |>
     1 (Intercept)    0.545     0.111      4.90 2.01e- 6
     2 B1             1.25      0.157      7.95 1.36e-13
 
-We are interested in the causal influence of M and D and would like to
-estimate ***m***. We know the following things:
+We are interested in the causal influence of M on D and would therefore
+like to estimate ***m***. We know the following things:
 
--   We cannot directly estimate
-    ![D = \beta_0 + \beta_1M](https://latex.codecogs.com/svg.latex?D%20%3D%20%5Cbeta_0%20%2B%20%5Cbeta_1M "D = \beta_0 + \beta_1M")
-    because **the confound U acts on both M and D**. Another way of
-    saying this is that both ***m*** and ***k*** contribute to
-    ![cov(M, D)](https://latex.codecogs.com/svg.latex?cov%28M%2C%20D%29 "cov(M, D)").  
 -   We do not know U or ***k*** as U is unobserved.  
 -   We can calculate
     ![cov(B_1, D) = b\times m \times var(B_1)](https://latex.codecogs.com/svg.latex?cov%28B_1%2C%20D%29%20%3D%20b%5Ctimes%20m%20%5Ctimes%20var%28B_1%29 "cov(B_1, D) = b\times m \times var(B_1)")
@@ -415,7 +418,7 @@ Even if we do not have any ideas about the exact functions between
 different variables, we can use **do-calculus** to query a DAG and
 determine if there is a method to estimate a causal effect.
 
-The key ideas behind do-calculus are:
+The key ideas behind **do-calculus** are:
 
 -   Use statistical or experimental design choices to remove confounds
     for an association of interest between an exposure and outcome.
@@ -423,7 +426,8 @@ The key ideas behind do-calculus are:
     exposure of interest. In medical research, we can achieve this
     scenario by conducting randomised controlled trials (RCTs) to
     experimentally set different values for M.  
--   The remaining association is an estimate of the causal effect.
+-   The remaining association is an estimate of the causal effect of the
+    exposure on the outcome.
 
 In our scenario, we would be interested in modelling the intervention
 below to calculate
@@ -437,18 +441,100 @@ flowchart TD
   M --> D
   
   B1
+  
+  style D fill:#Fff9e3,stroke:#333
 ```
 
 When RCTs cannot be conducted (for ethical or financial reasons),
 do-calculus provides an algorithm for deducing statistical methods to
-convert our original model into the simplified model above and to then
-calculate
+convert our original hypothesised model into the simplified model above
+and to then calculate
 ![p(D\|do(M))](https://latex.codecogs.com/svg.latex?p%28D%7Cdo%28M%29%29 "p(D|do(M))").
 
 # Part 3: Bayesian Inference
+
+According to McElreath, **full-luxury Bayesian inference** is an
+approach which:
+
+-   Uses all variables and expresses all of their relationships as a
+    joint probability distribution (only uses one statistical model
+    unlike the causal graph approach).  
+-   Any available data can be used to constrain the joint probability
+    distribution, eliminate possibilities and refine information about
+    causal effects.  
+-   This process automatically realises and derives the statistical
+    implications of the causal model.  
+-   This process allows estimations in finite samples, with missing
+    data, measurement errors or other common errors present.
+
+## Step 1: Express the model as a joint probability distribution
+
+We can rewrite our original generative code as a joint probability
+distribution.
+
+``` r
+# Original generative model to be converted ------------------------------------
+set.seed(200)
+
+N <- 200 
+U <- rnorm(N, 0, 1) 
+B1 <- rbinom(N, size=1, prob = 0.5) 
+M <- rnorm(N, 2*B1 + U)
+M <- ifelse(M < 0, 0, round(M, digits = 0)) # [1]
+B2 <- rbinom(N, size = 1, prob = 0.5)
+D <- rnorm(N, 2*B2 + U + 0*M)
+D <- ifelse(D < 0, 0, round(D, digits = 0)) # [1]
+
+# [1] We will skip these lines to simplify our joint probability distribution
+```
+
+Let ![i](https://latex.codecogs.com/svg.latex?i "i") represent an
+individual mother-daughter pair. The joint probability distribution is
+derived from the following distinct probability distributions:
+
+![M_i \sim Normal(\mu_i, \sigma)](https://latex.codecogs.com/svg.latex?M_i%20%5Csim%20Normal%28%5Cmu_i%2C%20%5Csigma%29 "M_i \sim Normal(\mu_i, \sigma)")
+where
+![\mu_i = \alpha_1 + bB\_{1,i} + kU_i](https://latex.codecogs.com/svg.latex?%5Cmu_i%20%3D%20%5Calpha_1%20%2B%20bB_%7B1%2Ci%7D%20%2B%20kU_i "\mu_i = \alpha_1 + bB_{1,i} + kU_i")
+
+![D_i \sim Normal(\nu_i, \tau)](https://latex.codecogs.com/svg.latex?D_i%20%5Csim%20Normal%28%5Cnu_i%2C%20%5Ctau%29 "D_i \sim Normal(\nu_i, \tau)")
+where
+![\nu_i = \alpha_2 + bB\_{2,i} + mM_i+ kU_i](https://latex.codecogs.com/svg.latex?%5Cnu_i%20%3D%20%5Calpha_2%20%2B%20bB_%7B2%2Ci%7D%20%2B%20mM_i%2B%20kU_i "\nu_i = \alpha_2 + bB_{2,i} + mM_i+ kU_i")
+
+![B\_{j,i} \sim Bernoulli(p)](https://latex.codecogs.com/svg.latex?B_%7Bj%2Ci%7D%20%5Csim%20Bernoulli%28p%29 "B_{j,i} \sim Bernoulli(p)")
+
+![U_i \sim Normal(0,1)](https://latex.codecogs.com/svg.latex?U_i%20%5Csim%20Normal%280%2C1%29 "U_i \sim Normal(0,1)")
+
+The values for U have not been observed so we cannot estimate the mean
+and variance of U. However, it is fine to assign U a standardised normal
+distribution. As U is an unobserved variable, it is a prior.
+
+We also need to specify probability distributions for the latent
+variables ***b***, ***m***, ***k*** and so on. These parameters are also
+unobserved variables and therefore also priors. Assigning prior
+probability distributions to unobserved variables is an art that can be
+refined by simulating the observations implied by the prior probability
+assignments. For our scenario, we will use weakly regularising
+distributions that encode skepticism of large causal effects.
+
+![\alpha_1, \alpha_2, b, m \sim Normal(0, 0.5)](https://latex.codecogs.com/svg.latex?%5Calpha_1%2C%20%5Calpha_2%2C%20b%2C%20m%20%5Csim%20Normal%280%2C%200.5%29 "\alpha_1, \alpha_2, b, m \sim Normal(0, 0.5)")  
+![k, \sigma, \tau \sim Exponential(1)](https://latex.codecogs.com/svg.latex?k%2C%20%5Csigma%2C%20%5Ctau%20%5Csim%20Exponential%281%29 "k, \sigma, \tau \sim Exponential(1)")  
+![p \sim Beta(2,2)](https://latex.codecogs.com/svg.latex?p%20%5Csim%20Beta%282%2C2%29 "p \sim Beta(2,2)")
+
+The parameter ***k*** has been assigned an exponential distribution to
+constrain it to be positive. Although we do not know if the effect of U
+on M or D is positive or negative, we need to force it to be one or the
+other as the sign of U impacts each M-D pair. This enforced constraint
+helps with the next step.
+
+## Step 2: Teach the distribution to a computer
+
+TODO
 
 # Key messages
 
 -   The interpretation of statistical results always depends upon causal
     assumptions, assumptions that ultimately cannot be tested with
-    available data.
+    available data. See [Westreich et al
+    2013](https://academic.oup.com/aje/article/177/4/292/147738) for a
+    more detailed example.  
+-   

@@ -1,7 +1,7 @@
 Review of Regression, Fire and Dangerous Things
 ================
 Erika Duan
-2024-04-26
+2024-04-28
 
 -   <a href="#part-1-causal-salad" id="toc-part-1-causal-salad">Part 1:
     Causal Salad</a>
@@ -528,7 +528,22 @@ helps with the next step.
 
 ## Step 2: Teach the distribution to a computer
 
-TODO
+The variables of our final joint probability distribution are:
+
+-   the observed variables (the data)  
+-   the latent variables (the unknown parameters)
+
+Every time we acquire new data, we acquire new information about these
+variables and we can update the joint distribution to see if it implies
+new information about any of the other i.e. latent variables.
+
+In our scenario, the information we have is observations of M, D, B1 and
+B2. We want to know if these observations imply anything about ***m***.
+
+``` r
+library(rethinking)
+library(cmdstanr)
+```
 
 # Key messages
 

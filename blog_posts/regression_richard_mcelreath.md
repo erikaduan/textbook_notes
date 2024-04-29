@@ -1,7 +1,7 @@
 Review of Regression, Fire and Dangerous Things
 ================
 Erika Duan
-2024-04-28
+2024-04-29
 
 -   <a href="#part-1-causal-salad" id="toc-part-1-causal-salad">Part 1:
     Causal Salad</a>
@@ -15,6 +15,9 @@ Erika Duan
     -   <a href="#step-2-teach-the-distribution-to-a-computer"
         id="toc-step-2-teach-the-distribution-to-a-computer">Step 2: Teach the
         distribution to a computer</a>
+    -   <a href="#step-3-simulate-causal-interventions"
+        id="toc-step-3-simulate-causal-interventions">Step 3: Simulate causal
+        interventions</a>
 -   <a href="#key-messages" id="toc-key-messages">Key messages</a>
 
 This is a review of the following blog posts:
@@ -366,7 +369,7 @@ bootstrap estimate.
 
 ``` r
 # Calculate bootstrap estimate for 1000 simulations ----------------------------
-set.seed(200)
+set.seed(111)
 
 N <- 200 
 U <- rnorm(N, 0, 1) 
@@ -397,7 +400,7 @@ boot(data = data_sim, statistic = f, R = 1000) |>
     # A tibble: 1 x 3
       statistic     bias std.error
           <dbl>    <dbl>     <dbl>
-    1     0.116 0.000196     0.136
+    1   -0.0201 0.000772     0.151
 
 Thinking like a graph involves multiple stages:
 
@@ -474,7 +477,7 @@ distribution.
 
 ``` r
 # Original generative model to be converted ------------------------------------
-set.seed(200)
+set.seed(111)
 
 N <- 200 
 U <- rnorm(N, 0, 1) 
@@ -541,9 +544,61 @@ In our scenario, the information we have is observations of M, D, B1 and
 B2. We want to know if these observations imply anything about ***m***.
 
 ``` r
+# Load Bayesian modelling packages ---------------------------------------------
 library(rethinking)
 library(cmdstanr)
+
+# Define Bayesian model --------------------------------------------------------
+data <- list(N = N,
+             M = M,
+             D = D,
+             B1 = B1,
+             B2 = B2)
+
+set.seed(111)
+
+flbi <- ulam(
+    alist(
+        # Mum model
+            M ~ normal(mu , sigma),
+            mu <- a1 + b*B1 + k*U[i],
+        
+        # Daughter model
+            D ~ normal(nu , tau),
+            nu <- a2 + b*B2 + m*M + k*U[i],
+        
+        # B1 and B2
+            B1 ~ bernoulli(p),
+            B2 ~ bernoulli(p),
+        
+        # Unmeasured confound is also included
+            vector[N]:U ~ normal(0,1),
+        
+        # Priors or latent variables
+            c(a1,a2,b,m) ~ normal( 0 , 0.5 ),
+            c(k,sigma,tau) ~ exponential( 1 ),
+            p ~ beta(2,2)
+    ),
+    data = data,
+    chains = 4, 
+    cores = 4, 
+    iter = 2000, 
+    cmdstan = TRUE)
 ```
+
+The `cmdstanr` package uses automatic differentiation to sample from the
+approximate join distribution of the specified model, **conditional on
+the observed data**.
+
+``` r
+# Summarise the marginal distributions of m, b and k ---------------------------
+precis(flbi, pars = c("m", "b", "k")) 
+
+# Estimates for m, b and k are much closer to the original values used in our 
+# generative model i.e. m = 0, b = 2 and k = 1.   
+```
+
+## Step 3: Simulate causal interventions
 
 # Key messages
 

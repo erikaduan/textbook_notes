@@ -1,7 +1,7 @@
 Review of Regression, Fire and Dangerous Things
 ================
 Erika Duan
-2024-04-29
+2024-05-02
 
 -   <a href="#part-1-causal-salad" id="toc-part-1-causal-salad">Part 1:
     Causal Salad</a>
@@ -18,6 +18,8 @@ Erika Duan
     -   <a href="#step-3-simulate-causal-interventions"
         id="toc-step-3-simulate-causal-interventions">Step 3: Simulate causal
         interventions</a>
+    -   <a href="#dealing-with-confounds"
+        id="toc-dealing-with-confounds">Dealing with confounds</a>
 -   <a href="#key-messages" id="toc-key-messages">Key messages</a>
 
 This is a review of the following blog posts:
@@ -557,54 +559,182 @@ data <- list(N = N,
 
 set.seed(111)
 
-flbi <- ulam(
-    alist(
-        # Mum model
-            M ~ normal(mu , sigma),
-            mu <- a1 + b*B1 + k*U[i],
-        
-        # Daughter model
-            D ~ normal(nu , tau),
-            nu <- a2 + b*B2 + m*M + k*U[i],
-        
-        # B1 and B2
-            B1 ~ bernoulli(p),
-            B2 ~ bernoulli(p),
-        
-        # Unmeasured confound is also included
-            vector[N]:U ~ normal(0,1),
-        
-        # Priors or latent variables
-            c(a1,a2,b,m) ~ normal( 0 , 0.5 ),
-            c(k,sigma,tau) ~ exponential( 1 ),
-            p ~ beta(2,2)
-    ),
-    data = data,
-    chains = 4, 
-    cores = 4, 
-    iter = 2000, 
-    cmdstan = TRUE)
+bayes_model <- ulam(
+  alist(
+    # Mum model
+    M ~ normal(mu, sigma),
+    mu <- a1 + b*B1 + k*U[i],
+    
+    # Daughter model
+    D ~ normal(nu, tau),
+    nu <- a2 + b*B2 + m*M + k*U[i],
+    
+    # B1 and B2
+    B1 ~ bernoulli(p),
+    B2 ~ bernoulli(p),
+    
+    # Unmeasured confound is also included
+    vector[N]:U ~ normal(0, 1),
+    
+    # Priors or latent variables
+    c(a1, a2, b, m) ~ normal(0, 0.5),
+    c(k, sigma, tau) ~ exponential(1),
+    p ~ beta(2, 2)
+  ),
+  data = data,
+  chains = 4, 
+  cores = 4, 
+  iter = 2000, 
+  cmdstan = TRUE)
 ```
 
 The `cmdstanr` package uses automatic differentiation to sample from the
-approximate join distribution of the specified model, **conditional on
+approximate joint distribution of the specified model, **conditional on
 the observed data**.
 
 ``` r
 # Summarise the marginal distributions of m, b and k ---------------------------
-precis(flbi, pars = c("m", "b", "k")) 
+precis(bayes_model, pars = c("m", "b", "k")) 
+```
 
+            mean        sd       5.5%     94.5%     rhat  ess_bulk
+    m 0.06425187 0.1190338 -0.1317059 0.2571193 1.019846  223.8204
+    b 1.25957636 0.1005843  1.1013234 1.4215938 1.000825 3842.8306
+    k 0.59038828 0.1671759  0.2837118 0.8159069 1.023639  188.5850
+
+``` r
 # Estimates for m, b and k are much closer to the original values used in our 
 # generative model i.e. m = 0, b = 2 and k = 1.   
 ```
 
 ## Step 3: Simulate causal interventions
 
+Imagine that we also want to know the causal effect of intervening on B1
+on D
+i.e. ![P(D \| do(B_1))](https://latex.codecogs.com/svg.latex?P%28D%20%7C%20do%28B_1%29%29 "P(D | do(B_1))").
+This causal effect depends on multiple parameters (the product of
+***b*** and ***m*** instead of only ***m***) and it can also be
+computed.
+
+``` r
+# Directly calculate b*m from original Bayesian model --------------------------
+# As the causal model is a linear model, the average effect of intervening on B1
+# must be b * m.    
+
+posterior <- extract.samples(bayes_model)
+quantile(with(posterior, b*m))
+```
+
+             0%         25%         50%         75%        100% 
+    -0.40037008 -0.01866835  0.08150841  0.18459810  0.55531662 
+
+The median is 0.082 and there is a wide range of both positive and
+negative effects, which indicates that there is no effect on D when we
+intervene on B1. This is expected, as ***m*** is close to 0 and
+uncertain.
+
+``` r
+# Simulate intervention on B1 and its effect on D ------------------------------
+# B1 can only be 0 or 1 
+
+# Scenario 1: Let B1 = 0  
+# Simulate the distribution of M   
+M_B1_0 <- with(posterior, a1 + b*0 + k*0)
+# Use simulated values of M to simulate the distribution of D  
+D_B1_0 <- with(posterior, a2 + b*0 + m*M_B1_0 + k*0)
+
+# Scenario 2: Let B1 = 1
+M_B1_1 <- with(posterior, a1 + b*1 + k*0)
+D_B1_1 <- with(posterior, a2 + b*0 + m*M_B1_1 + k*0)
+
+# Obtain distribution of D_B1_1 - D_B1_0 
+# This is the causal effect of changing B1 from 0 to 1.  
+dist_D_B1 <- D_B1_1 - D_B1_0
+quantile(dist_D_B1)
+```
+
+             0%         25%         50%         75%        100% 
+    -0.40037008 -0.01866835  0.08150841  0.18459810  0.55531662 
+
+The quantiles calculated by the two methods are identical, as they are
+computed from the same simulated samples from the joint probability
+distribution.
+
+## Dealing with confounds
+
+An advantage of Bayesian inference is that it can automatically discover
+ways to manage confounds like U.
+
+Imagine we have a more complicated generative model where B1 also
+influences D directly (for example, first-born mothers tend to gain an
+inheritance which can support their daughter’s future family).
+
+``` mermaid
+flowchart TD  
+  U --v--> V 
+  U --w--> W 
+  U --k--> D 
+  U --k--> M
+  
+  B2 --b--> D
+  M --m--> D
+  
+  B1 --b--> M
+  B1 --d--> D
+  
+  style D fill:#Fff9e3,stroke:#333
+```
+
+B1 therefore becomes another confound that we have to control for.
+
+``` r
+# more exotic example - no instrument (B1 -> D), but have two measures of U
+set.seed(1908)
+N <- 200 # number of pairs
+U <- rnorm(N,0,1) # simulate confound
+V <- rnorm(N,U,1)
+W <- rnorm(N,U,1)
+# birth order and family sizes
+B1 <- rbinom(N,size=1,prob=0.5) # 50% first borns
+M <- rnorm( N , 2*B1 + U )
+B2 <- rbinom(N,size=1,prob=0.5)
+D <- rnorm( N , 2*B2 + 0.5*B1 + U + 0*M )
+
+# confounded regression
+precis( lm( D ~ M + B1 + B2 + V + W ) )
+
+# full-luxury bayesian inference
+dat2 <- list(N=N,M=M,D=D,B1=B1,B2=B2,V=V,W=W)
+flbi2 <- ulam(
+    alist(
+        M ~ normal( muM , sigmaM ),
+        muM <- a1 + b*B1 + k*U[i],
+        D ~ normal( muD , sigmaD ),
+        muD <- a2 + b*B2 + d*B1 + m*M + k*U[i],
+        W ~ normal( muW , sigmaW ),
+        muW <- a3 + w*U[i],
+        V ~ normal( muV , sigmaV ),
+        muV <- a4 + v*U[i],
+        vector[N]:U ~ normal(0,1),
+        c(a1,a2,a3,a4,b,d,m) ~ normal( 0 , 0.5 ),
+        c(k,w,v) ~ exponential( 1 ),
+        c(sigmaM,sigmaD,sigmaW,sigmaV) ~ exponential( 1 )
+    ), data=dat2 , chains=4 , cores=4 , iter=2000 , cmdstan=TRUE )
+
+precis(flbi2)
+```
+
 # Key messages
 
 -   The interpretation of statistical results always depends upon causal
     assumptions, assumptions that ultimately cannot be tested with
-    available data. See [Westreich et al
+    available data. This is why we need to interpret statistical
+    modelling and machine learning results with caution, especially when
+    making claims about causality. See [Westreich et al
     2013](https://academic.oup.com/aje/article/177/4/292/147738) for a
     more detailed example.  
--   
+-   Graphical causal inference (including RCTs) requires a different
+    statistical model for each causal query.  
+-   Bayesian inference only requires a single statistical model (the
+    joint probability distribution) to obtain different causal queries
+    through different simulations.

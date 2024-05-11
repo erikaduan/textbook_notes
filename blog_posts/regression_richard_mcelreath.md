@@ -1,7 +1,7 @@
 Review of Regression, Fire and Dangerous Things
 ================
 Erika Duan
-2024-05-02
+2024-05-11
 
 -   <a href="#part-1-causal-salad" id="toc-part-1-causal-salad">Part 1:
     Causal Salad</a>
@@ -367,7 +367,8 @@ cov(B1, D3) / cov(B1, M)
 However, this solution does not provide us information about the
 uncertainty of our estimate of ***m***. A computationally intensive way
 of doing this is to repeat the data simulation many times and obtain a
-bootstrap estimate.
+bootstrap estimate. However, performing bootstraps is not always
+possible.
 
 ``` r
 # Calculate bootstrap estimate for 1000 simulations ----------------------------
@@ -647,8 +648,8 @@ D_B1_0 <- with(posterior, a2 + b*0 + m*M_B1_0 + k*0)
 M_B1_1 <- with(posterior, a1 + b*1 + k*0)
 D_B1_1 <- with(posterior, a2 + b*0 + m*M_B1_1 + k*0)
 
-# Obtain distribution of D_B1_1 - D_B1_0 
-# This is the causal effect of changing B1 from 0 to 1.  
+# Obtain distribution of D_B1_1 - D_B1_0 --------------------------------------- 
+# This is the causal effect of changing B1 from 0 to 1    
 dist_D_B1 <- D_B1_1 - D_B1_0
 quantile(dist_D_B1)
 ```
@@ -666,8 +667,9 @@ An advantage of Bayesian inference is that it can automatically discover
 ways to manage confounds like U.
 
 Imagine we have a more complicated generative model where B1 also
-influences D directly (for example, first-born mothers tend to gain an
-inheritance which can support their daughter’s future family).
+influences D directly (for example, because first-born mothers tend to
+gain an inheritance which can support their daughter’s future family).
+We also have two new variables V and W, which are caused by U.
 
 ``` mermaid
 flowchart TD  
@@ -685,56 +687,195 @@ flowchart TD
   style D fill:#Fff9e3,stroke:#333
 ```
 
-B1 therefore becomes another confound that we have to control for.
+B1 therefore becomes another confound that we have to control for when
+calculating the causal effect of M on D. However, we can now use V and W
+to remove the confounding effect of U.
 
 ``` r
-# more exotic example - no instrument (B1 -> D), but have two measures of U
-set.seed(1908)
-N <- 200 # number of pairs
-U <- rnorm(N,0,1) # simulate confound
-V <- rnorm(N,U,1)
-W <- rnorm(N,U,1)
-# birth order and family sizes
-B1 <- rbinom(N,size=1,prob=0.5) # 50% first borns
-M <- rnorm( N , 2*B1 + U )
-B2 <- rbinom(N,size=1,prob=0.5)
-D <- rnorm( N , 2*B2 + 0.5*B1 + U + 0*M )
+# Define more complex Bayesian model -------------------------------------------
+set.seed(111)
 
-# confounded regression
-precis( lm( D ~ M + B1 + B2 + V + W ) )
+N <- 200 
 
-# full-luxury bayesian inference
-dat2 <- list(N=N,M=M,D=D,B1=B1,B2=B2,V=V,W=W)
-flbi2 <- ulam(
+# Simulate unobserved confound U and its effects on V and W
+U <- rnorm(N, 0, 1) 
+V <- rnorm(N, U, 1)
+W <- rnorm(N, U, 1)
+
+# Simulate birth order and family size
+B1 <- rbinom(N, size = 1, prob = 0.5) 
+M <- rnorm(N, 2*B1 + U)
+
+B2 <- rbinom(N, size = 1, prob = 0.5)
+D <- rnorm(N, 2*B2 + 0.5*B1 + U + 0*M)
+
+# Define Bayesian model --------------------------------------------------------
+# We no longer know the distributions of B1 and B2
+complex_data <- list(
+  N = N,
+  M = M,
+  D = D,
+  B1 = B1,
+  B2 = B2,
+  V = V,
+  W = W)
+
+complex_bayes_model <- ulam(
     alist(
-        M ~ normal( muM , sigmaM ),
+        M ~ normal(muM, sigmaM),
         muM <- a1 + b*B1 + k*U[i],
-        D ~ normal( muD , sigmaD ),
+        
+        D ~ normal(muD, sigmaD),
         muD <- a2 + b*B2 + d*B1 + m*M + k*U[i],
-        W ~ normal( muW , sigmaW ),
+        
+        W ~ normal(muW, sigmaW),
         muW <- a3 + w*U[i],
-        V ~ normal( muV , sigmaV ),
+        
+        V ~ normal(muV , sigmaV),
         muV <- a4 + v*U[i],
-        vector[N]:U ~ normal(0,1),
-        c(a1,a2,a3,a4,b,d,m) ~ normal( 0 , 0.5 ),
-        c(k,w,v) ~ exponential( 1 ),
-        c(sigmaM,sigmaD,sigmaW,sigmaV) ~ exponential( 1 )
-    ), data=dat2 , chains=4 , cores=4 , iter=2000 , cmdstan=TRUE )
-
-precis(flbi2)
+        
+        vector[N]:U ~ normal(0, 1),
+        
+        # Still use weakly regularising distributions for priors
+        c(a1, a2, a3, a4, b, d, m) ~ normal(0, 0.5),
+        c(k, w, v) ~ exponential(1),
+        c(sigmaM, sigmaD, sigmaW, sigmaV) ~ exponential(1)
+        
+    ), 
+    data = complex_data,
+    chains = 4, 
+    cores = 4 , 
+    iter = 2000 , 
+    cmdstan = TRUE)
 ```
+
+``` r
+precis(complex_bayes_model)
+```
+
+                  mean         sd        5.5%      94.5%      rhat ess_bulk
+    m       0.16960054 0.08188694  0.03960823 0.30279672 1.0012207 2147.273
+    d       0.11476251 0.21787101 -0.21937491 0.46469234 1.0009631 3376.670
+    b       1.95276557 0.11099411  1.77532945 2.12747330 1.0014163 4492.762
+    a4      0.06231286 0.09396005 -0.09135014 0.21177960 1.0018730 1730.048
+    a3     -0.09258681 0.09619545 -0.24360191 0.06319867 1.0015615 2133.334
+    a2      0.02533199 0.14210585 -0.19491012 0.25011709 1.0002476 2927.299
+    a1     -0.02933989 0.10772048 -0.20312861 0.14205601 1.0002731 2216.305
+    v       1.03576492 0.09353699  0.89094659 1.18875650 1.0015247 1612.433
+    w       0.94411181 0.09734003  0.79335103 1.10128210 0.9999713 2242.923
+    k       0.97237904 0.09985011  0.81729938 1.13449495 1.0028707 1117.619
+    sigmaV  0.85668174 0.07402561  0.73700181 0.97304161 1.0008793 1755.953
+    sigmaW  1.01028818 0.06871882  0.90271051 1.12292165 1.0000127 3043.080
+    sigmaD  1.12867762 0.07092363  1.02012395 1.24701320 0.9997250 4284.407
+    sigmaM  0.98410645 0.07165032  0.87547982 1.10058695 1.0030935 2006.551
+
+``` r
+# Examine results from confounded multiple regression model --------------------
+lm(D ~ M + B1 + B2 + V + W) |>
+  tidy()
+```
+
+    # A tibble: 6 x 5
+      term        estimate std.error statistic  p.value
+      <chr>          <dbl>     <dbl>     <dbl>    <dbl>
+    1 (Intercept)  -0.0982    0.160     -0.615 5.39e- 1
+    2 M             0.380     0.0779     4.88  2.24e- 6
+    3 B1           -0.258     0.232     -1.11  2.67e- 1
+    4 B2            2.17      0.174     12.5   1.39e-26
+    5 V             0.260     0.0836     3.11  2.17e- 3
+    6 W             0.297     0.0755     3.93  1.18e- 4
+
+``` r
+# Multiple regression fails to account for confounding relationships and 
+# provides a positive coefficient for m.  
+```
+
+A disadvantage of the Bayesian inference approach is that some
+calculations are inefficient or impossible to run. Some algebraic
+thinking can help make the inference more efficient and reliable.
+
+For example, in our original model, we can ignore the impact of U by
+treating M and D as pairs of values drawn from a common (multivariate
+normal) distribution with some correlation induced by U.
+
+The joint probability distribution therefore does not need to include U:
+
+![\Bigl( \begin{matrix} M_i \\\\ D_i \end{matrix} \Bigr) \sim MVNormal \Bigl( \bigl( \begin{matrix} u_i \\\\ v_i \end{matrix} \bigr) , \Sigma \Bigr)](https://latex.codecogs.com/svg.latex?%5CBigl%28%20%5Cbegin%7Bmatrix%7D%20M_i%20%5C%5C%20D_i%20%5Cend%7Bmatrix%7D%20%5CBigr%29%20%5Csim%20MVNormal%20%5CBigl%28%20%5Cbigl%28%20%5Cbegin%7Bmatrix%7D%20u_i%20%5C%5C%20v_i%20%5Cend%7Bmatrix%7D%20%5Cbigr%29%20%2C%20%5CSigma%20%5CBigr%29 "\Bigl( \begin{matrix} M_i \\ D_i \end{matrix} \Bigr) \sim MVNormal \Bigl( \bigl( \begin{matrix} u_i \\ v_i \end{matrix} \bigr) , \Sigma \Bigr)")
+
+![u_i = a_1 + bB\_{1,i}](https://latex.codecogs.com/svg.latex?u_i%20%3D%20a_1%20%2B%20bB_%7B1%2Ci%7D "u_i = a_1 + bB_{1,i}")
+
+![v_i = a_2 + bB\_{2,i} + mM_i](https://latex.codecogs.com/svg.latex?v_i%20%3D%20a_2%20%2B%20bB_%7B2%2Ci%7D%20%2B%20mM_i "v_i = a_2 + bB_{2,i} + mM_i")
+
+![B\_{j, i} \sim Bernoulli(p)](https://latex.codecogs.com/svg.latex?B_%7Bj%2C%20i%7D%20%5Csim%20Bernoulli%28p%29 "B_{j, i} \sim Bernoulli(p)")
+
+``` r
+# Define simplified Bayesian model ---------------------------------------------
+set.seed(111)
+
+# Sigma is the covariance matrix that attempts to learn the residual association
+# between M and D due to U so U can be excluded
+
+mvn_bayes_model <- ulam(
+    alist(
+        c(M, D) ~ multi_normal(c(mu, nu), Rho, Sigma),
+        mu <- a1 + b*B1, 
+        nu <- a2 + b*B2 + m*M,
+        
+        c(a1, a2, b, m) ~ normal(0, 0.5),
+        Rho ~ lkj_corr(2),
+        Sigma ~ exponential(1)
+    ), 
+    data = data, 
+    chains = 4, 
+    cores = 4, 
+    cmdstan = TRUE)
+```
+
+``` r
+precis(mvn_bayes_model, 3)
+```
+
+                   mean         sd        5.5%     94.5%     rhat  ess_bulk
+    m        0.07435733 0.10559172 -0.09773703 0.2460944 1.005598  685.2339
+    b        1.26509529 0.09926416  1.10734340 1.4294633 1.001187 1262.3625
+    a2       0.54444654 0.15668036  0.30732971 0.7950777 1.004824  727.3945
+    a1       0.51910548 0.08975037  0.37723323 0.6627066 1.005372 1314.2208
+    Rho[1,1] 1.00000000 0.00000000  1.00000000 1.0000000       NA        NA
+    Rho[2,1] 0.29534553 0.11466591  0.10145410 0.4706128 1.005545  734.8973
+    Rho[1,2] 0.29534553 0.11466591  0.10145410 0.4706128 1.005545  734.8973
+    Rho[2,2] 1.00000000 0.00000000  1.00000000 1.0000000       NA        NA
+    Sigma[1] 1.11346473 0.05691709  1.02656340 1.2081238 1.000072 1937.2072
+    Sigma[2] 1.08038981 0.06441891  0.98564164 1.1899950 1.008704  987.7994
+
+Another problem with the Bayesian inference approach is that we do not
+necessarily understand how our analysis extracts the final information
+(as it is all hidden under complex probability theory). Understanding
+why an inference is possible or not helps us anticipate results and
+design better research.
+
+The full-luxury Bayesian inference approach and the causal design
+approach complement each other because 1) we can use do-calculus to
+identify when inference is possible and which variables can be ignored,
+and then 2) use Bayesian inference to perform the calculations. Both
+models depend on the definition and analysis of a generative model. The
+assumptions required to build a generative model must come from prior
+research or hypotheses constructed using domain knowledge.
 
 # Key messages
 
 -   The interpretation of statistical results always depends upon causal
     assumptions, assumptions that ultimately cannot be tested with
     available data. This is why we need to interpret statistical
-    modelling and machine learning results with caution, especially when
-    making claims about causality. See [Westreich et al
+    modelling and machine learning results with caution and be skeptical
+    of those making claims about causality. See [Westreich et al
     2013](https://academic.oup.com/aje/article/177/4/292/147738) for a
     more detailed example.  
 -   Graphical causal inference (including RCTs) requires a different
     statistical model for each causal query.  
 -   Bayesian inference only requires a single statistical model (the
     joint probability distribution) to obtain different causal queries
-    through different simulations.
+    through different simulations.  
+-   Because we care about estimating uncertainty in a finite sample,
+    using a causal design approach without incorporating Bayesian
+    inference is incomplete, as we lack a reliable and efficient method
+    to perform calculations.

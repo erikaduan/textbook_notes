@@ -7,6 +7,8 @@ This repository contains personal notes made whilst reading open-source statisti
     + Post about [causal inference methods and the caveats of the multiple linear regression approach](./blog_posts/regression_richard_mcelreath.md) by Richard McElreath    
     + Post about [the misuse of p-values](./blog_posts/p_values_richard_mcelreath.md) by Richard McElreath and linked research articles      
 
+<p>
+
 + **Building Reproducible Analytical Pipelines with R** by Bruno Rodrigues    
     + [Part 1.3](./building_raps_with_r/raps_part_1_3.md) - Introducing the demo project code     
     + [Part 1.6](./building_raps_with_r/raps_part_1_6.md) - Using functions in R    
@@ -14,6 +16,8 @@ This repository contains personal notes made whilst reading open-source statisti
     + [Part 2.9](./building_raps_with_r/raps_part_2_9.md) - Code review   
     + [Part 2.10](./building_raps_with_r/raps_part_2_10.md) - R package versioning with `renv`    
     + [Part 2.11](./building_raps_with_r/raps_part_2_11.md) - Building R packages     
+
+<p>  
 
 + **Statistical Rethinking** by Richard McElreath       
     + Chapter 1 - TBC

@@ -1,0 +1,48 @@
+---
+title: "ROS - causal inference and randomised experiments notes"
+author: "Erika Duan"
+date: "`r Sys.Date()`"
+
+execute:
+  echo: true
+  output: false
+  message: false
+  warning: false
+
+format:
+  gfm:
+    toc: true
+    html-math-method: webtex
+---
+
+```{r}
+#| echo: false 
+
+# Load required R packages -----------------------------------------------------
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load() 
+```
+
+# Basics of causal inference  
+
+Causal inference is a common concept in clinical trials. These trials generally aim to answer the questions:   
+
++ What would have happened if person A received treatment A compared to treatment B or a placebo?   
++ Do we have clear evidence to change clinical practice (to improve patient outcomes)?    
+
+A useful clinical trial clearly identifies whether an **average causal effect** exists between different treatments or a treatment versus placebo.   
+
+We can illustrate the basics of causal inference through an example using synthetic data.    
+
+```{r}
+# Scenario 1 -------------------------------------------------------------------
+# Question: do omega-3 fish oil supplements impact blood pressure?  
+
+# n = 8 
+# n = 4 maintaining current diets and additional fish oil supplement consumption
+# n = 4 maintaining current diets without fish oil supplements  
+# We assume all study participants complete the treatment that they are assigned
+
+
+```
+

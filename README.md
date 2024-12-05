@@ -1,10 +1,11 @@
 # Textbook notes
-This repository contains personal notes made whilst reading open-source statistical and machine learning textbooks.
+This repository contains personal notes made whilst reading open-source statistical textbooks.   
 
 <br>  
 
-+ **Blog posts**  
-    + [Regression, fire and dangerous things](./blog_posts/regression_richard_mcelreath.md) by Richard McElreath   
++ **Blog posts**   
+    + Post about [causal inference methods and the caveats of the multiple linear regression approach](./blog_posts/regression_richard_mcelreath.md) by Richard McElreath    
+    + Post about [the misuse of p-values](./blog_posts/p_values_richard_mcelreath.md) by Richard McElreath and linked research articles      
 
 + **Building Reproducible Analytical Pipelines with R** by Bruno Rodrigues    
     + [Part 1.3](./building_raps_with_r/raps_part_1_3.md) - Introducing the demo project code     
@@ -15,13 +16,12 @@ This repository contains personal notes made whilst reading open-source statisti
     + [Part 2.11](./building_raps_with_r/raps_part_2_11.md) - Building R packages     
 
 + **Statistical Rethinking** by Richard McElreath       
-    + Chapter 1 
-    + Chapter 2      
+    + Chapter 1 - TBC
+    + Chapter 2 - TBC     
 
 <br>  
 
 # Publicly available textbooks
 + [Statistical Rethinking - 2022 edition](https://github.com/rmcelreath/stat_rethinking_2022) by Richard McElreath  
 + [Building Reproducible Analytical Pipelines with R](https://raps-with-r.dev/) by Bruno Rodrigues      
-+ [Regression and Other Stories](https://avehtari.github.io/ROS-Examples/) by Andrew Gelman, Jennifer Hill and Aki Vehtari    
-
++ [Regression and Other Stories](https://avehtari.github.io/ROS-Examples/) by Andrew Gelman, Jennifer Hill and Aki Vehtari     

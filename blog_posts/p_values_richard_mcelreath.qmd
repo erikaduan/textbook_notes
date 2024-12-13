@@ -16,12 +16,11 @@ format:
 ---
 
 ```{r}
-#| eval: false 
-
 # Load required R packages -----------------------------------------------------
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load() 
+pacman::p_load(ggplot2) 
 ```
+
 
 This is a review of the following blog posts and articles:    
 
@@ -30,8 +29,69 @@ This is a review of the following blog posts and articles:
 + [How conditioning on post-treatment variables can ruin your experiment and what to do about it](https://onlinelibrary.wiley.com/doi/10.1111/ajps.12357)  
 + [Connecting simple and precise p-values to complex and ambiguous realities](https://arxiv.org/abs/2304.01392)  
 
+# A review of P-values  
 
-# None of the Above       
+Why do biologists care about P-values? 
+
+It all starts with scientific belief and the traditional way discoveries were made. 
+
+We believe that different biological phenomenon exist. In biology, we're interested in improving pest resistance in crops to decreasing tumour resistance to chemotherapy. A classic case is this. 
+
+We hope that drug X causes cancer cells to die in a petri dish. 
+Biologically, we need to think about the whole population of cancer cells with and without drug X. Because each individual cell, for unknown and random differences, can vary in their response. 
+
+Because we have R, we can simulate the truth and look at what these numbers look like in the lab.  
+Let's look at two scenarios. 
+
+```{r}
+# Functions for simulating and plotting data points ----------------------------
+# n is the sample size of the experiment  
+# control_mean and treatment_mean are separately specified 
+# seed allows us to fix the outputs from random sampling from control and treatment
+# populations  
+# we assumed sd = 1 for convenience
+
+simulate_cancer_samples <- function(n, con_mean, treat_mean, seed) {
+
+set.seed(seed)
+  
+# Assume two different populations exist   
+c <- rnorm(n, mean = con_mean, sd = 1)
+t <- rnorm(n, mean = treat_mean, sd = 1)
+
+set.seed(NULL)
+
+tibble::tibble(c, t) |>
+  tidyr::pivot_longer(cols = c(c, t)) |>
+  ggplot(aes(x = name, y = value)) +
+  geom_point()
+}
+```
+
+# Scenario 1 and scenario 2   
+
+```{r}
+simulate_cancer_samples(10, 10, 4, 111)
+simulate_cancer_samples(10, 10, 9, 111)
+
+simulate_cancer_samples(1000, 10, 4, 111)
+simulate_cancer_samples(1000, 10, 9, 111)
+```
+
+Is the example biologically significant? That's for the field to answer (personally NO). 
+
+In the Student's t-test and linear regression, we assume variation of error is normally distributed and this is the variation part of Y's response. We have some background assumptions about unmeasurable phenomenon and we have fixed constant variables.  
+
+P-values are a numerical indicator for inferring whether the overall populations are different to each other. 
+A p-value of 0.001 is interpreted as: 
+
+....  
+
+(we can simulate this)
+
+Okay then, so why all the angst? 
+
+# Review of None of the Above       
 
 
 # Key messages  

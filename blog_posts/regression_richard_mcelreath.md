@@ -1,7 +1,7 @@
 Review of Regression, Fire and Dangerous Things
 ================
 Erika Duan
-2024-05-11
+2024-12-13
 
 -   <a href="#part-1-causal-salad" id="toc-part-1-causal-salad">Part 1:
     Causal Salad</a>
@@ -47,10 +47,10 @@ al. 
 -   Estimating treatment effects by comparing outcomes between a
     treatment and control (defined in ROS as causal inference).
 
-McElreath emphasises that what scientific practitioners are often
-looking for is a method to **separate spurious associations from true
-causal relationships**. McElreath is critical of those who carelessly
-use regression modelling to identify causal relationships.
+Scientific practitioners are often looking for a method to **separate
+spurious associations from true causal relationships**, but regression
+modelling is not designed for this. McElreath is critical of those who
+carelessly use regression modelling to identify causal relationships.
 
 **Scenario:**
 
@@ -111,13 +111,15 @@ drawn.
 
 ``` mermaid
 flowchart LR  
-  A(Mother birth order B1) --> B(Mother family size M) 
-  C(Unknown confound U) --> B(Mother family size M) 
+  A(Mother birth order B1) --b--> B(Mother family size M) 
+  C(Unknown confound U) --k--> B 
   
-  D(Daughter birth order B2) --> E(Daughter family size D) 
-  C(Unknown confound U) --> E(Daughter family size D) 
+  D(Daughter birth order B2) --b--> E(Daughter family size D) 
+  C --k--> E
   
-  style E fill:#Fff9e3,stroke:#333
+  B -.m.-> D
+  
+  style E fill:#Fff9e3,stroke:#f96
 ```
 
 Of note, the effect size of the confound (U) can be as large as the
@@ -136,9 +138,9 @@ style="width:60.0%" />
 src="regression_richard_mcelreath_files/figure-gfm/unnamed-chunk-4-3.png"
 style="width:60.0%" />
 
-Our synthetic data model specifies that the mother’s family size (M) has
-**no impact** on the daughter’s family size (D). But what happens when
-we include M in a regression model to predict D?
+In our synthetic data model, the mother’s family size (M) has **no
+impact** on the daughter’s family size (D). But what happens when we
+include M in a regression model to predict D?
 
 ``` r
 # Build linear regression model D = b0 + b1*M ---------------------------------- 
@@ -168,7 +170,10 @@ glance(only_M)
 The linear regression model indicates that M is positively associated
 with D
 i.e. ![E(D) = 0.98 + 0.23 M](https://latex.codecogs.com/svg.latex?E%28D%29%20%3D%200.98%20%2B%200.23%20M "E(D) = 0.98 + 0.23 M").
-**This contrasts with our prior knowledge that D is independent of M.**
+This contrasts with our prior knowledge that D is independent of M and
+**should be incredibly scary to regression modelling practitioners**. In
+the real world, it is extremely plausible that an unknown confounder
+exists that is predictive of both predictor AND outcome variables.
 
 What happens if we add more variables into our linear regression model?
 Does the misleading association between M and D disappear?

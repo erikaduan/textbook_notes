@@ -5,6 +5,9 @@ Erika Duan
 
 -   <a href="#part-1-causal-salad" id="toc-part-1-causal-salad">Part 1:
     Causal Salad</a>
+    -   <a href="#todo---what-if-the-impact-of-u-was-decreased"
+        id="toc-todo---what-if-the-impact-of-u-was-decreased">TODO - what if the
+        impact of U was decreased?</a>
 -   <a href="#part-2-causal-design" id="toc-part-2-causal-design">Part 2:
     Causal Design</a>
 -   <a href="#part-3-bayesian-inference"
@@ -107,40 +110,32 @@ D[1:5]
 ```
 
 A diagram of the causal relationships in our synthetic data model can be
-drawn.
+drawn **where m = 0**.
 
 ``` mermaid
 flowchart LR  
-  A(Mother birth order B1) --b--> B(Mother family size M) 
-  C(Unknown confound U) --k--> B 
+  A(Mother birth order B1) --> B(Mother family size M) 
+  C(Unknown confound U) --> B 
   
-  D(Daughter birth order B2) --b--> E(Daughter family size D) 
-  C --k--> E
-  
-  B -.m.-> D
+  D(Daughter birth order B2) --> E(Daughter family size D) 
+  C --> E
   
   style E fill:#Fff9e3,stroke:#f96
 ```
 
-Of note, the effect size of the confound (U) can be as large as the
-causal effect of the daughter’s birth order (B2) on the daughter’s
-family size (D).
+Note that the effect size of the confounder (U) can be as large as the
+effect of the daughter’s birth order (B2) on the daughter’s family size
+(D).
 
-<img
-src="regression_richard_mcelreath_files/figure-gfm/unnamed-chunk-4-1.png"
-style="width:60.0%" />
+![](regression_richard_mcelreath_files/figure-gfm/unnamed-chunk-4-1.png)
 
-<img
-src="regression_richard_mcelreath_files/figure-gfm/unnamed-chunk-4-2.png"
-style="width:60.0%" />
+![](regression_richard_mcelreath_files/figure-gfm/unnamed-chunk-4-2.png)
 
-<img
-src="regression_richard_mcelreath_files/figure-gfm/unnamed-chunk-4-3.png"
-style="width:60.0%" />
+![](regression_richard_mcelreath_files/figure-gfm/unnamed-chunk-4-3.png)
 
-In our synthetic data model, the mother’s family size (M) has **no
-impact** on the daughter’s family size (D). But what happens when we
-include M in a regression model to predict D?
+In our synthetic model, the mother’s family size (M) has **no impact**
+on the daughter’s family size (D). But what happens when we include M in
+a regression model to predict D?
 
 ``` r
 # Build linear regression model D = b0 + b1*M ---------------------------------- 
@@ -169,17 +164,19 @@ glance(only_M)
 
 The linear regression model indicates that M is positively associated
 with D
-i.e. ![E(D) = 0.98 + 0.23 M](https://latex.codecogs.com/svg.latex?E%28D%29%20%3D%200.98%20%2B%200.23%20M "E(D) = 0.98 + 0.23 M").
-This contrasts with our prior knowledge that D is independent of M and
-**should be incredibly scary to regression modelling practitioners**. In
-the real world, it is extremely plausible that an unknown confounder
-exists that is predictive of both predictor AND outcome variables.
+i.e. ![E(D) = 0.98 + 0.23 M](https://latex.codecogs.com/svg.latex?E%28D%29%20%3D%200.98%20%2B%200.23%20M "E(D) = 0.98 + 0.23 M")!
+
+This clearly conflicts with our ground truth that D is independent of M
+and **should be incredibly scary to regression modelling
+practitioners**. In the real world, it is very plausible that an unknown
+confounder exists which is predictive of both predictor AND outcome
+variables.
 
 What happens if we add more variables into our linear regression model?
 Does the misleading association between M and D disappear?
 
 ``` r
-# Build linear regression model D = b0 + b1*M + b2*B1 + b3*B2 ------------------ 
+# Build linear regression model D = b0 + b1*M + b2*B1 + b3*B2 ------------------
 M_B1_B2 <- lm(D ~ M + B1 + B2)
 
 # Output tidy linear regression coefficients and p-values  
@@ -205,20 +202,22 @@ glance(M_B1_B2)
     1     0.352         0.343  1.02      35.6 2.15e-18     3  -286.  582.  598.
     # i 3 more variables: deviance <dbl>, df.residual <int>, nobs <int>
 
-Unfortunately, adding the variables B1 and B2 produced a model with a
-larger ![\beta](https://latex.codecogs.com/svg.latex?%5Cbeta "\beta")
-coefficient for M. B1 is also negatively associated with D, despite our
-synthetic model specifying M to be positively dependent on B1 (so we
-expect B1 and M to at least have
+Unfortunately, adding the variables B1 and B2 produced a model with an
+even larger
 ![\beta](https://latex.codecogs.com/svg.latex?%5Cbeta "\beta")
-coefficients with the same sign).
+coefficient for M!
+
+B1 is also negatively associated with D, despite our synthetic model
+stating that M is positively dependent on B1 (so we expect B1 and M to
+have ![\beta](https://latex.codecogs.com/svg.latex?%5Cbeta "\beta")
+coefficients with the same sign if M had a causal effect on D).
 
 If we examined model performance metrics like AIC and BIC, we would be
-misled into concluding that the second model was the better model. It is
-likely that the second model is a more predictive model. However, the
-second model is also more misleading if we wanted to infer causal
-relationships between the predictor (B1, B2 and M) and response (D)
-variables.
+misled into concluding that the second model was the better model and
+use this one for scientific inference. It is very likely that the second
+model is a more predictive model. However, the second model is also even
+more misleading if we wanted to infer causal relationships between the
+predictor (B1, B2 and M) and response (D) variables.
 
 This example illustrates the dangers of causal salads, where we throw
 many variables into a model and hope to identify some statistically
@@ -229,21 +228,21 @@ variables.
 
 In this case, our scenario is the result of **bias amplification**:
 
--   A predictor variable or exposure of interest (M) is confounded by
-    another variable (U).  
--   Another predictor variable (B1) is included, which is also a strong
-    predictor of the original exposure of interest (M). This is because
-    `M <- rnorm(N, 2*B1 + U)`.  
+-   The predictor variable of interest (M) is confounded by another
+    variable (U). The response variable (D) is also confounded by U.  
+-   Another predictor variable (B1) is further included in the model. B1
+    is a strong predictor of M as `M <- rnorm(N, 2*B1 + U)`.  
 -   The addition of B1 tends to amplify the effects of U and make
-    inference worse.  
--   Best practice would be to add additional predictor variables which
-    are hypothesised to be strong predictors of the outcome **but** not
-    the exposure (B2). In research however, it may not be easy to
-    identify such variables confidently, especially when there is
-    limited information about existing causal relationships.
+    inference much worse.  
+-   In best practice, we should add additional predictor variables
+    hypothesised to be strong predictors of D **but** not of M. In
+    research however, it is usually very difficult to identify such
+    variables confidently, especially when there is limited information
+    about existing causal relationships.
 
 ``` r
-# Build linear regression model D = b0 + b1*M + b2*B2 ------------------ 
+# Build linear regression model D = b0 + b1*M + b2*B2 -------------------------- 
+# Only include additional predictor variables known to be associated with D
 M_B2 <- lm(D ~ M + B2)
 
 # Output tidy linear regression coefficients and p-values  
@@ -261,6 +260,8 @@ tidy(M_B2)
 # The coefficients of the model D ~ M + B2 are more sensible than those of 
 # D ~ M + B1 + B2, although the coefficient of M is still misleading.   
 ```
+
+## TODO - what if the impact of U was decreased?
 
 # Part 2: Causal Design
 

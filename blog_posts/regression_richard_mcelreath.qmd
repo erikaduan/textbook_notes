@@ -35,19 +35,19 @@ This is a review of the following blog posts:
 
 There are a few reasons for performing regression modelling, as listed in [Regression and Other Stories](https://avehtari.github.io/ROS-Examples/) (ROS) by Gelman et al.   
 
-+ Predicting or forecasting outcomes using existing data (does not aim to understand causality).  
-+ Exploring associations between variables of interest and an outcome.  
-+ Adjusting outcomes from a sample to infer something about a population of interest.  
-+ Estimating treatment effects by comparing outcomes between a treatment and control (defined in ROS as causal inference).  
++ Predicting or forecasting outcomes using existing data, **without** aiming to understand causality.     
++ Exploring (potentially misleading) associations between variables of interest and an outcome.  
++ Adjusting outcomes from a sample to infer something about a population of interest. This is the aim of many scientific experiments.  
++ Estimating treatment effects by comparing outcomes between treatment(s) and control (defined in ROS as causal inference).  
 
-Scientific practitioners are often looking for a method to **separate spurious associations from true causal relationships**, but regression modelling is not designed for this. McElreath is critical of those who carelessly use regression modelling to identify causal relationships.   
+Scientists are often looking for a method to **separate spurious associations from true causal relationships**, but regression modelling is not designed for this. McElreath is critical of those who carelessly use regression modelling to identify causal relationships.   
 
 **Scenario:**    
 
 We are interested in whether the family size of the mother has any impact on the family size of the daughter.  
 
 + We have data on the family sizes of mother and daughter pairs.  
-+ We expect unmeasured confounds (shared environmental exposures) for mother and daughter pairs.  
++ We expect unmeasured confounds for mother and daughter pairs (different environmental exposures shared by each mother-daughter pair).    
 + Previous research indicates that birth order is associated with fertility, which impacts family size.  
 
 ```{r}
@@ -84,7 +84,7 @@ B2[1:5]
 # D represents the daughter's family size 
 # We first assume that the mother's family size has no impact on the daughter's 
 # family size.  
-D <- rnorm(N, 2*B2 + U + 0*M) 
+D <- rnorm(N, mean = 2*B2 + U + 0*M) 
 D[1:5]
 #> [1]  0.4896820  2.4589650  0.5504082 -2.3242933  2.9083178  
 
@@ -93,7 +93,7 @@ D[1:5]
 #> [1] 0 2 1 0 3
 ```
 
-A diagram of the causal relationships in our synthetic data model can be drawn **where m = 0**.    
+A diagram of the causal relationships in our synthetic data model is below.    
 
 ```{mermaid}
 flowchart LR  
@@ -102,17 +102,15 @@ flowchart LR
   
   D(Daughter birth order B2) --> E(Daughter family size D) 
   C --> E
-  
-  style E fill:#Fff9e3,stroke:#f96
 ```
 
-Note that the effect size of the confounder (U) can be as large as the effect of the daughter's birth order (B2) on the daughter's family size (D).   
+Note that the effect size of the confounder (U) is reasonably significant when `D <- rnorm(N, 2*B2 + U + 0*M)`.        
 
 ```{r}
 #| echo: false
 #| output: true
 #| fig-width: 4
-#| layout-ncol: 3
+#| fig-height: 2
 
 plot(U, main = "Effect size of U on D")
 plot(2*B2, main = "Effect size of 2*B2 on D")
@@ -134,11 +132,11 @@ tidy(only_M)
 glance(only_M)
 ```
 
-The linear regression model indicates that M is positively associated with D i.e. $E(D) = 0.98 + 0.23 M$!   
+The linear regression model indicates that M is positively associated with D! 
 
-This clearly conflicts with our ground truth that D is independent of M and **should be incredibly scary to regression modelling practitioners**. In the real world, it is very plausible that an unknown confounder exists which is predictive of both predictor AND outcome variables.           
+This conflicts with our ground truth that **D is not influenced by M**. Although the adjusted $r^2$ indicates that our model is extremely poorly predictive, we should still be alarmed. In research, it is plausible for unknown confounders to exist that are predictive of both predictor AND outcome variables of interest.   
 
-What happens if we add more variables into our linear regression model? Does the misleading association between M and D disappear?  
+What happens if we add more predictor variables into our linear regression model? Does the misleading association between M and D disappear?  
 
 ```{r}
 #| output: true
@@ -155,34 +153,133 @@ glance(M_B1_B2)
 
 Unfortunately, adding the variables B1 and B2 produced a model with an even larger $\beta$ coefficient for M!  
 
-B1 is also negatively associated with D, despite our synthetic model stating that M is positively dependent on B1 (so we expect B1 and M to have $\beta$ coefficients with the same sign if M had a causal effect on D).       
+B1 is also negatively associated with D, despite ground truth that M is positively dependent on B1 (so we expect B1 and M to have non-zero $\beta$ coefficients with the same sign if M had a causal effect on D).       
 
-If we examined model performance metrics like AIC and BIC, we would be misled into concluding that the second model was the better model and use this one for scientific inference. It is very likely that the second model is a more predictive model. However, the second model is also even more misleading if we wanted to infer causal relationships between the predictor (B1, B2 and M) and response (D) variables.      
+If we examined model performance metrics like AIC and BIC, we would wrongly conclude that the second model is superior and use it for scientific inference. It is likely that the second model is a more predictive model. However, the second model is more misleading if we wanted to infer causal relationships between the predictor (B1, B2 and M) and response (D) variables.      
 
-This example illustrates the dangers of causal salads, where we throw many variables into a model and hope to identify some statistically significant ones. The best way to counter this practice is to explicitly think about the **causal relationships among predictor variables** and not just the causal relationships between predictor and response variables. 
+This example illustrates the dangers of causal salads, where we throw many variables into a model and hope to identify some statistically significant ones. The best way to counter this practice is to also think about the causal relationships **among predictor variables** and not just directly between predictor and response variables.  
 
-In this case, our scenario is the result of **bias amplification**:  
+Our first scenario is the result of **bias amplification**:  
 
-+ The predictor variable of interest (M) is confounded by another variable (U). The response variable (D) is also confounded by U.      
-+ Another predictor variable (B1) is further included in the model. B1 is a strong predictor of M as `M <- rnorm(N, 2*B1 + U)`.     
-+ The addition of B1 tends to amplify the effects of U and make inference much worse.  
-+ In best practice, we should add additional predictor variables hypothesised to be strong predictors of D **but** not of M. In research however, it is usually very difficult to identify such variables confidently, especially when there is limited information about existing causal relationships.    
++ Both the predictor and response variables are confounded by another variable (U).  
++ Another predictor variable (B1) is included in the model and is a strong predictor of M as `M <- rnorm(N, 2*B1 + U)`.     
++ The addition of B1 tends to amplify the unknown effects of U and make inference much worse.  
++ In best practice, we should add other predictor variables hypothesised to be strong predictors of **D but not of M**. In research however, it is usually very difficult to identify such variables confidently, especially when there is limited or mixed information about existing causal relationships.    
 
 ```{r}
 #| output: true
 
 # Build linear regression model D = b0 + b1*M + b2*B2 -------------------------- 
-# Only include additional predictor variables known to be associated with D
+# Only include other predictor variables known to be associated with D
 M_B2 <- lm(D ~ M + B2)
 
-# Output tidy linear regression coefficients and p-values  
+# The coefficients of the model D ~ M + B2 are more sensible than 
+# D ~ M + B1 + B2 as the negative coefficient for B1 is omitted. However, the 
+# coefficient of M is still misleading.   
 tidy(M_B2) 
 
-# The coefficients of the model D ~ M + B2 are more sensible than those of 
-# D ~ M + B1 + B2, although the coefficient of M is still misleading.   
+# The model performance is similar to D ~ M + B1 + B2 
+glance(M_B2)
 ```
 
-## TODO - what if the impact of U was decreased?  
+## Confounder impacts on linear regression modelling    
+
+How much do confounders contribute to misleading regression modelling results? Let's examine three scenarios below.   
+
+**Scenario 3:** The effect size of U is relatively weak compared to the effect sizes of B1 and B2. The new ground truth is represented below.    
+
+```{mermaid}
+flowchart LR  
+  A(B1) --> B(M) 
+  C(U) -.weak.-> B 
+  
+  D(B2) --> E(D) 
+  C -.weak.-> E
+```
+
+```{r}
+# Create new values for M and D when U = 0.1 -----------------------------------
+set.seed(111)  
+
+M_low_U <- rnorm(N, mean = 2*B1 + 0.1*U) 
+M_low_U <- ifelse(M_low_U < 0, 0, round(M_low_U, digits = 0))  
+
+D_low_U <- rnorm(N, mean = 2*B2 + 0.1*U)
+D_low_U <- ifelse(D_low_U < 0, 0, round(D_low_U, digits = 0))
+
+# Build linear regression model D_low_U = b0 + b1*M_low_U + b2*B2 --------------
+M_B2_low_U <- lm(D_low_U ~ M_low_U + B2)
+
+# The coefficient for M is zero (non-significant) as expected and model 
+# performance is also increased.  
+tidy(M_B2_low_U)
+glance(M_B2_low_U)
+```
+
+**Scenario 2:** There is no unknown confounder U that impacts both M and D. The modelling includes B1, which is highly predictive of M and may introduce some multicollinearity. The new ground truth is represented below.   
+
+```{mermaid}
+flowchart LR  
+  A(B1) --> B(M) 
+  D(B2) --> E(D) 
+```
+
+```{r}
+# Create new values for M and D when U = 0 -------------------------------------
+set.seed(111)
+
+M_no_U <- rnorm(N, mean = 2*B1) 
+M_no_U <- ifelse(M_no_U < 0, 0, round(M_no_U, digits = 0))
+
+D_no_U <- rnorm(N, mean = 2*B2)
+D_no_U <- ifelse(D_no_U < 0, 0, round(D_no_U, digits = 0))
+
+# Build linear regression models -----------------------------------------------
+M_B2_no_U <- lm(D_no_U ~ M_no_U + B2) # No multicollinearity
+M_B1_B2_no_U <- lm(D_no_U ~ M_no_U + B1 + B2) # Multicollinearity through B1
+M_B1_B2_no_U_no_I <- lm(D_no_U ~ 0 + M_no_U + B1 + B2) # No intercept assumed  
+
+# The addition of B1 does not impact the value of other model coefficients. The 
+# biggest positive impact on model performance is the removal of the intercept.
+tidy(M_B2_no_U)
+glance(M_B2_no_U)
+
+tidy(M_B1_B2_no_U) 
+glance(M_B1_B2_no_U)
+
+tidy(M_B1_B2_no_U_no_I) 
+glance(M_B1_B2_no_U_no_I)
+```
+
+**Scenario 3:** There is no confounder of both M and D. An unknown confounder U only affects M and the model includes B1, which may introduce some multicollinearity. The new ground truth is represented below.    
+
+```{mermaid}
+flowchart LR  
+  A(B1) --> B(M) 
+  C(U) --> B
+  
+  D(B2) --> E(D)  
+```
+
+```{r}
+# Build linear regression model D_no_U = b0 + b1*M + b2*B2 ---------------------
+M_B2_D_no_U <- lm(D_no_U ~ M + B2) # No multicollinearity
+M_B1_B2_D_no_U <- lm(D_no_U ~ M + B1 + B2) # Multicollinearity through B1
+
+# The model coefficients for M and B2 are unchanged after the inclusion of B1, 
+# highlighting that bias amplification only exists when U confounds both 
+# predictive AND response variables.   
+
+tidy(M_B2_D_no_U)
+glance(M_B2_D_no_U)
+
+tidy(M_B1_B2_D_no_U)
+glance(M_B1_B2_D_no_U)
+```
+
+Shown above, misleading causal salads are generated when unknown confounders impact **both** the predictor and response variables of interest. Amplification bias is also specific to this pattern of confounding.   
+
+In research, it is difficult to rule out the existence of such unknown confounders, unless one is extremely confident about the causal relationships between all measured and unmeasured variables.  
 
 
 # Part 2: Causal Design      
@@ -192,7 +289,7 @@ Regression has no direction whereas causal models are built from directional rel
 + A change in X will cause a change in Y.  
 + A change in Y will not impact X.    
 
-We can turn our modelling question into the causal graph below. This graph represents our hypothesis about what is happening, which is why we include an arrow from M to D.      
+We can turn our first modelling question into the causal graph below. This graph represents our hypothesis about what is happening, which is why we include an arrow from M to D.   
  
 ```{mermaid}
 flowchart TD  

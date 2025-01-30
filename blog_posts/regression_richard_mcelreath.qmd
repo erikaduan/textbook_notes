@@ -226,15 +226,16 @@ D_no_U <- rnorm(N, mean = 2*B2)
 M_B2_no_U <- lm(D_no_U ~ M_no_U + B2) # No multicollinearity
 M_B1_B2_no_U <- lm(D_no_U ~ M_no_U + B1 + B2) # Multicollinearity through B1
 
-# The addition of B1 does not impact the value of other model coefficients. 
+# The addition of B1 does not impact the value of other model coefficients or 
+# the model's predictive performance.   
 tidy(M_B2_no_U)
-glance(M_B2_no_U)
+tidy(M_B1_B2_no_U)
 
-tidy(M_B1_B2_no_U) 
+glance(M_B2_no_U)
 glance(M_B1_B2_no_U)
 ```
 
-**Scenario 4:** An unmeasured variable I only affects M (it is no longer a confounder of D) and the model includes B1, which may introduce some multicollinearity. The new ground truth is represented below.    
+**Scenario 4:** An unmeasured variable I only affects M (it is not a confounder of D) and the model includes B1, which may introduce some multicollinearity. The new ground truth is represented below.    
 
 ```{mermaid}
 flowchart LR  
@@ -256,9 +257,9 @@ M_B1_B2_I <- lm(D_no_U ~ M + B1 + B2) # Multicollinearity through B1
 # predictive and response variable.   
 
 tidy(M_B2_I)
-glance(M_B2_I)
-
 tidy(M_B1_B2_I)
+
+glance(M_B2_I)
 glance(M_B1_B2_I)
 ```
 
@@ -304,7 +305,7 @@ $$b = \tfrac{cov(B_1, M)}{var(B_1)}$$
 # Check causal influence estimation using a causal graph -----------------------
 cov(B1, M) / var(B1)
 
-#> [1] 1.246625  
+#> [1] 1.613775 
 ```
 
 ```{r}
@@ -330,7 +331,7 @@ $m = \tfrac{cov(B_1, D)}{cov(B_1, M)}$
 ```{r}
 # Solve for m using a causal graph ---------------------------------------------
 cov(B1, D) / cov(B1, M)
-#> [1] -0.02005616  
+#> [1] -0.05053256
 
 # This agrees with our prior knowledge that M has no effect on D  
 ```
@@ -340,19 +341,15 @@ cov(B1, D) / cov(B1, M)
 set.seed(111)
 
 D_m2 <- rnorm(N, 2*B2 + U + 0.7*M) 
-D_m2 <- ifelse(D_m2 < 0, 0, round(D_m2, digits = 0))
-
 cov(B1, D_m2) / cov(B1, M)
-#> [1] 0.3991978
+#> [1] 0.4714197
 
 D_m3 <- rnorm(N, 2*B2 + U + 1.5*M) 
-D_m3 <- ifelse(D_m3 < 0, 0, round(D_m3, digits = 0))
-
 cov(B1, D_m3) / cov(B1, M)
-#> [1] 1.19655
+#> [1] 1.33463
 ```
 
-However, this solution does not provide us information about the uncertainty of our estimate of ***m***. A computationally intensive way of doing this is to repeat the data simulation many times and obtain a bootstrap estimate. However, performing bootstraps is not always possible.   
+However, this solution does not provide us any information about the uncertainty of our estimate of ***m***. A computationally intensive way of doing this is to repeat the data simulation many times and obtain a bootstrap estimate. However, performing bootstraps is not always possible.   
 
 ```{r}
 #| output: true  
@@ -402,7 +399,7 @@ The key ideas behind **do-calculus** are:
 + The remaining association is an estimate of the causal effect of the exposure on the outcome.   
 + Other variables (B2) are still included in the analysis to improve the precision of the estimated effect size.  
 
-In our scenario, we would be interested in modelling the intervention below to calculate $p(D|do(M))$, which is the distribution of D when we intervene on M.    
+In our scenario, we would be interested in modelling the intervention below to calculate $p(D|do(M))$, which is the distribution of D when we intervene on M thought a RCT.    
 
 ```{mermaid}
 flowchart TD  
@@ -468,9 +465,9 @@ $B_{j,i} \sim Bernoulli(p)$
 
 $U_i \sim Normal(0,1)$     
 
-The values for U have not been observed so we cannot estimate the mean and variance of U. However, it is fine to assign U a standardised normal distribution. As U is an unobserved variable, it is a prior.   
+The values for U have not been observed so we cannot estimate the mean and variance of U. However, it is fine to assign U a standardised normal distribution. U is an unobserved variable and therefore also a prior.   
 
-We also need to specify probability distributions for the latent variables ***b***, ***m***, ***k*** and so on. These parameters are also unobserved variables and therefore also priors. Assigning prior probability distributions to unobserved variables is an art that can be refined by simulating the observations implied by the prior probability assignments. For our scenario, we will use weakly regularising distributions that encode skepticism of large causal effects.   
+We also need to specify probability distributions for the latent variables ***b***, ***m***, ***k*** and so on. These parameters are also unobserved variables and therefore priors. Assigning prior probability distributions to unobserved variables is an art that can be refined by simulating the observations implied by the prior probability assignments. For our scenario, we will use weakly regularising distributions that encode skepticism of large causal effects.   
 
 $\alpha_1, \alpha_2, b, m \sim Normal(0, 0.5)$     
 $k, \sigma, \tau \sim Exponential(1)$    
@@ -541,11 +538,13 @@ The `cmdstanr` package uses automatic differentiation to sample from the approxi
 precis(bayes_model, pars = c("m", "b", "k")) 
 ```
 
-The estimates for m, b and k are much closer to the original values from our generative model i.e. m = 0, b = 2 and k = 1.   
+The estimates for m, b and k are much closer to the original values from our generative model where m = 0, b = 2 and k = 1.   
 
 ## Step 3: Simulate causal interventions   
 
-Imagine that we also want to know the causal effect of intervening on B1 on D i.e. $P(D | do(B_1))$. This causal effect depends on multiple parameters (the product of ***b*** and ***m*** instead of only ***m***). As our causal model is linear, we can compute $P(D | do(B_1))$ directly or by simulating the intervention on B1.   
+Imagine that we also want to know the causal effect of intervening on B1 on D i.e. $P(D | do(B_1))$. This causal effect depends on multiple parameters i.e. the product of both ***b*** and ***m*** instead of only ***m***.   
+
+As our causal model is linear, we can compute $P(D | do(B_1))$ directly or by simulating the intervention on B1.   
 
 ```{r}
 #| output: true 
@@ -625,7 +624,7 @@ B1 <- rbinom(N, size = 1, prob = 0.5)
 M <- rnorm(N, 2*B1 + U)
 
 B2 <- rbinom(N, size = 1, prob = 0.5)
-D <- rnorm(N, 2*B2 + 0.5*B1 + U + 0*M)
+D <- rnorm(N, 2*B2 + 0.5*B1 + U + 0*M) # D depends on B1 and M
 
 # Define Bayesian model --------------------------------------------------------
 # We no longer know the distributions of B1 and B2
@@ -679,16 +678,15 @@ precis(complex_bayes_model)
 # Examine results from confounded multiple regression model --------------------
 lm(D ~ M + B1 + B2 + V + W) |>
   tidy()
-
-# Multiple regression fails to account for confounding relationships and 
-# provides a positive coefficient for m.  
 ```
+
+Multiple regression fails to account for confounding relationships and still provides a misleading positive coefficient for ***m***. However, both Bayesian inference and multiple regression fail to calculate the correct coefficient for ***d***.   
 
 A disadvantage of the Bayesian inference approach is that some calculations are inefficient or impossible to run. Some algebraic thinking can help make the inference more efficient and reliable.  
 
 For example, in our original model, we can ignore the impact of U by treating M and D as pairs of values drawn from a common (multivariate normal) distribution with some correlation induced by U.  
 
-The joint probability distribution therefore does not need to include U:  
+The joint probability distribution now does not need to explicitly include U:  
 
 $$\Bigl( \begin{matrix} M_i \\ D_i \end{matrix} \Bigr) \sim MVNormal \Bigl( \bigl( \begin{matrix} u_i \\ v_i \end{matrix} \bigr) , \Sigma \Bigr)$$    
 $$u_i = a_1 + bB_{1,i}$$  
@@ -721,17 +719,17 @@ mvn_bayes_model <- ulam(
 ```{r}
 #| output: true 
 
-precis(mvn_bayes_model, 3)
+precis(mvn_bayes_model, 3) # We expect m = 0 and b = 2
 ```
 
-Another problem with the Bayesian inference approach is that we do not necessarily understand how our analysis extracts the final information (as it is all hidden under complex probability theory). Understanding why an inference is possible or not helps us anticipate results and design better research.   
+A problem with the Bayesian inference approach is that we do not necessarily understand how our analysis extracts the final information, as it is all hidden under complex probability theory. Understanding why an inference is possible or not helps us anticipate results and design better research.   
 
-The full-luxury Bayesian inference approach and the causal design approach complement each other because 1) we can use do-calculus to identify when inference is possible and which variables can be ignored, and then 2) use Bayesian inference to perform the calculations. Both models depend on the definition and analysis of a generative model. The assumptions required to build a generative model must come from prior research or hypotheses constructed using domain knowledge.           
+The full-luxury Bayesian inference approach and the causal design approach complement each other because 1) we can use do-calculus to identify when inference is possible and which variables can be ignored, and then 2) use Bayesian inference to perform the calculations. Both models depend on the thoughtful definition and analysis of a generative model. The assumptions required to build a generative model must come from prior research or hypotheses constructed using domain knowledge.           
 
 
 # Key messages  
 
-+ The interpretation of statistical results always depends upon causal assumptions, assumptions that ultimately cannot be tested with available data. This is why we need to interpret statistical modelling and machine learning results with caution and be skeptical of those making claims about causality. See [Westreich et al 2013](https://academic.oup.com/aje/article/177/4/292/147738) for a more detailed example.   
++ Our causal assumptions unintentionally impact the interpretation of statistical results. Our assumptions cannot be tested with available data. This is why we need to interpret statistical modelling and machine learning results with caution and be skeptical of those making claims about causality. See [Westreich et al 2013](https://academic.oup.com/aje/article/177/4/292/147738) for a more detailed example.   
 + Graphical causal inference (including RCTs) requires a different statistical model for each causal query.     
 + Bayesian inference only requires a single statistical model (the joint probability distribution) to obtain different causal queries through different simulations.    
-+ Because we care about estimating uncertainty in a finite sample, using a causal design approach without incorporating Bayesian inference is incomplete, as we lack a reliable and efficient method to perform calculations.        
++ We should always care about estimating uncertainty when we have a finite sample. Using a causal design approach without incorporating Bayesian inference is incomplete, as we lack a reliable and efficient method to estimate uncertainty.          

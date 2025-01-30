@@ -335,7 +335,8 @@ D_no_U <- rnorm(N, mean = 2*B2)
 M_B2_no_U <- lm(D_no_U ~ M_no_U + B2) # No multicollinearity
 M_B1_B2_no_U <- lm(D_no_U ~ M_no_U + B1 + B2) # Multicollinearity through B1
 
-# The addition of B1 does not impact the value of other model coefficients. 
+# The addition of B1 does not impact the value of other model coefficients or 
+# the model's predictive performance.   
 tidy(M_B2_no_U)
 ```
 
@@ -345,6 +346,18 @@ tidy(M_B2_no_U)
     1 (Intercept)   0.199     0.106       1.87 6.29e- 2
     2 M_no_U       -0.0590    0.0479     -1.23 2.19e- 1
     3 B2            1.87      0.133      14.0  1.87e-31
+
+``` r
+tidy(M_B1_B2_no_U)
+```
+
+    # A tibble: 4 x 5
+      term        estimate std.error statistic  p.value
+      <chr>          <dbl>     <dbl>     <dbl>    <dbl>
+    1 (Intercept)   0.172     0.116      1.49  1.39e- 1
+    2 M_no_U       -0.0857    0.0643    -1.33  1.85e- 1
+    3 B1            0.111     0.178      0.622 5.35e- 1
+    4 B2            1.87      0.134     14.0   3.25e-31
 
 ``` r
 glance(M_B2_no_U)
@@ -357,18 +370,6 @@ glance(M_B2_no_U)
     # i 3 more variables: deviance <dbl>, df.residual <int>, nobs <int>
 
 ``` r
-tidy(M_B1_B2_no_U) 
-```
-
-    # A tibble: 4 x 5
-      term        estimate std.error statistic  p.value
-      <chr>          <dbl>     <dbl>     <dbl>    <dbl>
-    1 (Intercept)   0.172     0.116      1.49  1.39e- 1
-    2 M_no_U       -0.0857    0.0643    -1.33  1.85e- 1
-    3 B1            0.111     0.178      0.622 5.35e- 1
-    4 B2            1.87      0.134     14.0   3.25e-31
-
-``` r
 glance(M_B1_B2_no_U)
 ```
 
@@ -378,8 +379,8 @@ glance(M_B1_B2_no_U)
     1     0.510         0.503 0.938      68.1 3.21e-30     3  -269.  548.  565.
     # i 3 more variables: deviance <dbl>, df.residual <int>, nobs <int>
 
-**Scenario 4:** An unmeasured variable I only affects M (it is no longer
-a confounder of D) and the model includes B1, which may introduce some
+**Scenario 4:** An unmeasured variable I only affects M (it is not a
+confounder of D) and the model includes B1, which may introduce some
 multicollinearity. The new ground truth is represented below.
 
 ``` mermaid
@@ -410,16 +411,6 @@ tidy(M_B2_I)
     3 B2            1.88      0.133      14.1  1.16e-31
 
 ``` r
-glance(M_B2_I)
-```
-
-    # A tibble: 1 x 12
-      r.squared adj.r.squared sigma statistic  p.value    df logLik   AIC   BIC
-          <dbl>         <dbl> <dbl>     <dbl>    <dbl> <dbl>  <dbl> <dbl> <dbl>
-    1     0.508         0.503 0.938      102. 4.20e-31     2  -269.  547.  560.
-    # i 3 more variables: deviance <dbl>, df.residual <int>, nobs <int>
-
-``` r
 tidy(M_B1_B2_I)
 ```
 
@@ -430,6 +421,16 @@ tidy(M_B1_B2_I)
     2 M            -0.0465    0.0469    -0.993 3.22e- 1
     3 B1            0.0274    0.153      0.179 8.58e- 1
     4 B2            1.88      0.134     14.1   1.64e-31
+
+``` r
+glance(M_B2_I)
+```
+
+    # A tibble: 1 x 12
+      r.squared adj.r.squared sigma statistic  p.value    df logLik   AIC   BIC
+          <dbl>         <dbl> <dbl>     <dbl>    <dbl> <dbl>  <dbl> <dbl> <dbl>
+    1     0.508         0.503 0.938      102. 4.20e-31     2  -269.  547.  560.
+    # i 3 more variables: deviance <dbl>, df.residual <int>, nobs <int>
 
 ``` r
 glance(M_B1_B2_I)
@@ -504,7 +505,7 @@ variance of B1.
 # Check causal influence estimation using a causal graph -----------------------
 cov(B1, M) / var(B1)
 
-#> [1] 1.246625  
+#> [1] 1.613775 
 ```
 
 ``` r
@@ -542,7 +543,7 @@ where
 ``` r
 # Solve for m using a causal graph ---------------------------------------------
 cov(B1, D) / cov(B1, M)
-#> [1] -0.02005616  
+#> [1] -0.05053256
 
 # This agrees with our prior knowledge that M has no effect on D  
 ```
@@ -552,19 +553,15 @@ cov(B1, D) / cov(B1, M)
 set.seed(111)
 
 D_m2 <- rnorm(N, 2*B2 + U + 0.7*M) 
-D_m2 <- ifelse(D_m2 < 0, 0, round(D_m2, digits = 0))
-
 cov(B1, D_m2) / cov(B1, M)
-#> [1] 0.3991978
+#> [1] 0.4714197
 
 D_m3 <- rnorm(N, 2*B2 + U + 1.5*M) 
-D_m3 <- ifelse(D_m3 < 0, 0, round(D_m3, digits = 0))
-
 cov(B1, D_m3) / cov(B1, M)
-#> [1] 1.19655
+#> [1] 1.33463
 ```
 
-However, this solution does not provide us information about the
+However, this solution does not provide us any information about the
 uncertainty of our estimate of ***m***. A computationally intensive way
 of doing this is to repeat the data simulation many times and obtain a
 bootstrap estimate. However, performing bootstraps is not always
@@ -639,7 +636,7 @@ The key ideas behind **do-calculus** are:
 In our scenario, we would be interested in modelling the intervention
 below to calculate
 ![p(D\|do(M))](https://latex.codecogs.com/svg.latex?p%28D%7Cdo%28M%29%29 "p(D|do(M))"),
-which is the distribution of D when we intervene on M.
+which is the distribution of D when we intervene on M thought a RCT.
 
 ``` mermaid
 flowchart TD  
@@ -724,13 +721,13 @@ where
 
 The values for U have not been observed so we cannot estimate the mean
 and variance of U. However, it is fine to assign U a standardised normal
-distribution. As U is an unobserved variable, it is a prior.
+distribution. U is an unobserved variable and therefore also a prior.
 
 We also need to specify probability distributions for the latent
 variables ***b***, ***m***, ***k*** and so on. These parameters are also
-unobserved variables and therefore also priors. Assigning prior
-probability distributions to unobserved variables is an art that can be
-refined by simulating the observations implied by the prior probability
+unobserved variables and therefore priors. Assigning prior probability
+distributions to unobserved variables is an art that can be refined by
+simulating the observations implied by the prior probability
 assignments. For our scenario, we will use weakly regularising
 distributions that encode skepticism of large causal effects.
 
@@ -816,16 +813,17 @@ precis(bayes_model, pars = c("m", "b", "k"))
     k  0.9567002 0.1580053  0.6939557 1.1929514 1.022180  250.7948
 
 The estimates for m, b and k are much closer to the original values from
-our generative model i.e. m = 0, b = 2 and k = 1.
+our generative model where m = 0, b = 2 and k = 1.
 
 ## Step 3: Simulate causal interventions
 
 Imagine that we also want to know the causal effect of intervening on B1
 on D
 i.e. ![P(D \| do(B_1))](https://latex.codecogs.com/svg.latex?P%28D%20%7C%20do%28B_1%29%29 "P(D | do(B_1))").
-This causal effect depends on multiple parameters (the product of
-***b*** and ***m*** instead of only ***m***). As our causal model is
-linear, we can compute
+This causal effect depends on multiple parameters i.e. the product of
+both ***b*** and ***m*** instead of only ***m***.
+
+As our causal model is linear, we can compute
 ![P(D \| do(B_1))](https://latex.codecogs.com/svg.latex?P%28D%20%7C%20do%28B_1%29%29 "P(D | do(B_1))")
 directly or by simulating the intervention on B1.
 
@@ -920,7 +918,7 @@ B1 <- rbinom(N, size = 1, prob = 0.5)
 M <- rnorm(N, 2*B1 + U)
 
 B2 <- rbinom(N, size = 1, prob = 0.5)
-D <- rnorm(N, 2*B2 + 0.5*B1 + U + 0*M)
+D <- rnorm(N, 2*B2 + 0.5*B1 + U + 0*M) # D depends on B1 and M
 
 # Define Bayesian model --------------------------------------------------------
 # We no longer know the distributions of B1 and B2
@@ -998,10 +996,10 @@ lm(D ~ M + B1 + B2 + V + W) |>
     5 V             0.260     0.0836     3.11  2.17e- 3
     6 W             0.297     0.0755     3.93  1.18e- 4
 
-``` r
-# Multiple regression fails to account for confounding relationships and 
-# provides a positive coefficient for m.  
-```
+Multiple regression fails to account for confounding relationships and
+still provides a misleading positive coefficient for ***m***. However,
+both Bayesian inference and multiple regression fail to calculate the
+correct coefficient for ***d***.
 
 A disadvantage of the Bayesian inference approach is that some
 calculations are inefficient or impossible to run. Some algebraic
@@ -1011,7 +1009,8 @@ For example, in our original model, we can ignore the impact of U by
 treating M and D as pairs of values drawn from a common (multivariate
 normal) distribution with some correlation induced by U.
 
-The joint probability distribution therefore does not need to include U:
+The joint probability distribution now does not need to explicitly
+include U:
 
 ![\Bigl( \begin{matrix} M_i \\\\ D_i \end{matrix} \Bigr) \sim MVNormal \Bigl( \bigl( \begin{matrix} u_i \\\\ v_i \end{matrix} \bigr) , \Sigma \Bigr)](https://latex.codecogs.com/svg.latex?%5CBigl%28%20%5Cbegin%7Bmatrix%7D%20M_i%20%5C%5C%20D_i%20%5Cend%7Bmatrix%7D%20%5CBigr%29%20%5Csim%20MVNormal%20%5CBigl%28%20%5Cbigl%28%20%5Cbegin%7Bmatrix%7D%20u_i%20%5C%5C%20v_i%20%5Cend%7Bmatrix%7D%20%5Cbigr%29%20%2C%20%5CSigma%20%5CBigr%29 "\Bigl( \begin{matrix} M_i \\ D_i \end{matrix} \Bigr) \sim MVNormal \Bigl( \bigl( \begin{matrix} u_i \\ v_i \end{matrix} \bigr) , \Sigma \Bigr)")
 
@@ -1045,7 +1044,7 @@ mvn_bayes_model <- ulam(
 ```
 
 ``` r
-precis(mvn_bayes_model, 3)
+precis(mvn_bayes_model, 3) # We expect m = 0 and b = 2
 ```
 
                    mean         sd        5.5%     94.5%     rhat  ess_bulk
@@ -1060,27 +1059,27 @@ precis(mvn_bayes_model, 3)
     Sigma[1] 1.43007923 0.07160340  1.31994175 1.5460066 1.002861 1630.1825
     Sigma[2] 1.40915172 0.09913354  1.26424450 1.5820359 1.009441  801.3400
 
-Another problem with the Bayesian inference approach is that we do not
-necessarily understand how our analysis extracts the final information
-(as it is all hidden under complex probability theory). Understanding
-why an inference is possible or not helps us anticipate results and
-design better research.
+A problem with the Bayesian inference approach is that we do not
+necessarily understand how our analysis extracts the final information,
+as it is all hidden under complex probability theory. Understanding why
+an inference is possible or not helps us anticipate results and design
+better research.
 
 The full-luxury Bayesian inference approach and the causal design
 approach complement each other because 1) we can use do-calculus to
 identify when inference is possible and which variables can be ignored,
 and then 2) use Bayesian inference to perform the calculations. Both
-models depend on the definition and analysis of a generative model. The
-assumptions required to build a generative model must come from prior
-research or hypotheses constructed using domain knowledge.
+models depend on the thoughtful definition and analysis of a generative
+model. The assumptions required to build a generative model must come
+from prior research or hypotheses constructed using domain knowledge.
 
 # Key messages
 
--   The interpretation of statistical results always depends upon causal
-    assumptions, assumptions that ultimately cannot be tested with
-    available data. This is why we need to interpret statistical
-    modelling and machine learning results with caution and be skeptical
-    of those making claims about causality. See [Westreich et al
+-   Our causal assumptions unintentionally impact the interpretation of
+    statistical results. Our assumptions cannot be tested with available
+    data. This is why we need to interpret statistical modelling and
+    machine learning results with caution and be skeptical of those
+    making claims about causality. See [Westreich et al
     2013](https://academic.oup.com/aje/article/177/4/292/147738) for a
     more detailed example.  
 -   Graphical causal inference (including RCTs) requires a different
@@ -1088,7 +1087,7 @@ research or hypotheses constructed using domain knowledge.
 -   Bayesian inference only requires a single statistical model (the
     joint probability distribution) to obtain different causal queries
     through different simulations.  
--   Because we care about estimating uncertainty in a finite sample,
-    using a causal design approach without incorporating Bayesian
-    inference is incomplete, as we lack a reliable and efficient method
-    to perform calculations.
+-   We should always care about estimating uncertainty when we have a
+    finite sample. Using a causal design approach without incorporating
+    Bayesian inference is incomplete, as we lack a reliable and
+    efficient method to estimate uncertainty.

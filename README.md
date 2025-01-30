@@ -4,8 +4,8 @@ This repository contains personal notes made whilst reading open-source statisti
 <br>  
 
 + **Blog posts**   
-    + Post about [causal inference methods and the caveats of the multiple linear regression approach](./blog_posts/regression_richard_mcelreath.md) by Richard McElreath    
-    + Post about [the misuse of p-values](./blog_posts/p_values_richard_mcelreath.md) by Richard McElreath and linked research articles      
+    + Post about [the pitfalls of multiple linear regression and using Bayesian inference as an alternative](./blog_posts/regression_richard_mcelreath.md) by Richard McElreath    
+    + Post about [the misuse of p-values in science](./blog_posts/p_values_richard_mcelreath.md) by Richard McElreath and linked research articles      
 
 <p>
 

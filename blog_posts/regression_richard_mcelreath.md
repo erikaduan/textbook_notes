@@ -1,7 +1,7 @@
 Review of Regression, Fire and Dangerous Things
 ================
 Erika Duan
-2025-01-11
+2025-01-30
 
 -   <a href="#part-1-causal-salad" id="toc-part-1-causal-salad">Part 1:
     Causal Salad</a>
@@ -41,42 +41,43 @@ in [Regression and Other
 Stories](https://avehtari.github.io/ROS-Examples/) (ROS) by Gelman et
 al. 
 
--   Predicting or forecasting outcomes using existing data, **without**
-    aiming to understand causality.  
+-   Predicting or forecasting the mean outcome using existing data,
+    **without** aiming to understand causality.  
 -   Exploring (potentially misleading) associations between variables of
     interest and an outcome.  
--   Adjusting outcomes from a sample to infer something about a
-    population of interest. This is the aim of many scientific
-    experiments.  
+-   Adjusting observations from a sample to infer the characteristic(s)
+    of a population of interest.  
 -   Estimating treatment effects by comparing outcomes between
-    treatment(s) and control (defined in ROS as causal inference).
+    treatment(s) and control. This is the aim of most scientific
+    experiments and clinical trials and is defined in
+    [ROS](https://avehtari.github.io/ROS-Examples/) as causal inference.
 
 Scientists are often looking for a method to **separate spurious
 associations from true causal relationships**, but regression modelling
 is not designed for this. McElreath is critical of those who carelessly
 use regression modelling to identify causal relationships.
 
-**Scenario:**
+**Scenario 1:**
 
 We are interested in whether the family size of the mother has any
 impact on the family size of the daughter.
 
 -   We have data on the family sizes of mother and daughter pairs.  
--   We expect unmeasured confounds for mother and daughter pairs
-    (different environmental exposures shared by each mother-daughter
-    pair).  
+-   We expect unmeasured confounds for mother and daughter pairs, for
+    example different environmental exposures shared by each
+    mother-daughter pair.  
 -   Previous research indicates that birth order is associated with
     fertility, which impacts family size.
 
 ``` r
-# Create a synthetic data model ------------------------------------------------
+# Create a generative data model -----------------------------------------------
 set.seed(111)
 
 N <- 200 # Number of mother-daughter pairs
 U <- rnorm(N) # Simulate confounds
 
 U[1:5]
-#> [1] -0.3832159 -0.6019343  0.8216938 -0.4526242  0.3254342
+#> [1] 0.2352207 -0.3307359 -0.3116238 -2.3023457 -0.1708760
 
 # B1 represents the mother's birth order where 1 indicates 'is first born'
 B1 <- rbinom(N, size = 1, prob = 0.5) # Probability 50% are first born
@@ -89,10 +90,6 @@ M <- rnorm(N, mean = 2*B1 + U)
 M[1:5]
 #> [1]  0.37835160  0.03283694 -0.51075527 -4.15239295  1.66977563
 
-M <- ifelse(M < 0, 0, round(M, digits = 0))
-M[1:5]
-#> [1] 0 0 0 0 2
-
 # B2 represents the daughter's birth order where 1 indicates 'is first born' 
 # B2 occurs independently of B1 
 B2 <- rbinom(N, size = 1, prob = 0.5)
@@ -100,31 +97,31 @@ B2[1:5]
 #> [1] 1 1 0 0 1 
 
 # D represents the daughter's family size 
-# We first assume that the mother's family size has no impact on the daughter's 
-# family size.  
+# Our generative model states that the mother's family size has no impact on the
+# daughter's family size.  
 D <- rnorm(N, mean = 2*B2 + U + 0*M) 
 D[1:5]
 #> [1]  0.4896820  2.4589650  0.5504082 -2.3242933  2.9083178  
 
-D <- ifelse(D < 0, 0, round(D, digits = 0))
-D[1:5]
-#> [1] 0 2 1 0 3
+# For simplicity, we assume values of M and D to be real numbers instead of 0 
+# and positive integers.
 ```
 
-A diagram of the causal relationships in our synthetic data model is
+A diagram of the causal relationships in our generative data model is
 below.
 
 ``` mermaid
 flowchart LR  
   A(Mother birth order B1) --> B(Mother family size M) 
-  C(Unknown confound U) --> B 
+  C(Confound U) --> B 
   
   D(Daughter birth order B2) --> E(Daughter family size D) 
   C --> E
 ```
 
 Note that the effect size of the confounder (U) is reasonably
-significant when `D <- rnorm(N, 2*B2 + U + 0*M)`.
+significant when `U <- rnorm(N, 0, 1)` and
+`D <- rnorm(N, 2*B2 + U + 0*M)`.
 
 ![](regression_richard_mcelreath_files/figure-gfm/unnamed-chunk-4-1.png)
 
@@ -132,7 +129,7 @@ significant when `D <- rnorm(N, 2*B2 + U + 0*M)`.
 
 ![](regression_richard_mcelreath_files/figure-gfm/unnamed-chunk-4-3.png)
 
-In our synthetic model, the mother’s family size (M) has **no impact**
+In our generative model, the mother’s family size (M) has **no impact**
 on the daughter’s family size (D). But what happens when we include M in
 a regression model to predict D?
 
@@ -145,10 +142,10 @@ tidy(only_M)
 ```
 
     # A tibble: 2 x 5
-      term        estimate std.error statistic  p.value
-      <chr>          <dbl>     <dbl>     <dbl>    <dbl>
-    1 (Intercept)    0.978    0.118       8.26 2.03e-14
-    2 M              0.231    0.0685      3.38 8.82e- 4
+      term        estimate std.error statistic      p.value
+      <chr>          <dbl>     <dbl>     <dbl>        <dbl>
+    1 (Intercept)    0.713    0.128       5.58 0.0000000769
+    2 M              0.288    0.0683      4.22 0.0000370   
 
 ``` r
 # Output model performance metrics
@@ -156,9 +153,9 @@ glance(only_M)
 ```
 
     # A tibble: 1 x 12
-      r.squared adj.r.squared sigma statistic  p.value    df logLik   AIC   BIC
-          <dbl>         <dbl> <dbl>     <dbl>    <dbl> <dbl>  <dbl> <dbl> <dbl>
-    1    0.0545        0.0497  1.23      11.4 0.000882     1  -324.  654.  663.
+      r.squared adj.r.squared sigma statistic   p.value    df logLik   AIC   BIC
+          <dbl>         <dbl> <dbl>     <dbl>     <dbl> <dbl>  <dbl> <dbl> <dbl>
+    1    0.0826        0.0779  1.58      17.8 0.0000370     1  -374.  754.  764.
     # i 3 more variables: deviance <dbl>, df.residual <int>, nobs <int>
 
 The linear regression model indicates that M is positively associated
@@ -167,9 +164,8 @@ with D!
 This conflicts with our ground truth that **D is not influenced by M**.
 Although the adjusted
 ![r^2](https://latex.codecogs.com/svg.latex?r%5E2 "r^2") indicates that
-our model is extremely poorly predictive, we should still be alarmed. In
-research, it is plausible for unknown confounders to exist that are
-predictive of both predictor AND outcome variables of interest.
+our model `E(D) = 0.71 + 0.29M` is terrible at predicting D, we should
+still be alarmed.
 
 What happens if we add more predictor variables into our linear
 regression model? Does the misleading association between M and D
@@ -179,27 +175,25 @@ disappear?
 # Build linear regression model D = b0 + b1*M + b2*B1 + b3*B2 ------------------
 M_B1_B2 <- lm(D ~ M + B1 + B2)
 
-# Output tidy linear regression coefficients and p-values  
 tidy(M_B1_B2) 
 ```
 
     # A tibble: 4 x 5
       term        estimate std.error statistic  p.value
       <chr>          <dbl>     <dbl>     <dbl>    <dbl>
-    1 (Intercept)    0.400    0.132       3.02 2.88e- 3
-    2 M              0.373    0.0658      5.67 5.15e- 8
-    3 B1            -0.437    0.166      -2.64 9.07e- 3
-    4 B2             1.33     0.145       9.16 6.85e-17
+    1 (Intercept)   0.0844    0.156      0.543 5.88e- 1
+    2 M             0.444     0.0631     7.05  3.05e-11
+    3 B1           -0.728     0.206     -3.54  5.02e- 4
+    4 B2            1.80      0.180     10.0   2.63e-19
 
 ``` r
-# Output model performance metrics
 glance(M_B1_B2)
 ```
 
     # A tibble: 1 x 12
       r.squared adj.r.squared sigma statistic  p.value    df logLik   AIC   BIC
           <dbl>         <dbl> <dbl>     <dbl>    <dbl> <dbl>  <dbl> <dbl> <dbl>
-    1     0.352         0.343  1.02      35.6 2.15e-18     3  -286.  582.  598.
+    1     0.417         0.408  1.26      46.8 7.76e-23     3  -329.  668.  684.
     # i 3 more variables: deviance <dbl>, df.residual <int>, nobs <int>
 
 Unfortunately, adding the variables B1 and B2 produced a model with an
@@ -207,37 +201,39 @@ even larger
 ![\beta](https://latex.codecogs.com/svg.latex?%5Cbeta "\beta")
 coefficient for M!
 
-B1 is also negatively associated with D, despite ground truth that M is
-positively dependent on B1 (so we expect B1 and M to have non-zero
+B1 is also negatively associated with D, despite our generative model
+specifying that M is positively dependent on B1 (so we expect B1 and M
+to have non-zero
 ![\beta](https://latex.codecogs.com/svg.latex?%5Cbeta "\beta")
 coefficients with the same sign if M had a causal effect on D).
 
-If we examined model performance metrics like AIC and BIC, we would
+If we examined model performance metrics like AIC and BIC, we might
 wrongly conclude that the second model is superior and use it for
-scientific inference. It is likely that the second model is a more
-predictive model. However, the second model is more misleading if we
-wanted to infer causal relationships between the predictor (B1, B2 and
-M) and response (D) variables.
+scientific inference. It is likely that the second model is more
+predictive. However, the second model is more misleading if we wanted to
+infer causal relationships between the predictor (B1, B2 and M) and
+response (D) variables.
 
 This example illustrates the dangers of causal salads, where we throw
 many variables into a model and hope to identify some statistically
-significant ones. The best way to counter this practice is to also think
-about the causal relationships **among predictor variables** and not
-just directly between predictor and response variables.
+significant ones. The best way to counter this practice is to
+additionally consider the causal relationships **among predictor
+variables** and not just the causal relationship between predictor and
+response variables.
 
-Our first scenario is the result of **bias amplification**:
+Our first scenario is specifically the result of **bias amplification**:
 
 -   Both the predictor and response variables are confounded by another
     variable (U).  
 -   Another predictor variable (B1) is included in the model and is a
     strong predictor of M as `M <- rnorm(N, 2*B1 + U)`.  
--   The addition of B1 tends to amplify the unknown effects of U and
+-   The addition of B1 tends to amplify the unmeasured effects of U and
     make inference much worse.  
 -   In best practice, we should add other predictor variables
     hypothesised to be strong predictors of **D but not of M**. In
     research however, it is usually very difficult to identify such
-    variables confidently, especially when there is limited or mixed
-    information about existing causal relationships.
+    variables confidently, especially when there is limited information
+    about existing causal relationships.
 
 ``` r
 # Build linear regression model D = b0 + b1*M + b2*B2 -------------------------- 
@@ -246,16 +242,16 @@ M_B2 <- lm(D ~ M + B2)
 
 # The coefficients of the model D ~ M + B2 are more sensible than 
 # D ~ M + B1 + B2 as the negative coefficient for B1 is omitted. However, the 
-# coefficient of M is still misleading.   
+# coefficient of M is still very misleading.   
 tidy(M_B2) 
 ```
 
     # A tibble: 3 x 5
       term        estimate std.error statistic  p.value
       <chr>          <dbl>     <dbl>     <dbl>    <dbl>
-    1 (Intercept)    0.282    0.126       2.23 2.70e- 2
-    2 M              0.288    0.0582      4.94 1.63e- 6
-    3 B2             1.33     0.148       8.99 2.06e-16
+    1 (Intercept)   -0.182    0.140      -1.30 1.94e- 1
+    2 M              0.335    0.0565      5.92 1.39e- 8
+    3 B2             1.80     0.185       9.72 1.73e-18
 
 ``` r
 # The model performance is similar to D ~ M + B1 + B2 
@@ -265,16 +261,16 @@ glance(M_B2)
     # A tibble: 1 x 12
       r.squared adj.r.squared sigma statistic  p.value    df logLik   AIC   BIC
           <dbl>         <dbl> <dbl>     <dbl>    <dbl> <dbl>  <dbl> <dbl> <dbl>
-    1     0.329         0.323  1.04      48.4 7.96e-18     2  -289.  587.  600.
+    1     0.380         0.374  1.30      60.3 3.62e-21     2  -335.  678.  691.
     # i 3 more variables: deviance <dbl>, df.residual <int>, nobs <int>
 
 ## Confounder impacts on linear regression modelling
 
-How much do confounders contribute to misleading regression modelling
-results? Let’s examine three scenarios below.
+How much do unmeasured confounds contribute to misleading regression
+modelling results? Let’s examine three scenarios below.
 
-**Scenario 3:** The effect size of U is relatively weak compared to the
-effect sizes of B1 and B2. The new ground truth is represented below.
+**Scenario 2:** The effect size of U is relatively weak compared to the
+effect sizes of B1 and B2. The new generative model is below.
 
 ``` mermaid
 flowchart LR  
@@ -290,10 +286,7 @@ flowchart LR
 set.seed(111)  
 
 M_low_U <- rnorm(N, mean = 2*B1 + 0.1*U) 
-M_low_U <- ifelse(M_low_U < 0, 0, round(M_low_U, digits = 0))  
-
 D_low_U <- rnorm(N, mean = 2*B2 + 0.1*U)
-D_low_U <- ifelse(D_low_U < 0, 0, round(D_low_U, digits = 0))
 
 # Build linear regression model D_low_U = b0 + b1*M_low_U + b2*B2 --------------
 M_B2_low_U <- lm(D_low_U ~ M_low_U + B2)
@@ -301,11 +294,27 @@ M_B2_low_U <- lm(D_low_U ~ M_low_U + B2)
 # The coefficient for M is zero (non-significant) as expected and model 
 # performance is also increased.  
 tidy(M_B2_low_U)
+```
+
+    # A tibble: 3 x 5
+      term        estimate std.error statistic  p.value
+      <chr>          <dbl>     <dbl>     <dbl>    <dbl>
+    1 (Intercept)  0.148      0.105      1.40  1.62e- 1
+    2 M_low_U     -0.00562    0.0455    -0.124 9.02e- 1
+    3 B2           1.87       0.133     14.0   2.61e-31
+
+``` r
 glance(M_B2_low_U)
 ```
 
-**Scenario 2:** There is no unknown confounder U that impacts both M and
-D. The modelling includes B1, which is highly predictive of M and may
+    # A tibble: 1 x 12
+      r.squared adj.r.squared sigma statistic  p.value    df logLik   AIC   BIC
+          <dbl>         <dbl> <dbl>     <dbl>    <dbl> <dbl>  <dbl> <dbl> <dbl>
+    1     0.502         0.497 0.936      99.2 1.58e-30     2  -269.  546.  559.
+    # i 3 more variables: deviance <dbl>, df.residual <int>, nobs <int>
+
+**Scenario 3:** There is no unmeasured confounder U impacting M and D.
+The modelling includes B1, which is highly predictive of M and may
 introduce some multicollinearity. The new ground truth is represented
 below.
 
@@ -320,64 +329,126 @@ flowchart LR
 set.seed(111)
 
 M_no_U <- rnorm(N, mean = 2*B1) 
-M_no_U <- ifelse(M_no_U < 0, 0, round(M_no_U, digits = 0))
-
 D_no_U <- rnorm(N, mean = 2*B2)
-D_no_U <- ifelse(D_no_U < 0, 0, round(D_no_U, digits = 0))
 
 # Build linear regression models -----------------------------------------------
 M_B2_no_U <- lm(D_no_U ~ M_no_U + B2) # No multicollinearity
 M_B1_B2_no_U <- lm(D_no_U ~ M_no_U + B1 + B2) # Multicollinearity through B1
-M_B1_B2_no_U_no_I <- lm(D_no_U ~ 0 + M_no_U + B1 + B2) # No intercept assumed  
 
-# The addition of B1 does not impact the value of other model coefficients. The 
-# biggest positive impact on model performance is the removal of the intercept.
+# The addition of B1 does not impact the value of other model coefficients. 
 tidy(M_B2_no_U)
-glance(M_B2_no_U)
-
-tidy(M_B1_B2_no_U) 
-glance(M_B1_B2_no_U)
-
-tidy(M_B1_B2_no_U_no_I) 
-glance(M_B1_B2_no_U_no_I)
 ```
 
-**Scenario 3:** There is no confounder of both M and D. An unknown
-confounder U only affects M and the model includes B1, which may
-introduce some multicollinearity. The new ground truth is represented
-below.
+    # A tibble: 3 x 5
+      term        estimate std.error statistic  p.value
+      <chr>          <dbl>     <dbl>     <dbl>    <dbl>
+    1 (Intercept)   0.199     0.106       1.87 6.29e- 2
+    2 M_no_U       -0.0590    0.0479     -1.23 2.19e- 1
+    3 B2            1.87      0.133      14.0  1.87e-31
+
+``` r
+glance(M_B2_no_U)
+```
+
+    # A tibble: 1 x 12
+      r.squared adj.r.squared sigma statistic  p.value    df logLik   AIC   BIC
+          <dbl>         <dbl> <dbl>     <dbl>    <dbl> <dbl>  <dbl> <dbl> <dbl>
+    1     0.509         0.504 0.937      102. 3.39e-31     2  -269.  546.  560.
+    # i 3 more variables: deviance <dbl>, df.residual <int>, nobs <int>
+
+``` r
+tidy(M_B1_B2_no_U) 
+```
+
+    # A tibble: 4 x 5
+      term        estimate std.error statistic  p.value
+      <chr>          <dbl>     <dbl>     <dbl>    <dbl>
+    1 (Intercept)   0.172     0.116      1.49  1.39e- 1
+    2 M_no_U       -0.0857    0.0643    -1.33  1.85e- 1
+    3 B1            0.111     0.178      0.622 5.35e- 1
+    4 B2            1.87      0.134     14.0   3.25e-31
+
+``` r
+glance(M_B1_B2_no_U)
+```
+
+    # A tibble: 1 x 12
+      r.squared adj.r.squared sigma statistic  p.value    df logLik   AIC   BIC
+          <dbl>         <dbl> <dbl>     <dbl>    <dbl> <dbl>  <dbl> <dbl> <dbl>
+    1     0.510         0.503 0.938      68.1 3.21e-30     3  -269.  548.  565.
+    # i 3 more variables: deviance <dbl>, df.residual <int>, nobs <int>
+
+**Scenario 4:** An unmeasured variable I only affects M (it is no longer
+a confounder of D) and the model includes B1, which may introduce some
+multicollinearity. The new ground truth is represented below.
 
 ``` mermaid
 flowchart LR  
   A(B1) --> B(M) 
-  C(U) --> B
+  C(I) --> B
   
   D(B2) --> E(D)  
 ```
 
 ``` r
 # Build linear regression model D_no_U = b0 + b1*M + b2*B2 ---------------------
-M_B2_D_no_U <- lm(D_no_U ~ M + B2) # No multicollinearity
-M_B1_B2_D_no_U <- lm(D_no_U ~ M + B1 + B2) # Multicollinearity through B1
+M_B2_I <- lm(D_no_U ~ M + B2) # No multicollinearity
+M_B1_B2_I <- lm(D_no_U ~ M + B1 + B2) # Multicollinearity through B1
 
 # The model coefficients for M and B2 are unchanged after the inclusion of B1, 
-# highlighting that bias amplification only exists when U confounds both 
-# predictive AND response variables.   
+# highlighting that bias amplification specifically exists when U confounds a 
+# predictive and response variable.   
 
-tidy(M_B2_D_no_U)
-glance(M_B2_D_no_U)
-
-tidy(M_B1_B2_D_no_U)
-glance(M_B1_B2_D_no_U)
+tidy(M_B2_I)
 ```
 
-Shown above, misleading causal salads are generated when unknown
-confounders impact **both** the predictor and response variables of
-interest. Amplification bias is also specific to this pattern of
-confounding.
+    # A tibble: 3 x 5
+      term        estimate std.error statistic  p.value
+      <chr>          <dbl>     <dbl>     <dbl>    <dbl>
+    1 (Intercept)   0.176     0.101       1.75 8.25e- 2
+    2 M            -0.0424    0.0407     -1.04 2.99e- 1
+    3 B2            1.88      0.133      14.1  1.16e-31
 
-In research, it is difficult to rule out the existence of such unknown
-confounders, unless one is extremely confident about the causal
+``` r
+glance(M_B2_I)
+```
+
+    # A tibble: 1 x 12
+      r.squared adj.r.squared sigma statistic  p.value    df logLik   AIC   BIC
+          <dbl>         <dbl> <dbl>     <dbl>    <dbl> <dbl>  <dbl> <dbl> <dbl>
+    1     0.508         0.503 0.938      102. 4.20e-31     2  -269.  547.  560.
+    # i 3 more variables: deviance <dbl>, df.residual <int>, nobs <int>
+
+``` r
+tidy(M_B1_B2_I)
+```
+
+    # A tibble: 4 x 5
+      term        estimate std.error statistic  p.value
+      <chr>          <dbl>     <dbl>     <dbl>    <dbl>
+    1 (Intercept)   0.166     0.116      1.44  1.53e- 1
+    2 M            -0.0465    0.0469    -0.993 3.22e- 1
+    3 B1            0.0274    0.153      0.179 8.58e- 1
+    4 B2            1.88      0.134     14.1   1.64e-31
+
+``` r
+glance(M_B1_B2_I)
+```
+
+    # A tibble: 1 x 12
+      r.squared adj.r.squared sigma statistic  p.value    df logLik   AIC   BIC
+          <dbl>         <dbl> <dbl>     <dbl>    <dbl> <dbl>  <dbl> <dbl> <dbl>
+    1     0.508         0.501 0.940      67.6 4.74e-30     3  -269.  549.  565.
+    # i 3 more variables: deviance <dbl>, df.residual <int>, nobs <int>
+
+Shown above, misleading causal salads are generated when unmeasured
+confounds impact **both** the predictor and response variables of
+interest. Amplification bias occurs specifically when confounding
+exists. In contrast, potential multicollinearity (through the addition
+of B1 as well as M) does not hurt our model very much.
+
+In research, it is difficult to rule out the existence of unmeasured
+confounds, unless one is extremely confident about the causal
 relationships between all measured and unmeasured variables.
 
 # Part 2: Causal Design
@@ -391,8 +462,8 @@ tells us that:
 -   A change in Y will not impact X.
 
 We can turn our first modelling question into the causal graph below.
-This graph represents our hypothesis about what is happening, which is
-why we include an arrow from M to D.
+The new graph represents our hypothesis about what is happening, which
+is why we now include an arrow from M to D.
 
 ``` mermaid
 flowchart TD  
@@ -403,20 +474,23 @@ flowchart TD
   
   M -- m --> D
   
+  style M fill:#b7cbde,stroke:#333
   style D fill:#Fff9e3,stroke:#333
 ```
 
-Other graph construction decisions:
+New graph construction decisions:
 
 -   We assume that the influence of birth order on family size ***b***
-    is consistent over time (the same effect size for mothers and
-    daughters). This assumption may come from domain knowledge or be a
-    common sense simplification.  
--   We also assume that the influence of the unobserved confound ***k***
+    is consistent over different generations. This assumption may come
+    from domain knowledge or be a common sense simplification.  
+-   We also assume that the influence of the unmeasured confound ***k***
     is the same for mothers and daughters.
 
-The covariance between two variables can be calculated directly from a
-causal graph.
+Our generative model is a linear one as each variable is produced by an
+additive combination of other variables. In a linear model, the
+covariance between two variables (the extent of variation between two
+variables measured using observation pairs) can be calculated directly
+from the graph.
 
 If ***b*** is the causal influence of B1 on M, then the covariance
 between B1 and M is just the causal effect ***b*** multiplied by the
@@ -442,13 +516,16 @@ lm(M ~ B1) |>
     # A tibble: 2 x 5
       term        estimate std.error statistic  p.value
       <chr>          <dbl>     <dbl>     <dbl>    <dbl>
-    1 (Intercept)    0.545     0.111      4.90 2.01e- 6
-    2 B1             1.25      0.157      7.95 1.36e-13
+    1 (Intercept)   0.0948     0.144     0.660 5.10e- 1
+    2 B1            1.61       0.202     7.99  1.12e-13
 
 We are interested in the causal influence of M on D and would therefore
 like to estimate ***m***. We know the following things:
 
 -   We do not know U or ***k*** as U is unobserved.  
+-   We cannot calculate
+    ![cov(M, D)](https://latex.codecogs.com/svg.latex?cov%28M%2C%20D%29 "cov(M, D)")
+    directly as it is influenced by ***k*** and ***m***.  
 -   We can calculate
     ![cov(B_1, D) = b\times m \times var(B_1)](https://latex.codecogs.com/svg.latex?cov%28B_1%2C%20D%29%20%3D%20b%5Ctimes%20m%20%5Ctimes%20var%28B_1%29 "cov(B_1, D) = b\times m \times var(B_1)")
     as we multiply the causes ***b*** and ***m*** when there are
@@ -474,16 +551,16 @@ cov(B1, D) / cov(B1, M)
 # Test for different values of m -----------------------------------------------
 set.seed(111)
 
-D2 <- rnorm(N, 2*B2 + U + 0.7*M) 
-D2 <- ifelse(D2 < 0, 0, round(D2, digits = 0))
+D_m2 <- rnorm(N, 2*B2 + U + 0.7*M) 
+D_m2 <- ifelse(D_m2 < 0, 0, round(D_m2, digits = 0))
 
-cov(B1, D2) / cov(B1, M)
+cov(B1, D_m2) / cov(B1, M)
 #> [1] 0.3991978
 
-D3 <- rnorm(N, 2*B2 + U + 1.5*M) 
-D3 <- ifelse(D3 < 0, 0, round(D3, digits = 0))
+D_m3 <- rnorm(N, 2*B2 + U + 1.5*M) 
+D_m3 <- ifelse(D_m3 < 0, 0, round(D_m3, digits = 0))
 
-cov(B1, D3) / cov(B1, M)
+cov(B1, D_m3) / cov(B1, M)
 #> [1] 1.19655
 ```
 
@@ -501,10 +578,9 @@ N <- 200
 U <- rnorm(N, 0, 1) 
 B1 <- rbinom(N, size=1, prob = 0.5) 
 M <- rnorm(N, 2*B1 + U)
-M <- ifelse(M < 0, 0, round(M, digits = 0))
+
 B2 <- rbinom(N, size = 1, prob = 0.5)
 D <- rnorm(N, 2*B2 + U + 0*M)
-D <- ifelse(D < 0, 0, round(D, digits = 0))
 
 # Define bootstrap statistic i.e. m = cov(B1, D) / cov(B1, M)  
 f <- function(data,indices) 
@@ -526,7 +602,7 @@ boot(data = data_sim, statistic = f, R = 1000) |>
     # A tibble: 1 x 3
       statistic     bias std.error
           <dbl>    <dbl>     <dbl>
-    1   -0.0201 0.000772     0.151
+    1   -0.0505 -0.00205     0.150
 
 Thinking like a graph involves multiple stages:
 
@@ -556,7 +632,9 @@ The key ideas behind **do-calculus** are:
     scenario by conducting randomised controlled trials (RCTs) to
     experimentally set different values for M.  
 -   The remaining association is an estimate of the causal effect of the
-    exposure on the outcome.
+    exposure on the outcome.  
+-   Other variables (B2) are still included in the analysis to improve
+    the precision of the estimated effect size.
 
 In our scenario, we would be interested in modelling the intervention
 below to calculate
@@ -571,6 +649,7 @@ flowchart TD
   
   B1
   
+  style M fill:#b7cbde,stroke:#333
   style D fill:#Fff9e3,stroke:#333
 ```
 
@@ -586,8 +665,8 @@ According to McElreath, **full-luxury Bayesian inference** is an
 approach which:
 
 -   Uses all variables and expresses all of their relationships as a
-    joint probability distribution (only uses one statistical model
-    unlike the causal graph approach).  
+    joint probability distribution (hence we only use one statistical
+    model unlike the causal graph approach).  
 -   Any available data can be used to constrain the joint probability
     distribution, eliminate possibilities and refine information about
     causal effects.  
@@ -601,6 +680,19 @@ approach which:
 We can rewrite our original generative code as a joint probability
 distribution.
 
+``` mermaid
+flowchart TD  
+  B1 -- b --> M  
+  U -- k --> M  
+  U -- k --> D   
+  B2 -- b --> D
+  
+  M -- m --> D
+  
+  style M fill:#b7cbde,stroke:#333
+  style D fill:#Fff9e3,stroke:#333
+```
+
 ``` r
 # Original generative model to be converted ------------------------------------
 set.seed(111)
@@ -609,12 +701,9 @@ N <- 200
 U <- rnorm(N, 0, 1) 
 B1 <- rbinom(N, size=1, prob = 0.5) 
 M <- rnorm(N, 2*B1 + U)
-M <- ifelse(M < 0, 0, round(M, digits = 0)) # [1]
+
 B2 <- rbinom(N, size = 1, prob = 0.5)
 D <- rnorm(N, 2*B2 + U + 0*M)
-D <- ifelse(D < 0, 0, round(D, digits = 0)) # [1]
-
-# [1] We will skip these lines to simplify our joint probability distribution
 ```
 
 Let ![i](https://latex.codecogs.com/svg.latex?i "i") represent an
@@ -660,7 +749,7 @@ helps with the next step.
 The variables of our final joint probability distribution are:
 
 -   the observed variables (the data)  
--   the latent variables (the unknown parameters)
+-   the latent variables (the unmeasured or unknown parameters)
 
 Every time we acquire new data, we acquire new information about these
 variables and we can update the joint distribution to see if it implies
@@ -722,14 +811,12 @@ precis(bayes_model, pars = c("m", "b", "k"))
 ```
 
             mean        sd       5.5%     94.5%     rhat  ess_bulk
-    m 0.06425187 0.1190338 -0.1317059 0.2571193 1.019846  223.8204
-    b 1.25957636 0.1005843  1.1013234 1.4215938 1.000825 3842.8306
-    k 0.59038828 0.1671759  0.2837118 0.8159069 1.023639  188.5850
+    m -0.0151959 0.1187216 -0.2051512 0.1763706 1.019832  291.7719
+    b  1.5983015 0.1264243  1.3915224 1.7982806 1.002297 1448.3153
+    k  0.9567002 0.1580053  0.6939557 1.1929514 1.022180  250.7948
 
-``` r
-# Estimates for m, b and k are much closer to the original values used in our 
-# generative model i.e. m = 0, b = 2 and k = 1.   
-```
+The estimates for m, b and k are much closer to the original values from
+our generative model i.e. m = 0, b = 2 and k = 1.
 
 ## Step 3: Simulate causal interventions
 
@@ -737,8 +824,10 @@ Imagine that we also want to know the causal effect of intervening on B1
 on D
 i.e. ![P(D \| do(B_1))](https://latex.codecogs.com/svg.latex?P%28D%20%7C%20do%28B_1%29%29 "P(D | do(B_1))").
 This causal effect depends on multiple parameters (the product of
-***b*** and ***m*** instead of only ***m***) and it can also be
-computed.
+***b*** and ***m*** instead of only ***m***). As our causal model is
+linear, we can compute
+![P(D \| do(B_1))](https://latex.codecogs.com/svg.latex?P%28D%20%7C%20do%28B_1%29%29 "P(D | do(B_1))")
+directly or by simulating the intervention on B1.
 
 ``` r
 # Directly calculate b*m from original Bayesian model --------------------------
@@ -750,9 +839,9 @@ quantile(with(posterior, b*m))
 ```
 
              0%         25%         50%         75%        100% 
-    -0.40037008 -0.01866835  0.08150841  0.18459810  0.55531662 
+    -0.66636523 -0.14962560 -0.02255177  0.10047505  0.57699430 
 
-The median is 0.082 and there is a wide range of both positive and
+The median is -0.0225518 and there is a wide range of both positive and
 negative effects, which indicates that there is no effect on D when we
 intervene on B1. This is expected, as ***m*** is close to 0 and
 uncertain.
@@ -778,7 +867,7 @@ quantile(dist_D_B1)
 ```
 
              0%         25%         50%         75%        100% 
-    -0.40037008 -0.01866835  0.08150841  0.18459810  0.55531662 
+    -0.66636523 -0.14962560 -0.02255177  0.10047505  0.57699430 
 
 The quantiles calculated by the two methods are identical, as they are
 computed from the same simulated samples from the joint probability
@@ -807,6 +896,7 @@ flowchart TD
   B1 --b--> M
   B1 --d--> D
   
+  style M fill:#b7cbde,stroke:#333
   style D fill:#Fff9e3,stroke:#333
 ```
 
@@ -959,16 +1049,16 @@ precis(mvn_bayes_model, 3)
 ```
 
                    mean         sd        5.5%     94.5%     rhat  ess_bulk
-    m        0.07435733 0.10559172 -0.09773703 0.2460944 1.005598  685.2339
-    b        1.26509529 0.09926416  1.10734340 1.4294633 1.001187 1262.3625
-    a2       0.54444654 0.15668036  0.30732971 0.7950777 1.004824  727.3945
-    a1       0.51910548 0.08975037  0.37723323 0.6627066 1.005372 1314.2208
+    m        0.02066232 0.11149481 -0.16029598 0.1924507 1.011278  687.2803
+    b        1.61153072 0.12896440  1.40922945 1.8136227 1.001938 1171.1111
+    a2       0.18458220 0.15819515 -0.06317454 0.4454406 1.004494  849.0465
+    a1       0.08973344 0.11604483 -0.09664543 0.2703045 1.002635 1181.1223
     Rho[1,1] 1.00000000 0.00000000  1.00000000 1.0000000       NA        NA
-    Rho[2,1] 0.29534553 0.11466591  0.10145410 0.4706128 1.005545  734.8973
-    Rho[1,2] 0.29534553 0.11466591  0.10145410 0.4706128 1.005545  734.8973
+    Rho[2,1] 0.41020630 0.10745310  0.22930779 0.5762249 1.008960  764.2950
+    Rho[1,2] 0.41020630 0.10745310  0.22930779 0.5762249 1.008960  764.2950
     Rho[2,2] 1.00000000 0.00000000  1.00000000 1.0000000       NA        NA
-    Sigma[1] 1.11346473 0.05691709  1.02656340 1.2081238 1.000072 1937.2072
-    Sigma[2] 1.08038981 0.06441891  0.98564164 1.1899950 1.008704  987.7994
+    Sigma[1] 1.43007923 0.07160340  1.31994175 1.5460066 1.002861 1630.1825
+    Sigma[2] 1.40915172 0.09913354  1.26424450 1.5820359 1.009441  801.3400
 
 Another problem with the Bayesian inference approach is that we do not
 necessarily understand how our analysis extracts the final information

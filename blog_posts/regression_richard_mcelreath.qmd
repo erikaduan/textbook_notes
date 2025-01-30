@@ -35,30 +35,30 @@ This is a review of the following blog posts:
 
 There are a few reasons for performing regression modelling, as listed in [Regression and Other Stories](https://avehtari.github.io/ROS-Examples/) (ROS) by Gelman et al.   
 
-+ Predicting or forecasting outcomes using existing data, **without** aiming to understand causality.     
-+ Exploring (potentially misleading) associations between variables of interest and an outcome.  
-+ Adjusting outcomes from a sample to infer something about a population of interest. This is the aim of many scientific experiments.  
-+ Estimating treatment effects by comparing outcomes between treatment(s) and control (defined in ROS as causal inference).  
++ Predicting or forecasting the mean outcome using existing data, **without** aiming to understand causality.      
++ Exploring (potentially misleading) associations between variables of interest and an outcome.   
++ Adjusting observations from a sample to infer the characteristic(s) of a population of interest.   
++ Estimating treatment effects by comparing outcomes between treatment(s) and control. This is the aim of most scientific experiments and clinical trials and is defined in [ROS](https://avehtari.github.io/ROS-Examples/) as causal inference.      
 
 Scientists are often looking for a method to **separate spurious associations from true causal relationships**, but regression modelling is not designed for this. McElreath is critical of those who carelessly use regression modelling to identify causal relationships.   
 
-**Scenario:**    
+**Scenario 1:**    
 
 We are interested in whether the family size of the mother has any impact on the family size of the daughter.  
 
 + We have data on the family sizes of mother and daughter pairs.  
-+ We expect unmeasured confounds for mother and daughter pairs (different environmental exposures shared by each mother-daughter pair).    
++ We expect unmeasured confounds for mother and daughter pairs, for example different environmental exposures shared by each mother-daughter pair.    
 + Previous research indicates that birth order is associated with fertility, which impacts family size.  
 
 ```{r}
-# Create a synthetic data model ------------------------------------------------
+# Create a generative data model -----------------------------------------------
 set.seed(111)
 
 N <- 200 # Number of mother-daughter pairs
 U <- rnorm(N) # Simulate confounds
 
 U[1:5]
-#> [1] -0.3832159 -0.6019343  0.8216938 -0.4526242  0.3254342
+#> [1] 0.2352207 -0.3307359 -0.3116238 -2.3023457 -0.1708760
 
 # B1 represents the mother's birth order where 1 indicates 'is first born'
 B1 <- rbinom(N, size = 1, prob = 0.5) # Probability 50% are first born
@@ -71,10 +71,6 @@ M <- rnorm(N, mean = 2*B1 + U)
 M[1:5]
 #> [1]  0.37835160  0.03283694 -0.51075527 -4.15239295  1.66977563
 
-M <- ifelse(M < 0, 0, round(M, digits = 0))
-M[1:5]
-#> [1] 0 0 0 0 2
-
 # B2 represents the daughter's birth order where 1 indicates 'is first born' 
 # B2 occurs independently of B1 
 B2 <- rbinom(N, size = 1, prob = 0.5)
@@ -82,42 +78,39 @@ B2[1:5]
 #> [1] 1 1 0 0 1 
 
 # D represents the daughter's family size 
-# We first assume that the mother's family size has no impact on the daughter's 
-# family size.  
+# Our generative model states that the mother's family size has no impact on the
+# daughter's family size.  
 D <- rnorm(N, mean = 2*B2 + U + 0*M) 
 D[1:5]
 #> [1]  0.4896820  2.4589650  0.5504082 -2.3242933  2.9083178  
 
-D <- ifelse(D < 0, 0, round(D, digits = 0))
-D[1:5]
-#> [1] 0 2 1 0 3
+# For simplicity, we assume values of M and D to be real numbers instead of 0 
+# and positive integers.
 ```
 
-A diagram of the causal relationships in our synthetic data model is below.    
+A diagram of the causal relationships in our generative data model is below.    
 
 ```{mermaid}
 flowchart LR  
   A(Mother birth order B1) --> B(Mother family size M) 
-  C(Unknown confound U) --> B 
+  C(Confound U) --> B 
   
   D(Daughter birth order B2) --> E(Daughter family size D) 
   C --> E
 ```
 
-Note that the effect size of the confounder (U) is reasonably significant when `D <- rnorm(N, 2*B2 + U + 0*M)`.        
+Note that the effect size of the confounder (U) is reasonably significant when `U <- rnorm(N, 0, 1)` and `D <- rnorm(N, 2*B2 + U + 0*M)`.   
 
 ```{r}
 #| echo: false
 #| output: true
-#| fig-width: 4
-#| fig-height: 2
 
 plot(U, main = "Effect size of U on D")
 plot(2*B2, main = "Effect size of 2*B2 on D")
 plot(2*B2 + U, main = "Total effect size on D")
 ```
 
-In our synthetic model, the mother's family size (M) has **no impact** on the daughter's family size (D). But what happens when we include M in a regression model to predict D?    
+In our generative model, the mother's family size (M) has **no impact** on the daughter's family size (D). But what happens when we include M in a regression model to predict D?    
 
 ```{r}
 #| output: true
@@ -134,7 +127,7 @@ glance(only_M)
 
 The linear regression model indicates that M is positively associated with D! 
 
-This conflicts with our ground truth that **D is not influenced by M**. Although the adjusted $r^2$ indicates that our model is extremely poorly predictive, we should still be alarmed. In research, it is plausible for unknown confounders to exist that are predictive of both predictor AND outcome variables of interest.   
+This conflicts with our ground truth that **D is not influenced by M**. Although the adjusted $r^2$ indicates that our model `E(D) = 0.71 + 0.29M` is terrible at predicting D, we should still be alarmed.    
 
 What happens if we add more predictor variables into our linear regression model? Does the misleading association between M and D disappear?  
 
@@ -144,27 +137,24 @@ What happens if we add more predictor variables into our linear regression model
 # Build linear regression model D = b0 + b1*M + b2*B1 + b3*B2 ------------------
 M_B1_B2 <- lm(D ~ M + B1 + B2)
 
-# Output tidy linear regression coefficients and p-values  
 tidy(M_B1_B2) 
-
-# Output model performance metrics
 glance(M_B1_B2)
 ```
 
 Unfortunately, adding the variables B1 and B2 produced a model with an even larger $\beta$ coefficient for M!  
 
-B1 is also negatively associated with D, despite ground truth that M is positively dependent on B1 (so we expect B1 and M to have non-zero $\beta$ coefficients with the same sign if M had a causal effect on D).       
+B1 is also negatively associated with D, despite our generative model specifying that M is positively dependent on B1 (so we expect B1 and M to have non-zero $\beta$ coefficients with the same sign if M had a causal effect on D).       
 
-If we examined model performance metrics like AIC and BIC, we would wrongly conclude that the second model is superior and use it for scientific inference. It is likely that the second model is a more predictive model. However, the second model is more misleading if we wanted to infer causal relationships between the predictor (B1, B2 and M) and response (D) variables.      
+If we examined model performance metrics like AIC and BIC, we might wrongly conclude that the second model is superior and use it for scientific inference. It is likely that the second model is more predictive. However, the second model is more misleading if we wanted to infer causal relationships between the predictor (B1, B2 and M) and response (D) variables.      
 
-This example illustrates the dangers of causal salads, where we throw many variables into a model and hope to identify some statistically significant ones. The best way to counter this practice is to also think about the causal relationships **among predictor variables** and not just directly between predictor and response variables.  
+This example illustrates the dangers of causal salads, where we throw many variables into a model and hope to identify some statistically significant ones. The best way to counter this practice is to additionally consider the causal relationships **among predictor variables** and not just the causal relationship between predictor and response variables.  
 
-Our first scenario is the result of **bias amplification**:  
+Our first scenario is specifically the result of **bias amplification**:  
 
 + Both the predictor and response variables are confounded by another variable (U).  
 + Another predictor variable (B1) is included in the model and is a strong predictor of M as `M <- rnorm(N, 2*B1 + U)`.     
-+ The addition of B1 tends to amplify the unknown effects of U and make inference much worse.  
-+ In best practice, we should add other predictor variables hypothesised to be strong predictors of **D but not of M**. In research however, it is usually very difficult to identify such variables confidently, especially when there is limited or mixed information about existing causal relationships.    
++ The addition of B1 tends to amplify the unmeasured effects of U and make inference much worse.  
++ In best practice, we should add other predictor variables hypothesised to be strong predictors of **D but not of M**. In research however, it is usually very difficult to identify such variables confidently, especially when there is limited information about existing causal relationships.    
 
 ```{r}
 #| output: true
@@ -175,7 +165,7 @@ M_B2 <- lm(D ~ M + B2)
 
 # The coefficients of the model D ~ M + B2 are more sensible than 
 # D ~ M + B1 + B2 as the negative coefficient for B1 is omitted. However, the 
-# coefficient of M is still misleading.   
+# coefficient of M is still very misleading.   
 tidy(M_B2) 
 
 # The model performance is similar to D ~ M + B1 + B2 
@@ -184,9 +174,9 @@ glance(M_B2)
 
 ## Confounder impacts on linear regression modelling    
 
-How much do confounders contribute to misleading regression modelling results? Let's examine three scenarios below.   
+How much do unmeasured confounds contribute to misleading regression modelling results? Let's examine three scenarios below.   
 
-**Scenario 3:** The effect size of U is relatively weak compared to the effect sizes of B1 and B2. The new ground truth is represented below.    
+**Scenario 2:** The effect size of U is relatively weak compared to the effect sizes of B1 and B2. The new generative model is below.    
 
 ```{mermaid}
 flowchart LR  
@@ -198,14 +188,13 @@ flowchart LR
 ```
 
 ```{r}
+#| output: true
+
 # Create new values for M and D when U = 0.1 -----------------------------------
 set.seed(111)  
 
 M_low_U <- rnorm(N, mean = 2*B1 + 0.1*U) 
-M_low_U <- ifelse(M_low_U < 0, 0, round(M_low_U, digits = 0))  
-
 D_low_U <- rnorm(N, mean = 2*B2 + 0.1*U)
-D_low_U <- ifelse(D_low_U < 0, 0, round(D_low_U, digits = 0))
 
 # Build linear regression model D_low_U = b0 + b1*M_low_U + b2*B2 --------------
 M_B2_low_U <- lm(D_low_U ~ M_low_U + B2)
@@ -216,7 +205,7 @@ tidy(M_B2_low_U)
 glance(M_B2_low_U)
 ```
 
-**Scenario 2:** There is no unknown confounder U that impacts both M and D. The modelling includes B1, which is highly predictive of M and may introduce some multicollinearity. The new ground truth is represented below.   
+**Scenario 3:** There is no unmeasured confounder U impacting M and D. The modelling includes B1, which is highly predictive of M and may introduce some multicollinearity. The new ground truth is represented below.   
 
 ```{mermaid}
 flowchart LR  
@@ -225,61 +214,57 @@ flowchart LR
 ```
 
 ```{r}
+#| output: true
+
 # Create new values for M and D when U = 0 -------------------------------------
 set.seed(111)
 
 M_no_U <- rnorm(N, mean = 2*B1) 
-M_no_U <- ifelse(M_no_U < 0, 0, round(M_no_U, digits = 0))
-
 D_no_U <- rnorm(N, mean = 2*B2)
-D_no_U <- ifelse(D_no_U < 0, 0, round(D_no_U, digits = 0))
 
 # Build linear regression models -----------------------------------------------
 M_B2_no_U <- lm(D_no_U ~ M_no_U + B2) # No multicollinearity
 M_B1_B2_no_U <- lm(D_no_U ~ M_no_U + B1 + B2) # Multicollinearity through B1
-M_B1_B2_no_U_no_I <- lm(D_no_U ~ 0 + M_no_U + B1 + B2) # No intercept assumed  
 
-# The addition of B1 does not impact the value of other model coefficients. The 
-# biggest positive impact on model performance is the removal of the intercept.
+# The addition of B1 does not impact the value of other model coefficients. 
 tidy(M_B2_no_U)
 glance(M_B2_no_U)
 
 tidy(M_B1_B2_no_U) 
 glance(M_B1_B2_no_U)
-
-tidy(M_B1_B2_no_U_no_I) 
-glance(M_B1_B2_no_U_no_I)
 ```
 
-**Scenario 3:** There is no confounder of both M and D. An unknown confounder U only affects M and the model includes B1, which may introduce some multicollinearity. The new ground truth is represented below.    
+**Scenario 4:** An unmeasured variable I only affects M (it is no longer a confounder of D) and the model includes B1, which may introduce some multicollinearity. The new ground truth is represented below.    
 
 ```{mermaid}
 flowchart LR  
   A(B1) --> B(M) 
-  C(U) --> B
+  C(I) --> B
   
   D(B2) --> E(D)  
 ```
 
 ```{r}
+#| output: true
+
 # Build linear regression model D_no_U = b0 + b1*M + b2*B2 ---------------------
-M_B2_D_no_U <- lm(D_no_U ~ M + B2) # No multicollinearity
-M_B1_B2_D_no_U <- lm(D_no_U ~ M + B1 + B2) # Multicollinearity through B1
+M_B2_I <- lm(D_no_U ~ M + B2) # No multicollinearity
+M_B1_B2_I <- lm(D_no_U ~ M + B1 + B2) # Multicollinearity through B1
 
 # The model coefficients for M and B2 are unchanged after the inclusion of B1, 
-# highlighting that bias amplification only exists when U confounds both 
-# predictive AND response variables.   
+# highlighting that bias amplification specifically exists when U confounds a 
+# predictive and response variable.   
 
-tidy(M_B2_D_no_U)
-glance(M_B2_D_no_U)
+tidy(M_B2_I)
+glance(M_B2_I)
 
-tidy(M_B1_B2_D_no_U)
-glance(M_B1_B2_D_no_U)
+tidy(M_B1_B2_I)
+glance(M_B1_B2_I)
 ```
 
-Shown above, misleading causal salads are generated when unknown confounders impact **both** the predictor and response variables of interest. Amplification bias is also specific to this pattern of confounding.   
+Shown above, misleading causal salads are generated when unmeasured confounds impact **both** the predictor and response variables of interest. Amplification bias occurs specifically when confounding exists. In contrast, potential multicollinearity (through the addition of B1 as well as M) does not hurt our model very much.   
 
-In research, it is difficult to rule out the existence of such unknown confounders, unless one is extremely confident about the causal relationships between all measured and unmeasured variables.  
+In research, it is difficult to rule out the existence of unmeasured confounds, unless one is extremely confident about the causal relationships between all measured and unmeasured variables.  
 
 
 # Part 2: Causal Design      
@@ -289,7 +274,7 @@ Regression has no direction whereas causal models are built from directional rel
 + A change in X will cause a change in Y.  
 + A change in Y will not impact X.    
 
-We can turn our first modelling question into the causal graph below. This graph represents our hypothesis about what is happening, which is why we include an arrow from M to D.   
+We can turn our first modelling question into the causal graph below. The new graph represents our hypothesis about what is happening, which is why we now include an arrow from M to D.   
  
 ```{mermaid}
 flowchart TD  
@@ -300,15 +285,16 @@ flowchart TD
   
   M -- m --> D
   
+  style M fill:#b7cbde,stroke:#333
   style D fill:#Fff9e3,stroke:#333
 ```
 
-Other graph construction decisions:  
+New graph construction decisions:  
 
-+ We assume that the influence of birth order on family size ***b*** is consistent over time (the same effect size for mothers and daughters). This assumption may come from domain knowledge or be a common sense simplification.     
-+ We also assume that the influence of the unobserved confound ***k*** is the same for mothers and daughters.   
++ We assume that the influence of birth order on family size ***b*** is consistent over different generations. This assumption may come from domain knowledge or be a common sense simplification.     
++ We also assume that the influence of the unmeasured confound ***k*** is the same for mothers and daughters.   
 
-The covariance between two variables can be calculated directly from a causal graph.  
+Our generative model is a linear one as each variable is produced by an additive combination of other variables. In a linear model, the covariance between two variables (the extent of variation between two variables measured using observation pairs) can be calculated directly from the graph.  
 
 If ***b*** is the causal influence of B1 on M, then the covariance between B1 and M is just the causal effect ***b*** multiplied by the variance of B1.    
 
@@ -332,6 +318,7 @@ lm(M ~ B1) |>
 We are interested in the causal influence of M on D and would therefore like to estimate ***m***. We know the following things:   
 
 + We do not know U or ***k*** as U is unobserved.  
++ We cannot  calculate $cov(M, D)$ directly as it is influenced by ***k*** and ***m***.   
 + We can calculate $cov(B_1, D) = b\times m \times var(B_1)$ as we multiply the causes ***b*** and ***m*** when there are multiple arrows on a path.    
 
 We can therefore solve for ***m***.     
@@ -352,16 +339,16 @@ cov(B1, D) / cov(B1, M)
 # Test for different values of m -----------------------------------------------
 set.seed(111)
 
-D2 <- rnorm(N, 2*B2 + U + 0.7*M) 
-D2 <- ifelse(D2 < 0, 0, round(D2, digits = 0))
+D_m2 <- rnorm(N, 2*B2 + U + 0.7*M) 
+D_m2 <- ifelse(D_m2 < 0, 0, round(D_m2, digits = 0))
 
-cov(B1, D2) / cov(B1, M)
+cov(B1, D_m2) / cov(B1, M)
 #> [1] 0.3991978
 
-D3 <- rnorm(N, 2*B2 + U + 1.5*M) 
-D3 <- ifelse(D3 < 0, 0, round(D3, digits = 0))
+D_m3 <- rnorm(N, 2*B2 + U + 1.5*M) 
+D_m3 <- ifelse(D_m3 < 0, 0, round(D_m3, digits = 0))
 
-cov(B1, D3) / cov(B1, M)
+cov(B1, D_m3) / cov(B1, M)
 #> [1] 1.19655
 ```
 
@@ -377,10 +364,9 @@ N <- 200
 U <- rnorm(N, 0, 1) 
 B1 <- rbinom(N, size=1, prob = 0.5) 
 M <- rnorm(N, 2*B1 + U)
-M <- ifelse(M < 0, 0, round(M, digits = 0))
+
 B2 <- rbinom(N, size = 1, prob = 0.5)
 D <- rnorm(N, 2*B2 + U + 0*M)
-D <- ifelse(D < 0, 0, round(D, digits = 0))
 
 # Define bootstrap statistic i.e. m = cov(B1, D) / cov(B1, M)  
 f <- function(data,indices) 
@@ -414,6 +400,7 @@ The key ideas behind **do-calculus** are:
 
 + Use statistical or experimental design choices to remove confounds for an association of interest between an exposure and outcome. Graphically, this is equivalent to removing all arrows entering the exposure of interest. In medical research, we can achieve this scenario by conducting randomised controlled trials (RCTs) to experimentally set different values for M.      
 + The remaining association is an estimate of the causal effect of the exposure on the outcome.   
++ Other variables (B2) are still included in the analysis to improve the precision of the estimated effect size.  
 
 In our scenario, we would be interested in modelling the intervention below to calculate $p(D|do(M))$, which is the distribution of D when we intervene on M.    
 
@@ -425,16 +412,18 @@ flowchart TD
   
   B1
   
+  style M fill:#b7cbde,stroke:#333
   style D fill:#Fff9e3,stroke:#333
 ```
 
 When RCTs cannot be conducted (for ethical or financial reasons), do-calculus provides an algorithm for deducing statistical methods to convert our original hypothesised model into the simplified model above and to then calculate $p(D|do(M))$.    
 
+
 # Part 3: Bayesian Inference    
 
 According to McElreath, **full-luxury Bayesian inference** is an approach which:  
 
-+ Uses all variables and expresses all of their relationships as a joint probability distribution (only uses one statistical model unlike the causal graph approach).  
++ Uses all variables and expresses all of their relationships as a joint probability distribution (hence we only use one statistical model unlike the causal graph approach).  
 + Any available data can be used to constrain the joint probability distribution, eliminate possibilities and refine information about causal effects.  
 + This process automatically realises and derives the statistical implications of the causal model.  
 + This process allows estimations in finite samples, with missing data, measurement errors or other common errors present.  
@@ -442,6 +431,19 @@ According to McElreath, **full-luxury Bayesian inference** is an approach which:
 ## Step 1: Express the model as a joint probability distribution  
 
 We can rewrite our original generative code as a joint probability distribution.  
+
+```{mermaid}
+flowchart TD  
+  B1 -- b --> M  
+  U -- k --> M  
+  U -- k --> D   
+  B2 -- b --> D
+  
+  M -- m --> D
+  
+  style M fill:#b7cbde,stroke:#333
+  style D fill:#Fff9e3,stroke:#333
+```
 
 ```{r}
 # Original generative model to be converted ------------------------------------
@@ -451,12 +453,9 @@ N <- 200
 U <- rnorm(N, 0, 1) 
 B1 <- rbinom(N, size=1, prob = 0.5) 
 M <- rnorm(N, 2*B1 + U)
-M <- ifelse(M < 0, 0, round(M, digits = 0)) # [1]
+
 B2 <- rbinom(N, size = 1, prob = 0.5)
 D <- rnorm(N, 2*B2 + U + 0*M)
-D <- ifelse(D < 0, 0, round(D, digits = 0)) # [1]
-
-# [1] We will skip these lines to simplify our joint probability distribution
 ```
 
 Let $i$ represent an individual mother-daughter pair. The joint probability distribution is derived from the following distinct probability distributions:    
@@ -484,7 +483,7 @@ The parameter ***k*** has been assigned an exponential distribution to constrain
 The variables of our final joint probability distribution are:    
 
 + the observed variables (the data)    
-+ the latent variables (the unknown parameters)    
++ the latent variables (the unmeasured or unknown parameters)    
 
 Every time we acquire new data, we acquire new information about these variables and we can update the joint distribution to see if it implies new information about any of the other i.e. latent variables.   
 
@@ -540,14 +539,13 @@ The `cmdstanr` package uses automatic differentiation to sample from the approxi
 
 # Summarise the marginal distributions of m, b and k ---------------------------
 precis(bayes_model, pars = c("m", "b", "k")) 
-
-# Estimates for m, b and k are much closer to the original values used in our 
-# generative model i.e. m = 0, b = 2 and k = 1.   
 ```
+
+The estimates for m, b and k are much closer to the original values from our generative model i.e. m = 0, b = 2 and k = 1.   
 
 ## Step 3: Simulate causal interventions   
 
-Imagine that we also want to know the causal effect of intervening on B1 on D i.e. $P(D | do(B_1))$. This causal effect depends on multiple parameters (the product of ***b*** and ***m*** instead of only ***m***) and it can also be computed.   
+Imagine that we also want to know the causal effect of intervening on B1 on D i.e. $P(D | do(B_1))$. This causal effect depends on multiple parameters (the product of ***b*** and ***m*** instead of only ***m***). As our causal model is linear, we can compute $P(D | do(B_1))$ directly or by simulating the intervention on B1.   
 
 ```{r}
 #| output: true 
@@ -560,7 +558,7 @@ posterior <- extract.samples(bayes_model)
 quantile(with(posterior, b*m))
 ```
 
-The median is 0.082 and there is a wide range of both positive and negative effects, which indicates that there is no effect on D when we intervene on B1. This is expected, as ***m*** is close to 0 and uncertain.   
+The median is `r quantile(with(posterior, b*m))[3]` and there is a wide range of both positive and negative effects, which indicates that there is no effect on D when we intervene on B1. This is expected, as ***m*** is close to 0 and uncertain.   
 
 ```{r}
 #| output: true 
@@ -605,6 +603,7 @@ flowchart TD
   B1 --b--> M
   B1 --d--> D
   
+  style M fill:#b7cbde,stroke:#333
   style D fill:#Fff9e3,stroke:#333
 ```
 

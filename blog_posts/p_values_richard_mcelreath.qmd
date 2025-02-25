@@ -1,5 +1,5 @@
 ---
-title: "Review of None of the Above and linked research papers"
+title: "Review of None of the Above"
 author: "Erika Duan"
 date: "`r Sys.Date()`"
 
@@ -18,9 +18,10 @@ format:
 ```{r}
 # Load required R packages -----------------------------------------------------
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load(ggplot2) 
+pacman::p_load(dplyr,
+               purrr,
+               ggplot2) 
 ```
-
 
 This is a review of the following blog posts and articles:    
 
@@ -29,71 +30,110 @@ This is a review of the following blog posts and articles:
 + [How conditioning on post-treatment variables can ruin your experiment and what to do about it](https://onlinelibrary.wiley.com/doi/10.1111/ajps.12357)  
 + [Connecting simple and precise p-values to complex and ambiguous realities](https://arxiv.org/abs/2304.01392)  
 
-# A review of P-values  
+# A review of P-values   
 
-Why do biologists care about P-values? 
+Why do some biologists misunderstand p-values? Biology is built upon the traditional scientific method, where the behaviour of natural phenomena is inferred from carefully controlled experiments conducted on small samples.   
 
-It all starts with scientific belief and the traditional way discoveries were made. 
+When you are the exhausted craftsperson setting up intricate hours long experiments, you can fall victim to deterministic thinking (that any observed changes must ONLY be due to your experimentally altered variable). You forget that you are still at the mercy of randomness when you measure small samples drawn from extremely niche hypothetical populations.    
 
-We believe that different biological phenomenon exist. In biology, we're interested in improving pest resistance in crops to decreasing tumour resistance to chemotherapy. A classic case is this. 
+Biology is also subject to extremely competitive publication pressures. Only sensational discoveries about new biological mechanisms are published in prestigious journals. So biologists are always chasing a greater mechanistic mystery. It is easy to forget that the solution relies on inferences from 100s of different experiments about the behaviours of 100s of niche hypothetical populations.   
 
-We hope that drug X causes cancer cells to die in a petri dish. 
-Biologically, we need to think about the whole population of cancer cells with and without drug X. Because each individual cell, for unknown and random differences, can vary in their response. 
-
-Because we have R, we can simulate the truth and look at what these numbers look like in the lab.  
-Let's look at two scenarios. 
+Let's step away from biology and create some simulations to refresh our understanding of P-values.   
 
 ```{r}
-# Functions for simulating and plotting data points ----------------------------
-# n is the sample size of the experiment  
-# control_mean and treatment_mean are separately specified 
-# seed allows us to fix the outputs from random sampling from control and treatment
-# populations  
-# we assumed sd = 1 for convenience
+#| echo: true
 
-simulate_cancer_samples <- function(n, con_mean, treat_mean, seed) {
+# Generate single simulation ---------------------------------------------------
+# Image that two populations exist:   
+# [C] - the population of HeLa tumour cells growing normally in a petri dish 
+#     - after 3 days, the number of surviving cells has mean = 10000, sd = 1000
+# [T] - the population of HeLa tumour cells growing in the presence of drug Z  
+#     - after 3 days, the number of surviving cells has mean = 8500, sd = 1000
 
-set.seed(seed)
+# In each experiment, we have 6 samples of C and 6 samples of T   
+# Each experiment is a random draw from the population of all possible C and T 
+# values. 
+
+set.seed(111)
+
+single_exp <- tibble(
+  exp_id = rep(1, 12), 
+  treatment = rep(c("C", "T"), 6)
+) |> 
+  mutate(
+    survival = case_when(
+      treatment == "C" ~ rnorm(12, mean = 10000, sd = 1000),
+      treatment == "T" ~ rnorm(12, mean = 8500, sd = 1000),
+      .default = NA_real_
+    )) 
+
+# Plot cell survival by treatment group  
+single_exp |> 
+  ggplot(aes(x = treatment, y = survival)) +
+  geom_point() +
+  scale_y_continuous(limits = c(0, NA)) +
+  labs(x = "Treatment",
+       y = "Cell number")
+```
+
+Unlike biologists, we can easily simulate 20 repeated experiments.   
+
+```{r}
+#| echo: true
+
+# Create function to simulate and plot experiments ----------------------------- 
+perform_exp <- function(id, seed_number) {
+  set.seed(seed_number)
   
-# Assume two different populations exist   
-c <- rnorm(n, mean = con_mean, sd = 1)
-t <- rnorm(n, mean = treat_mean, sd = 1)
-
-set.seed(NULL)
-
-tibble::tibble(c, t) |>
-  tidyr::pivot_longer(cols = c(c, t)) |>
-  ggplot(aes(x = name, y = value)) +
-  geom_point()
+  df <- tibble(
+    exp_id = rep(id, 12), 
+    treatment = rep(c("C", "T"), 6)
+  ) |> 
+    mutate(
+      survival = case_when(
+        treatment == "C" ~ rnorm(12, mean = 10000, sd = 1000),
+        treatment == "T" ~ rnorm(12, mean = 8500, sd = 1000),
+        .default = NA_real_
+      )) 
+  
+  return(df)
+  set.seed(NULL)
 }
+
+# Create 20 new simulations ----------------------------------------------------
+id <- seq(2, 21)
+seed_number <- seq(112, 131)
+
+twenty_exps <- map2(id, seed_number, perform_exp) |>
+  bind_rows()
+
+# Plot 20 simulations ----------------------------------------------------------
+twenty_exps |>
+  ggplot(aes(x = treatment, y = survival)) +
+  geom_point(size = 1) +
+  stat_summary(
+    fun = "mean",        
+    geom = "point",
+    shape = 23,
+    size = 1.5,
+    fill = "salmon",
+    colour = "black"
+  ) + 
+  scale_y_continuous(limits = c(0, NA)) +
+  facet_wrap(vars(exp_id)) +
+  labs(x = NULL,
+       y = "Cell number",
+       fill = NULL)
 ```
 
-# Scenario 1 and scenario 2   
+As this is a simulation, we already know that mean cancer cell survival is different between the treatment and control groups. To be precise, $Control \sim\mathcal{N}(10000,\,1000^{2})$ and $Treatment \sim\mathcal{N}(8500,\,1000^{2})$ and the treatment does reduce mean cancer cell growth **in vitro**.  
 
-```{r}
-simulate_cancer_samples(10, 10, 4, 111)
-simulate_cancer_samples(10, 10, 9, 111)
-
-simulate_cancer_samples(1000, 10, 4, 111)
-simulate_cancer_samples(1000, 10, 9, 111)
-```
-
-Is the example biologically significant? That's for the field to answer (personally NO). 
-
-In the Student's t-test and linear regression, we assume variation of error is normally distributed and this is the variation part of Y's response. We have some background assumptions about unmeasurable phenomenon and we have fixed constant variables.  
-
-P-values are a numerical indicator for inferring whether the overall populations are different to each other. 
-A p-value of 0.001 is interpreted as: 
-
-....  
-
-(we can simulate this)
-
-Okay then, so why all the angst? 
+As a biologist, due to random sampling, an individual experiment could take the form of any of the 20 experiments above. In the absence of statistical rigour, we do not have a way of quantifying how the impact of random sampling affects our ability to observe natural phemonmemon too. 
 
 # Review of None of the Above       
 
 
 # Key messages  
 
+- https://stirlingcodingclub.github.io/simulating_data/index.html 
      

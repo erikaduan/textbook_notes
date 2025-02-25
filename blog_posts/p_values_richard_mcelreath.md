@@ -1,16 +1,20 @@
-Review of None of the Above and linked research papers
+Review of None of the Above
 ================
 Erika Duan
-2024-12-05
+2025-02-25
 
--   <a href="#none-of-the-above" id="toc-none-of-the-above">None of the
-    Above</a>
+-   <a href="#a-review-of-p-values" id="toc-a-review-of-p-values">A review
+    of P-values</a>
+-   <a href="#review-of-none-of-the-above"
+    id="toc-review-of-none-of-the-above">Review of None of the Above</a>
 -   <a href="#key-messages" id="toc-key-messages">Key messages</a>
 
 ``` r
 # Load required R packages -----------------------------------------------------
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load() 
+pacman::p_load(dplyr,
+               purrr,
+               ggplot2) 
 ```
 
 This is a review of the following blog posts and articles:
@@ -25,6 +29,127 @@ This is a review of the following blog posts and articles:
 -   [Connecting simple and precise p-values to complex and ambiguous
     realities](https://arxiv.org/abs/2304.01392)
 
-# None of the Above
+# A review of P-values
+
+Why do some biologists misunderstand p-values? Biology is built upon the
+traditional scientific method, where the behaviour of natural phenomena
+is inferred from carefully controlled experiments conducted on small
+samples.
+
+When you are the exhausted craftsperson setting up intricate hours long
+experiments, you can fall victim to deterministic thinking (that any
+observed changes must ONLY be due to your experimentally altered
+variable). You forget that you are still at the mercy of randomness when
+you measure small samples drawn from extremely niche hypothetical
+populations.
+
+Biology is also subject to extremely competitive publication pressures.
+Only sensational discoveries about new biological mechanisms are
+published in prestigious journals. So biologists are always chasing a
+greater mechanistic mystery. It is easy to forget that the solution
+relies on inferences from 100s of different experiments about the
+behaviours of 100s of niche hypothetical populations.
+
+Let’s step away from biology and create some simulations to refresh our
+understanding of P-values.
+
+``` r
+# Generate single simulation ---------------------------------------------------
+# Image that two populations exist:   
+# [C] - the population of HeLa tumour cells growing normally in a petri dish 
+#     - after 3 days, the number of surviving cells has mean = 10000, sd = 1000
+# [T] - the population of HeLa tumour cells growing in the presence of drug Z  
+#     - after 3 days, the number of surviving cells has mean = 8500, sd = 1000
+
+# In each experiment, we have 6 samples of C and 6 samples of T   
+# Each experiment is a random draw from the population of all possible C and T 
+# values. 
+
+set.seed(111)
+
+single_exp <- tibble(
+  exp_id = rep(1, 12), 
+  treatment = rep(c("C", "T"), 6)
+) |> 
+  mutate(
+    survival = case_when(
+      treatment == "C" ~ rnorm(12, mean = 10000, sd = 1000),
+      treatment == "T" ~ rnorm(12, mean = 8500, sd = 1000),
+      .default = NA_real_
+    )) 
+
+# Plot cell survival by treatment group  
+single_exp |> 
+  ggplot(aes(x = treatment, y = survival)) +
+  geom_point() +
+  scale_y_continuous(limits = c(0, NA)) +
+  labs(x = "Treatment",
+       y = "Cell number")
+```
+
+Unlike biologists, we can easily simulate 20 repeated experiments.
+
+``` r
+# Create function to simulate and plot experiments ----------------------------- 
+perform_exp <- function(id, seed_number) {
+  set.seed(seed_number)
+  
+  df <- tibble(
+    exp_id = rep(id, 12), 
+    treatment = rep(c("C", "T"), 6)
+  ) |> 
+    mutate(
+      survival = case_when(
+        treatment == "C" ~ rnorm(12, mean = 10000, sd = 1000),
+        treatment == "T" ~ rnorm(12, mean = 8500, sd = 1000),
+        .default = NA_real_
+      )) 
+  
+  return(df)
+  set.seed(NULL)
+}
+
+# Create 20 new simulations ----------------------------------------------------
+id <- seq(2, 21)
+seed_number <- seq(112, 131)
+
+twenty_exps <- map2(id, seed_number, perform_exp) |>
+  bind_rows()
+
+# Plot 20 simulations ----------------------------------------------------------
+twenty_exps |>
+  ggplot(aes(x = treatment, y = survival)) +
+  geom_point(size = 1) +
+  stat_summary(
+    fun = "mean",        
+    geom = "point",
+    shape = 23,
+    size = 1.5,
+    fill = "salmon",
+    colour = "black"
+  ) + 
+  scale_y_continuous(limits = c(0, NA)) +
+  facet_wrap(vars(exp_id)) +
+  labs(x = NULL,
+       y = "Cell number",
+       fill = NULL)
+```
+
+As this is a simulation, we already know that mean cancer cell survival
+is different between the treatment and control groups. To be precise,
+![Control \sim\mathcal{N}(10000,\\,1000^{2})](https://latex.codecogs.com/svg.latex?Control%20%5Csim%5Cmathcal%7BN%7D%2810000%2C%5C%2C1000%5E%7B2%7D%29 "Control \sim\mathcal{N}(10000,\,1000^{2})")
+and
+![Treatment \sim\mathcal{N}(8500,\\,1000^{2})](https://latex.codecogs.com/svg.latex?Treatment%20%5Csim%5Cmathcal%7BN%7D%288500%2C%5C%2C1000%5E%7B2%7D%29 "Treatment \sim\mathcal{N}(8500,\,1000^{2})")
+and the treatment does reduce mean cancer cell growth **in vitro**.
+
+As a biologist, due to random sampling, an individual experiment could
+take the form of any of the 20 experiments above. In the absence of
+statistical rigour, we do not have a way of quantifying how the impact
+of random sampling affects our ability to observe natural phemonmemon
+too.
+
+# Review of None of the Above
 
 # Key messages
+
+-   https://stirlingcodingclub.github.io/simulating_data/index.html

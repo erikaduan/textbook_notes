@@ -1,7 +1,7 @@
 Review of None of the Above
 ================
 Erika Duan
-2025-02-26
+2025-03-09
 
 -   <a href="#a-review-of-p-values" id="toc-a-review-of-p-values">A review
     of P-values</a>
@@ -10,9 +10,6 @@ Erika Duan
     frequentist versus Bayesian methods</a>
 -   <a href="#review-of-none-of-the-above"
     id="toc-review-of-none-of-the-above">Review of None of the Above</a>
--   <a href="#frequentist-versus-baysian-methods-in-ab-testing"
-    id="toc-frequentist-versus-baysian-methods-in-ab-testing">Frequentist
-    versus Baysian methods in A/B testing</a>
 -   <a href="#key-messages" id="toc-key-messages">Key messages</a>
 -   <a href="#other-resource" id="toc-other-resource">Other resource</a>
 
@@ -53,12 +50,13 @@ populations.
 Biology is also subject to extremely competitive publication pressures.
 Only sensational discoveries about new biological mechanisms are
 published in prestigious journals. So biologists are always chasing a
-greater mechanistic mystery. It is easy to forget this process relies on
+greater mechanistic mystery. This process relies on cobbling together
 inferences from 100s of different experiments about the behaviours of
-100s of different populations.
+100s of different populations (so if your P-value is 0.05, then a few
+inferences are likely wrong).
 
 Let’s step away from biology and simulate some laboratory experiments to
-refresh our understanding of P-values.
+refresh our understanding of random sampling from populations.
 
 ``` r
 # Generate single experiment ---------------------------------------------------
@@ -98,7 +96,17 @@ single_exp |>
 
 ![](p_values_richard_mcelreath_files/figure-gfm/unnamed-chunk-2-1.png)
 
-Unlike biologists, we can easily conduct 20 repeated experiments.
+As this is a simulation, we know that mean cell survival is lower in the
+treatment compared to control tumour cell population (in real life, we
+rely on experiments to estimate this property). In the code above, we
+specified that
+![Control \sim\mathcal{N}(10000,\\,1000^{2})](https://latex.codecogs.com/svg.latex?Control%20%5Csim%5Cmathcal%7BN%7D%2810000%2C%5C%2C1000%5E%7B2%7D%29 "Control \sim\mathcal{N}(10000,\,1000^{2})")
+and
+![Treatment \sim\mathcal{N}(8500,\\,1000^{2})](https://latex.codecogs.com/svg.latex?Treatment%20%5Csim%5Cmathcal%7BN%7D%288500%2C%5C%2C1000%5E%7B2%7D%29 "Treatment \sim\mathcal{N}(8500,\,1000^{2})").
+
+Our random single experiment accurately reflects the population level
+behaviour of control versus treatment cells. Unlike biologists, we can
+easily conduct 20 repeated experiments.
 
 ``` r
 # Create function to simulate and plot many experiments ------------------------
@@ -128,6 +136,7 @@ twenty_exps <- map2(id, seed_number, perform_exp) |>
   bind_rows()
 
 # Plot 20 simulations ----------------------------------------------------------
+# Mean cell survival is plotted by an orange diamond symbol 
 twenty_exps |>
   ggplot(aes(x = treatment, y = survival)) +
   geom_point(size = 1) +
@@ -150,37 +159,165 @@ twenty_exps |>
 
 ![](p_values_richard_mcelreath_files/figure-gfm/unnamed-chunk-3-1.png)
 
-As this is a simulation, we already know that mean cancer cell survival
-is different between the treatment and control groups (in real life, we
-need experiments to help us estimate this answer). We specified that
+If we look at individual experiments:  
++ The mean cell survival varies slightly between each experiment.  
++ In most of our experiments, mean cell survival is lower in the
+treatment compared to control group. + However, in experiments 2 and 8,
+mean cell survival looks similar between treatment and control groups
+**by random chance**.  
++ An unlucky biologist might conduct a single small experiment and be
+mislead that mean cell survival is similar between treatment and control
+groups when it is not. In this scenario, this could happen 2 out of 20
+times and this error is called a **false negative** or **type II**
+error.
+
+Another scenario can also occur, where an unlucky biologist wrongly
+concludes that mean cell survival is different between treatment and
+control groups when it is identical. This is called a **false positive**
+or **type I** error and is what **P-values** try to minimise.
+
+``` r
+# Create function to simulate and plot many experiments ------------------------
+# Mean cell survival is now the same between control and treatment populations  
+perform_exp_same <- function(id, seed_number) {
+  set.seed(seed_number)
+  
+  df <- tibble(
+    exp_id = rep(id, 12), 
+    treatment = rep(c("C", "T"), 6)
+  ) |> 
+    mutate(
+      survival = case_when(
+        treatment == "C" ~ rnorm(12, mean = 10000, sd = 1000),
+        treatment == "T" ~ rnorm(12, mean = 10000, sd = 1000),
+        .default = NA_real_
+      )) 
+  
+  return(df)
+  set.seed(NULL)
+}
+
+# Simulate 20 new experiments---------------------------------------------------
+twenty_exps_same <- map2(id, seed_number, perform_exp_same) |>
+  bind_rows()
+
+# Plot 20 simulations ----------------------------------------------------------
+# Mean cell survival is plotted by an orange diamond symbol
+twenty_exps_same |>
+  ggplot(aes(x = treatment, y = survival)) +
+  geom_point(size = 1) +
+  stat_summary(
+    fun = "mean",        
+    geom = "point",
+    shape = 23,
+    size = 1.5,
+    fill = "salmon",
+    colour = "black"
+  ) + 
+  scale_y_continuous(limits = c(0, NA)) +
+  facet_wrap(vars(exp_id)) +
+  labs(
+    x = NULL,
+    y = "Number of surviving cells",
+    fill = "Treatment group"
+  )
+```
+
+![](p_values_richard_mcelreath_files/figure-gfm/unnamed-chunk-4-1.png)
+
+In this new scenario, from the code above, we know that mean cell
+survival is identical in the treatment and control tumour cell
+populations. We specified that
 ![Control \sim\mathcal{N}(10000,\\,1000^{2})](https://latex.codecogs.com/svg.latex?Control%20%5Csim%5Cmathcal%7BN%7D%2810000%2C%5C%2C1000%5E%7B2%7D%29 "Control \sim\mathcal{N}(10000,\,1000^{2})")
 and
-![Treatment \sim\mathcal{N}(8500,\\,1000^{2})](https://latex.codecogs.com/svg.latex?Treatment%20%5Csim%5Cmathcal%7BN%7D%288500%2C%5C%2C1000%5E%7B2%7D%29 "Treatment \sim\mathcal{N}(8500,\,1000^{2})").
+![Treatment \sim\mathcal{N}(10000,\\,1000^{2})](https://latex.codecogs.com/svg.latex?Treatment%20%5Csim%5Cmathcal%7BN%7D%2810000%2C%5C%2C1000%5E%7B2%7D%29 "Treatment \sim\mathcal{N}(10000,\,1000^{2})").
 
-But if we look at individual experiments:  
-+ In the majority of our experiments, mean cancer cell survival is lower
-in the treatment compared to control group.  
-+ However, in experiments 2 and 8, mean cancer cell survival looks
-similar between treatment and control groups **by random chance**.  
-+ An unlucky scientist might conduct a single small experiment and be
-mislead that mean cell survival is similar between treatment and control
-groups, even when it is not. This could happen 2 out of 20 times in this
-scenario.
+If we look at individual experiments:  
++ In most experiments, mean cell survival looks similar between the
+treatment and control groups.  
++ In experiment 8, mean cell survival looks higher in the treatment
+compared to control group **by random chance**.  
++ In experiment 18, mean cell survival looks slightly lower in the
+treatment compared to control group **by random chance**.  
++ An unlucky biologist might conduct a single small experiment and be
+mislead that mean cell survival is different between treatment and
+control groups. Making this error causes biologists to waste money and
+time focusing on the wrong research target.
 
-Applied correctly, frequentist statistics is a rigorous method of
-preventing such misleading interpretations about our populations of
-interest. It estimates how likely the results from individual
-experiments represent what is really happening at the population level.
+To prevent type I errors, scientists rely on significance testing with
+**P-values** to help them estimate whether the mean outcome is likely to
+be different between two (or more) populations.
+
+A **P-value of 0.05** from a single experiment means that there is only
+a **5% chance** of observing this result if mean cell survival was
+identical in treatment and control tumour cell populations. A P-value \<
+0.05 indicates that mean cell survival is more likely to be different
+between our populations of interest.
+
+Applied correctly, frequentist statistics is still a rigorous method of
+preventing type I errors. The **P-value** of an experiment is a random
+variable that helps us to infer actual reality from individual
+experiments.
 
 # Review of frequentist versus Bayesian methods
+
+[This
+post](https://stats.stackexchange.com/questions/491436/what-does-parameters-are-fixed-and-data-vary-in-frequentists-term-and-parame)
+best explains the differences between frequentist and Bayesian
+approaches. To paraphrase:
+
+-   Frequentist statistics treat parameters as fixed and non-random
+    objects. For example, most biologists believe that the behaviour of
+    higher-level biological phenomenon is non-random **within a
+    carefully controlled environment**.  
+-   Frequentists therefore treat the results from an experimental data
+    set as being randomly generated (due to random sampling from a much
+    larger population).
+
+I think that this is a reasonable pragmatic belief. For example, when
+studying the impact of protein X on cell death, we expect that switching
+off protein X leads to a fixed amount of cell death if all other
+conditions are constant. **The flaw is that biologists can forget that
+individual data sets are actually random.**
+
+-   Bayesian statistics treats parameters as random variables that have
+    a distribution (described by a probability mass or density
+    function).  
+-   Bayesians may believe that a true fixed parameter ultimately exists
+    as we still need to approximate
+    ![p(x)](https://latex.codecogs.com/svg.latex?p%28x%29 "p(x)").  
+-   Bayesians encode additional beliefs about that range of values that
+    the parameter of interest takes on given new or more information.  
+-   Hence
+    ![\pi_1(\theta \| x) = \tfrac{f(x\| \theta)\times\pi_0(\theta)}{p(x)}](https://latex.codecogs.com/svg.latex?%5Cpi_1%28%5Ctheta%20%7C%20x%29%20%3D%20%5Ctfrac%7Bf%28x%7C%20%5Ctheta%29%5Ctimes%5Cpi_0%28%5Ctheta%29%7D%7Bp%28x%29%7D "\pi_1(\theta | x) = \tfrac{f(x| \theta)\times\pi_0(\theta)}{p(x)}").
+
+To ability to update our belief about the behavior of a parameter
+through new data is very clever. At a macroscopic level, this is
+actually how scientific theory evolves.
+
+However, the selection of a prior distribution
+![\pi_0(\theta)](https://latex.codecogs.com/svg.latex?%5Cpi_0%28%5Ctheta%29 "\pi_0(\theta)")
+is open-ended and may lead to different posterior distributions (that
+influence different pathways of action).
+
+Some Bayesians adopt an empirical approach when choosing their prior
+distribution, but idiosyncratic beliefs could still influence their
+choices. For example, personal choices may still influence the selection
+of ‘similar-enough’ experiments to calculate the prior distribution.
+
+I find it very interesting that Bayesians still use frequentist terms
+(by referring to the existence of a true population level behaviour)
+[when discussing A/B
+testing](https://www.youtube.com/watch?v=6269mm4XQOI). The Bayesian
+interpretation of A/B testing is that the posterior distribution should
+be interpreted as betting odds and that all final decisions are still
+bets.
 
 # Review of None of the Above
 
 The bad news is that frequentist statistics can be easily misused,
 [especially through p-value
 hacking](https://royalsocietypublishing.org/doi/10.1098/rsos.220346).
-
-# Frequentist versus Baysian methods in A/B testing
 
 # Key messages
 

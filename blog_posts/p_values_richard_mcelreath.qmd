@@ -286,7 +286,7 @@ Pre-registration (submitting your study plan in advance of collecting your resul
 This is a problem when researchers conduct analyses which use post-treatment variables (that can be causally related to the outcome of interest) [as a control variable](https://janhove.github.io/posts/2021-06-29-posttreatment/). Post-treatment variables are problematic as they can be:   
 
 + **Mediators** where $X \to M \to Y$. Conditioning on the mediator M can underestimate the effect of X on Y.    
-+ **Confounders** where $ X \to C$ and $Y \to C$. Conditioning on the confounder C can produce misleading results about the effect of X on Y.   
++ **Confounders** where $X \to C$ and $Y \to C$. Conditioning on the confounder C can produce misleading results about the effect of X on Y.   
 
 ## Causal inference  
 

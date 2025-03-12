@@ -405,7 +405,9 @@ Post-treatment variables are problematic as they can be:
   ![X \to M \to Y](https://latex.codecogs.com/svg.latex?X%20%5Cto%20M%20%5Cto%20Y "X \to M \to Y").
   Conditioning on the mediator M can underestimate the effect of X on
   Y.  
-- **Confounders** where \$ X C\$ and
+- **Confounders** where
+  ![X \to C](https://latex.codecogs.com/svg.latex?X%20%5Cto%20C "X \to C")
+  and
   ![Y \to C](https://latex.codecogs.com/svg.latex?Y%20%5Cto%20C "Y \to C").
   Conditioning on the confounder C can produce misleading results about
   the effect of X on Y.

@@ -6,6 +6,7 @@ This repository contains personal notes made whilst reading open-source statisti
 + **Blog posts**   
     + Post about [the pitfalls of multiple linear regression and using Bayesian inference as an alternative](./blog_posts/regression_richard_mcelreath.md) by Richard McElreath    
     + Post about [the misuse of p-values in science](./blog_posts/p_values_richard_mcelreath.md) by Richard McElreath and linked research articles      
+    + Post about [the transformers architecture for NLP](https://e2eml.school/transformers.html) by Brandon Rohrer   
 
 <p>
 

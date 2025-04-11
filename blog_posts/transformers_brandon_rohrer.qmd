@@ -210,7 +210,7 @@ print(
 
 A bag of words approach does not retain information about word sequence (the likelihood of word X being followed by word Y versus Z). A transition model is helpful for representing word sequences.  
 
-![](https://e2eml.school/images/transformers/markov_chain.png)  
+![](https://e2eml.school/images/transformers/markov_chain.png){width=60%}  
 
 The transition model above is a **first order Markov chain**, as the probabilities for the next word depend on the single most recent word. 
 
@@ -222,7 +222,7 @@ The first order Markov chain can be expressed in matrix form:
 + All values fall between 0 and 1 as each value represents a probability.    
 + The transition matrix above is a sparse matrix as there is only one place in the Markov chain where branching happens.    
 
-![](https://e2eml.school/images/transformers/transition_matrix.png)  
+![](https://e2eml.school/images/transformers/transition_matrix.png){width=40%}  
 
 ```{python}
 # Pull out transition probabilities for word of interest -----------------------  
@@ -258,7 +258,7 @@ Imagine a corpus of the 2 computer commands:
 
 A second order sequence model improves the certainty of our predictions compared to a first order sequence model. This can be seen in the second order Markov chain and the second order transition matrix.   
 
-![](https://e2eml.school/images/transformers/transition_matrix_second_order.png)   
+![](https://e2eml.school/images/transformers/transition_matrix_second_order.png){width=40%}   
 
 The second order transition matrix has more 1s and fewer values between 0 and 1 than the first order transition matrix. In terms of probabilities, we have increased the certainty of predicting the next word.     
 
@@ -303,11 +303,11 @@ list_combinations(sentence, word, n)
 
 We can visualise the relationship between each 2-word pair and the following word of interest using the flow diagram below. A non-zero weight indicates an occurrence of the word following the specific 2-word pair. Larger non-zero weights are represented by thicker lines in the diagram below.    
 
-![](https://e2eml.school/images/transformers/feature_voting.png)   
+![](https://e2eml.school/images/transformers/feature_voting.png){width=40%}   
 
 This **second order sequence model with skips** can also be represented by a transition matrix, except that the individual values in a matrix no longer represent a probability.  
 
-![](https://e2eml.school/images/transformers/transition_matrix_second_order_skips.png)   
+![](https://e2eml.school/images/transformers/transition_matrix_second_order_skips.png){width=50%}   
 This is because each row no longer represents a unique position of the sequence. A unique position is now represented by multiple rows or **features**. For example, the sequence point `ran` is described by multiple 2-word pairs such as `the, ran`, `program, ran` etc.   
 
 Each value in the matrix now represents a **vote**. Votes are summed column-wise and compared to determine the next word prediction.    
@@ -375,7 +375,7 @@ Using total votes can make predictions seem more uncertain than they are, as vot
 
 We can sharpen our prediction by forcing uninformative features to 0, so they cannot contribute to the overall vote. We do this by creating a **mask**, which is a one-hot vector of the same length as the features vector with uninformative features represented by 0s and informative features represented by 1s.    
 
-![](https://e2eml.school/images/transformers/masked_feature_activities.png)  
+![](https://e2eml.school/images/transformers/masked_feature_activities.png){width=60%}  
 
 ```{python}
 # Re-examine features for sequence of interest ---------------------------------
@@ -413,7 +413,20 @@ command_2_features * command_2_features_mask
 This process of selective masking forms the **attention** component of transformers. Overall, the **selective second order with skips** model is a useful way to think about what the decoder component of transformers does.    
 
 
-# Rest Stop and an Off Ramp  
+# Rest Stop and an Off Ramp    
+
+When we think about implementing a useful model for sequence prediction, there are three practical considerations:   
+
++ Computers are great at **matrix multiplications**. Expressing computation as a matrix multiplication is extremely efficient.   
++ Every step needs to be **differentiable**, as all model parameters (i.e. transition probabilities and mask values) are learnt using [back propagation](https://www.youtube.com/watch?v=Ilg3gGewQ5U). For any small change in a parameter, we must be able to calculate the corresponding change in the model error.   
++ The gradient needs to be **smooth** and **well conditioned** i.e. the slope doesn't change very quickly when you make steps in any direction and changes are similar in every direction. This is a tricky condition to guarantee.    
+
+```{python}
+# Simple back propagation example ----------------------------------------------
+```
+
+
+# Attention as matrix multiplication   
 
 
 # Key messages   

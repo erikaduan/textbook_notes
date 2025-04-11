@@ -1,6 +1,6 @@
 # Review of Transformers from Scratch
 Erika Duan
-2025-04-10
+2025-04-11
 
 - [Original uses of transformers](#original-uses-of-transformers)
 - [One-hot encoding](#one-hot-encoding)
@@ -13,6 +13,8 @@ Erika Duan
   skips](#second-order-sequence-model-with-skips)
 - [Masking](#masking)
 - [Rest Stop and an Off Ramp](#rest-stop-and-an-off-ramp)
+- [Attention as matrix
+  multiplication](#attention-as-matrix-multiplication)
 - [Key messages](#key-messages)
 - [Other resources](#other-resources)
 
@@ -246,7 +248,8 @@ A bag of words approach does not retain information about word sequence
 (the likelihood of word X being followed by word Y versus Z). A
 transition model is helpful for representing word sequences.
 
-![](https://e2eml.school/images/transformers/markov_chain.png)
+<img src="https://e2eml.school/images/transformers/markov_chain.png"
+style="width:60.0%" />
 
 The transition model above is a **first order Markov chain**, as the
 probabilities for the next word depend on the single most recent word.
@@ -262,7 +265,9 @@ The first order Markov chain can be expressed in matrix form:
 - The transition matrix above is a sparse matrix as there is only one
   place in the Markov chain where branching happens.
 
-![](https://e2eml.school/images/transformers/transition_matrix.png)
+<img
+src="https://e2eml.school/images/transformers/transition_matrix.png"
+style="width:40.0%" />
 
 ``` python
 # Pull out transition probabilities for word of interest -----------------------  
@@ -303,7 +308,9 @@ A second order sequence model improves the certainty of our predictions
 compared to a first order sequence model. This can be seen in the second
 order Markov chain and the second order transition matrix.
 
-![](https://e2eml.school/images/transformers/transition_matrix_second_order.png)
+<img
+src="https://e2eml.school/images/transformers/transition_matrix_second_order.png"
+style="width:40.0%" />
 
 The second order transition matrix has more 1s and fewer values between
 0 and 1 than the first order transition matrix. In terms of
@@ -366,13 +373,16 @@ weight indicates an occurrence of the word following the specific 2-word
 pair. Larger non-zero weights are represented by thicker lines in the
 diagram below.
 
-![](https://e2eml.school/images/transformers/feature_voting.png)
+<img src="https://e2eml.school/images/transformers/feature_voting.png"
+style="width:40.0%" />
 
 This **second order sequence model with skips** can also be represented
 by a transition matrix, except that the individual values in a matrix no
 longer represent a probability.
 
-![](https://e2eml.school/images/transformers/transition_matrix_second_order_skips.png)  
+<img
+src="https://e2eml.school/images/transformers/transition_matrix_second_order_skips.png"
+style="width:50.0%" />  
 This is because each row no longer represents a unique position of the
 sequence. A unique position is now represented by multiple rows or
 **features**. For example, the sequence point `ran` is described by
@@ -465,7 +475,9 @@ they cannot contribute to the overall vote. We do this by creating a
 vector with uninformative features represented by 0s and informative
 features represented by 1s.
 
-![](https://e2eml.school/images/transformers/masked_feature_activities.png)
+<img
+src="https://e2eml.school/images/transformers/masked_feature_activities.png"
+style="width:60.0%" />
 
 ``` python
 # Re-examine features for sequence of interest ---------------------------------
@@ -515,6 +527,27 @@ is a useful way to think about what the decoder component of
 transformers does.
 
 # Rest Stop and an Off Ramp
+
+When we think about implementing a useful model for sequence prediction,
+there are three practical considerations:
+
+- Computers are great at **matrix multiplications**. Expressing
+  computation as a matrix multiplication is extremely efficient.  
+- Every step needs to be **differentiable**, as all model parameters
+  (i.e. transition probabilities and mask values) are learnt using [back
+  propagation](https://www.youtube.com/watch?v=Ilg3gGewQ5U). For any
+  small change in a parameter, we must be able to calculate the
+  corresponding change in the model error.  
+- The gradient needs to be **smooth** and **well conditioned** i.e. the
+  slope doesn’t change very quickly when you make steps in any direction
+  and changes are similar in every direction. This is a tricky condition
+  to guarantee.
+
+``` python
+# Simple back propagation example ----------------------------------------------
+```
+
+# Attention as matrix multiplication
 
 # Key messages
 

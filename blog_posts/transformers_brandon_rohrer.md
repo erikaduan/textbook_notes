@@ -1,6 +1,6 @@
 # Review of Transformers from Scratch
 Erika Duan
-2025-04-11
+2025-04-12
 
 - [Original uses of transformers](#original-uses-of-transformers)
 - [One-hot encoding](#one-hot-encoding)
@@ -248,8 +248,7 @@ A bag of words approach does not retain information about word sequence
 (the likelihood of word X being followed by word Y versus Z). A
 transition model is helpful for representing word sequences.
 
-<img src="https://e2eml.school/images/transformers/markov_chain.png"
-style="width:60.0%" />
+![](https://e2eml.school/images/transformers/markov_chain.png)
 
 The transition model above is a **first order Markov chain**, as the
 probabilities for the next word depend on the single most recent word.
@@ -265,9 +264,7 @@ The first order Markov chain can be expressed in matrix form:
 - The transition matrix above is a sparse matrix as there is only one
   place in the Markov chain where branching happens.
 
-<img
-src="https://e2eml.school/images/transformers/transition_matrix.png"
-style="width:40.0%" />
+![](https://e2eml.school/images/transformers/transition_matrix.png)
 
 ``` python
 # Pull out transition probabilities for word of interest -----------------------  
@@ -308,9 +305,7 @@ A second order sequence model improves the certainty of our predictions
 compared to a first order sequence model. This can be seen in the second
 order Markov chain and the second order transition matrix.
 
-<img
-src="https://e2eml.school/images/transformers/transition_matrix_second_order.png"
-style="width:40.0%" />
+![](https://e2eml.school/images/transformers/transition_matrix_second_order.png)
 
 The second order transition matrix has more 1s and fewer values between
 0 and 1 than the first order transition matrix. In terms of
@@ -373,16 +368,13 @@ weight indicates an occurrence of the word following the specific 2-word
 pair. Larger non-zero weights are represented by thicker lines in the
 diagram below.
 
-<img src="https://e2eml.school/images/transformers/feature_voting.png"
-style="width:40.0%" />
+![](https://e2eml.school/images/transformers/feature_voting.png)
 
 This **second order sequence model with skips** can also be represented
 by a transition matrix, except that the individual values in a matrix no
 longer represent a probability.
 
-<img
-src="https://e2eml.school/images/transformers/transition_matrix_second_order_skips.png"
-style="width:50.0%" />  
+![](https://e2eml.school/images/transformers/transition_matrix_second_order_skips.png)  
 This is because each row no longer represents a unique position of the
 sequence. A unique position is now represented by multiple rows or
 **features**. For example, the sequence point `ran` is described by
@@ -475,9 +467,7 @@ they cannot contribute to the overall vote. We do this by creating a
 vector with uninformative features represented by 0s and informative
 features represented by 1s.
 
-<img
-src="https://e2eml.school/images/transformers/masked_feature_activities.png"
-style="width:60.0%" />
+![](https://e2eml.school/images/transformers/masked_feature_activities.png)
 
 ``` python
 # Re-examine features for sequence of interest ---------------------------------

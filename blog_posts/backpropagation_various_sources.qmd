@@ -28,7 +28,7 @@ library(reticulate)
 # Python libraries. Packages are installed each time the notebook is run.   
 
 py_require(
-  packages = c("numpy"),
+  packages = c("numpy", "sympy", "matplotlib"),
   python_version = "3.11"
 )
 ```
@@ -36,14 +36,256 @@ py_require(
 ```{python}
 # Import Python libraries ------------------------------------------------------
 import numpy as np
+import sympy as sp
+import matplotlib.pyplot as plt 
+import math
 ```
 
-This is a review of backpropagation from the following blog posts and videos:   
+This is a review of backpropagation from the following blog posts and videos:
 
-+ [Step by step guide to backpropagation](https://datamapu.com/posts/deep_learning/backpropagation/) by Datamapu  
-+ [Backpropagation visual explainer](https://xnought.github.io/backprop-explainer/) by Donald Bertucci and Minsuk Kahng    
-+ [StatQuest neural networks Youtube playlist](https://www.youtube.com/playlist?list=PLblh5JKOoLUIxGDQs4LFFD--41Vzf-ME1) by Josh Starmer   
-+ [3Blue1Brown neural networks Youtube playlist](https://www.youtube.com/playlist?list=PLZHQObOWTQDNU6R1_67000Dx_ZCJB-3pi) by Grant Sanderson   
+-   [Step by step guide to backpropagation](https://datamapu.com/posts/deep_learning/backpropagation/) by Datamapu\
+-   [Backpropagation visual explainer](https://xnought.github.io/backprop-explainer/) by Donald Bertucci and Minsuk Kahng\
+-   [StatQuest neural networks Youtube playlist](https://www.youtube.com/playlist?list=PLblh5JKOoLUIxGDQs4LFFD--41Vzf-ME1) by Josh Starmer\
+-   [3Blue1Brown neural networks Youtube playlist](https://www.youtube.com/playlist?list=PLZHQObOWTQDNU6R1_67000Dx_ZCJB-3pi) by Grant Sanderson\
+-   ChatGPT3 prompts for simple backpropagation examples
+
+# Derivatives
+
+We can use `SymPy` to obtain the derivatives of functions in Python.
+
+```{python}
+# Obtain derivative of univariate functions ------------------------------------
+# Example 1: f(x) = x**2 + 1
+x = sp.Symbol('x') # define the variable  
+f_x = x**2 + 1 # define the function   
+sp.diff(f_x, x)  
+
+# Example 2: f(x) = (x + 3)**3
+# x is already defined
+f_x = (x + 3)**3 
+sp.diff(f_x, x)
+```
+
+```{python}
+# Obtain partial derivatives of multivariate functions -------------------------
+x, y = sp.symbols('x y')
+f_xy = x**2 + 3*y**2  
+
+# Partial derivative w.r.t. x
+sp.diff(f_xy, x)
+
+# Partial derivative w.r.t. y
+sp.diff(f_xy, y)  
+
+# Alternatively use list comprehension to compute the gradient (the vector of 
+# partial derivatives)  
+[sp.diff(f_xy, var) for var in (x, y)]
+```
+
+# Gradient descent
+
+The general steps of gradient descent are:
+
+1.  Take the derivative of the loss function. If the loss function has multiple parameters, you need to calculate the partial derivative of each parameter (the gradient of the loss function).\
+2.  Start with random values for all parameters to be estimated.\
+3.  Use the random values to calculate the value of the derivative or gradient.\
+4.  Calculate the step size, where step size = derivative $\times$ learning rate.\
+5.  Calculate the new parameter values, where new value = old value $-$ step size for loss functions.
+
+Let's try the simplest example of finding an optimal parameter using gradient descent.
+
+-   **Loss function:** $f(x) = x^2$\
+-   **Derivative**: $f'(x) = \tfrac{d}{dx} x^2= 2x$
+
+We would like to find the value of $x$ for which $f(x)$ is the lowest. This is equivalent to finding $x$ where $\tfrac{d}{dx} x^2 = 0$.
+
+```{python}
+# Use gradient descent to minimize f(x) = x**2 ---------------------------------
+def f(x):
+    return x**2
+
+def gradient_f(x):
+    return 2*x
+
+# Parameters
+x = 4.0              # Initial guess
+alpha = 0.2          # Learning rate
+iterations = 20
+
+print(f"Starting gradient descent with x = {x} and gradient = {gradient_f(x)}")
+
+for i in range(iterations):
+    gradient = gradient_f(x)
+    x = x - (alpha * gradient)
+    print(f"Iteration {i+1}: x = {x: .4f}, f(x) = {f(x): .4f}")
+    
+    if gradient < 0.01:
+        print(f"""
+        Stopping early: f'(x) < 0.01
+        Optimal value of x: {x: .4f}
+        """)
+        
+        break
+```
+
+Let's try an example where we need to find two parameters.
+
+-   **Loss function:** $f(x,y) = x^2 + 3y^2$\
+-   **Gradient**: $\nabla f(x, y) = (2x, 6y)$
+
+We would like to find the values of $x$ and $y$ for which $f(x, y)$ is the lowest using gradient descent. We do this by travelling down the slope where $f'(x)$ and $f'(y)$ is the steepest to hopefully reach the global minima.
+
+```{python}
+# Use gradient descent to minimize f(x, y) = x**2 + 3*y**2 ---------------------
+def f(x, y):
+    return x**2 + 3*y**2  
+
+# Store gradient in an numpy array for maximal efficiency  
+def gradient(x, y):
+    return np.array([2*x, 6*y])
+
+# Parameters
+x, y = 4.0, -4.0     # Initial guess
+alpha = 0.2          # Learning rate
+iterations = 20
+
+print(f"Starting with (x, y) = ({x}, {y}) and gradient = {gradient(x, y)}")  
+
+# Store the path for inspection  
+path = []  
+
+for i in range(iterations):
+    # Store the current path before the next iteration
+    path.append((x, y, f(x, y)))
+    
+    # Calculate new gradient  
+    gradient_xy = gradient(x, y)   
+    
+    # Update new values of x and y  
+    x = x - (alpha * gradient_xy[0])
+    y = y - (alpha * gradient_xy[1])
+    
+    print(f"Iteration {i+1}: x = {x: .4f}, y = {y: .4f}, f(x, y) = {f(x, y): .4f}")
+    
+    if gradient_xy[0] < 0.01 and gradient_xy[1] < 0.01:
+        print(f"""
+        Stopping early: f'(x) < 0.01 & f'(y) < 0.01  
+        Optimal value of x, y is ({x: .4f}, {y: .4f})
+        """)
+        
+        break
+
+# Store the final path point 
+path.append((x, y, f(x, y)))
+```
+
+```{python}
+# Plot gradient descent path using contour plot --------------------------------
+# Extract path components for plotting
+xs, ys, zs = zip(*path)
+
+# Create grid for contour plot
+X, Y = np.meshgrid(np.linspace(-5, 5, 400), np.linspace(-5, 5, 400))
+Z = f(X, Y)
+
+# Plot contour and path
+plt.figure(figsize = (8, 6))
+plt.contour(X, Y, Z, levels = 50, cmap = 'viridis')
+
+# Plot gradient descent path
+plt.plot(xs, ys, marker = 'o', color = 'red', label = 'Gradient Descent Path')
+plt.title('Gradient descent path on f(x, y) = x^2 + 3y^2')
+plt.xlabel('x')
+plt.ylabel('y')
+plt.legend()
+plt.grid(True)
+
+# Show plot in Quarto notebook
+plt.show()
+```
 
 
-# 
+# Backpropagation
+
+The general steps of training a neural network are:   
+
+1. **Forward pass** - calculate $\hat y$ using the given input and initial neural network parameters (weights and biases).     
+2. Calculate the model error using the chosen loss function.    
+3. **Backpropagation** or **backward pass** - use gradient descent to update the neural network parameters to reduce the model error. To do this, we need to calculate the partial derivatives of the loss function with respect to the neural network parameters.     
+4. Iterate these steps until a specific stopping criterion is met.   
+
+Let's try the simplest example with a single neural unit:   
+
+-   **Prediction:** $\hat f(x) = \hat y = wx + b$  
+-   **Model parameters:** $w$ (weight) and $b$ (bias)  
+-   **Loss function:** $L = \tfrac{1}{2} (\hat y - y)^2$      
+-   **Activation function**: $\hat y = z$ where $z = wx + b$    
+-   **Derivatives:**  
+    - $\tfrac{dL}{d\hat y} = \tfrac{2}{2}(\hat y - y)^1 \times (1-0) = \hat y - y$    
+    - Since $\hat y = z$, $\tfrac {d\hat y}{dz} = 1$      
+    - We want to find $\tfrac{dL}{dw}$ and $\tfrac{dL}{db}$   
+    - $\tfrac{dL}{dw} = \tfrac{dL}{d\hat y} \times \tfrac{d\hat y}{dz}   \times \tfrac{dz}{dw} = (\hat y - y) \times 1 \times x = x(\hat y - y)$      
+    - $\tfrac{dL}{db} = \tfrac{dL}{d\hat y} \times \tfrac{d\hat y}{dz} \times \tfrac{dz}{db} = (\hat y - y) \times 1 \times 1 = \hat y - y$          
+
+```{mermaid}
+flowchart LR 
+  x --wx + b--> z
+  z --y_hat = z--> y_hat
+```
+
+```{python}
+# Use backpropagation to find the optimal values of w and b --------------------
+# This example assumes we only have 1 data point i.e. (x, y) = (2, 5)
+
+# Sample data point  
+x = 2.0        
+y = 5.0        
+
+# Initial random parameters
+w = 0.5        
+b = 1.0     
+
+# Model hyperparameters  
+learning_rate = 0.1
+i = 1
+epoches = 20  
+
+for i in range(epoches):    
+    # Step 1: Calculate the forward pass    
+    z = w * x + b      # Calculate linear combination
+    y_hat = z          # Calculate identity activation
+
+    # Step 2: Compute model loss (mean squared error) 
+    loss = 0.5 * (y_hat - y) ** 2
+    
+    # Early stopping criterion if model loss is 0.01
+    if loss < 0.01:
+        print(f"""
+        Stopping early at epoch {i + 1}
+        Loss = {loss:.4f}, w = {w:.4f}, b = {b:.4f}
+        """)
+        break
+
+    # Step 3: Calculate the backward pass 
+    # Calculate individual gradients
+    dL_dy_hat = y_hat - y       
+    dy_hat_dz = 1              
+    dz_dw = x
+    dz_db = 1
+
+    # Apply chain rule
+    dL_dw = dL_dy_hat * dy_hat_dz * dz_dw
+    dL_db = dL_dy_hat * dy_hat_dz * dz_db
+
+    # Step 4: Update model parameters 
+    w = w - learning_rate * dL_dw
+    b = b - learning_rate * dL_db
+
+    print(f"Epoch: {i + 1}, Loss = {loss:.4f}, w = {w:.4f}, b = {b:.4f}")
+```
+
+Let's try another example with a single neural unit and an activation function of ... 
+
+Let's try
+
+Let's try 

@@ -5,7 +5,8 @@ This repository contains personal notes made whilst reading open-source statisti
 
 + **Blog posts**   
     + Post about [the pitfalls of multiple linear regression and using Bayesian inference as an alternative](./blog_posts/regression_richard_mcelreath.md) by Richard McElreath    
-    + Post about [the misuse of p-values in science](./blog_posts/p_values_richard_mcelreath.md) by Richard McElreath and linked research articles      
+    + Post about [the misuse of p-values in science](./blog_posts/p_values_richard_mcelreath.md) by Richard McElreath and linked research articles     
+    + Revision of [backpropagation mathematics](./blog_posts/backpropagation_various_sources.md)    
     + Post about [the transformers architecture for NLP](./blog_posts/transformers_brandon_rohrer.md) by Brandon Rohrer   
     + Article about [randomised controlled trials from an information science perspective](./blog_posts/rcts_pavlos_msaouel.md) by Pavlos Msaouel    
 

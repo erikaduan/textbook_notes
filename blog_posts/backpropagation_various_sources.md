@@ -1,10 +1,14 @@
 # Review of backpropagation
 Erika Duan
-2025-05-03
+2025-05-04
 
 - [Derivatives](#derivatives)
 - [Gradient descent](#gradient-descent)
 - [Backpropagation](#backpropagation)
+- [Single data point and single neural
+  network](#single-data-point-and-single-neural-network)
+- [Multiple data points and single neural
+  network](#multiple-data-points-and-single-neural-network)
 
 ``` python
 # Import Python libraries ------------------------------------------------------
@@ -295,10 +299,11 @@ The general steps of training a neural network are:
     function with respect to the neural network parameters.  
 4.  Iterate these steps until a specific stopping criterion is met.
 
-Let’s try the simplest example with a single neural unit:
+# Single data point and single neural network
 
-- **Prediction:**
-  ![\hat f(x) = \hat y = wx + b](https://latex.codecogs.com/svg.latex?%5Chat%20f%28x%29%20%3D%20%5Chat%20y%20%3D%20wx%20%2B%20b "\hat f(x) = \hat y = wx + b")  
+Let’s try the simplest example with a single data point and a single
+neural unit:
+
 - **Model parameters:** ![w](https://latex.codecogs.com/svg.latex?w "w")
   (weight) and ![b](https://latex.codecogs.com/svg.latex?b "b") (bias)  
 - **Loss function:**
@@ -322,7 +327,7 @@ Let’s try the simplest example with a single neural unit:
 ``` mermaid
 flowchart LR 
   x --wx + b--> z
-  z --y_hat = z--> y_hat
+  z --identity function--> y_hat
 ```
 
 ``` python
@@ -345,7 +350,7 @@ epoches = 20
 for i in range(epoches):    
     # Step 1: Calculate the forward pass    
     z = w * x + b      # Calculate linear combination
-    y_hat = z          # Calculate identity activation
+    y_hat = z          # Calculate identity activation function
 
     # Step 2: Compute model loss (mean squared error) 
     loss = 0.5 * (y_hat - y) ** 2
@@ -386,9 +391,115 @@ for i in range(epoches):
             Loss = 0.0044, w = 1.6625, b = 1.5813
             
 
-Let’s try another example with a single neural unit and an activation
-function of …
+Let’s try another example with a single data point, a single neural unit
+and the sigmoid activation function
+![\sigma(z)](https://latex.codecogs.com/svg.latex?%5Csigma%28z%29 "\sigma(z)"):
 
-Let’s try
+- **Model parameters:** ![w](https://latex.codecogs.com/svg.latex?w "w")
+  (weight) and ![b](https://latex.codecogs.com/svg.latex?b "b") (bias)  
+- **Loss function:**
+  ![L = \tfrac{1}{2} (\hat y - y)^2](https://latex.codecogs.com/svg.latex?L%20%3D%20%5Ctfrac%7B1%7D%7B2%7D%20%28%5Chat%20y%20-%20y%29%5E2 "L = \tfrac{1}{2} (\hat y - y)^2")  
+- **Activation function**:
+  ![\hat y = \sigma(z) = \tfrac{1}{1+e^{-z}}](https://latex.codecogs.com/svg.latex?%5Chat%20y%20%3D%20%5Csigma%28z%29%20%3D%20%5Ctfrac%7B1%7D%7B1%2Be%5E%7B-z%7D%7D "\hat y = \sigma(z) = \tfrac{1}{1+e^{-z}}")
+  where
+  ![z = wx + b](https://latex.codecogs.com/svg.latex?z%20%3D%20wx%20%2B%20b "z = wx + b")  
+- **Derivatives:**
+  - ![\tfrac{dL}{d\hat y} = \hat y - y](https://latex.codecogs.com/svg.latex?%5Ctfrac%7BdL%7D%7Bd%5Chat%20y%7D%20%3D%20%5Chat%20y%20-%20y "\tfrac{dL}{d\hat y} = \hat y - y")  
+  - ![\tfrac{d\hat y}{dz} = \tfrac{e^{-z}}{(1+e^{-z})^2} = \sigma(z) \times (1- \sigma(z))](https://latex.codecogs.com/svg.latex?%5Ctfrac%7Bd%5Chat%20y%7D%7Bdz%7D%20%3D%20%5Ctfrac%7Be%5E%7B-z%7D%7D%7B%281%2Be%5E%7B-z%7D%29%5E2%7D%20%3D%20%5Csigma%28z%29%20%5Ctimes%20%281-%20%5Csigma%28z%29%29 "\tfrac{d\hat y}{dz} = \tfrac{e^{-z}}{(1+e^{-z})^2} = \sigma(z) \times (1- \sigma(z))")  
+  - ![\tfrac{dL}{dw} = \tfrac{dL}{d\hat y} \times \tfrac{d\hat y}{dz}   \times \tfrac{dz}{dw} = (\hat y - y) \times \sigma(z) \times (1- \sigma(z)) \times x](https://latex.codecogs.com/svg.latex?%5Ctfrac%7BdL%7D%7Bdw%7D%20%3D%20%5Ctfrac%7BdL%7D%7Bd%5Chat%20y%7D%20%5Ctimes%20%5Ctfrac%7Bd%5Chat%20y%7D%7Bdz%7D%20%20%20%5Ctimes%20%5Ctfrac%7Bdz%7D%7Bdw%7D%20%3D%20%28%5Chat%20y%20-%20y%29%20%5Ctimes%20%5Csigma%28z%29%20%5Ctimes%20%281-%20%5Csigma%28z%29%29%20%5Ctimes%20x "\tfrac{dL}{dw} = \tfrac{dL}{d\hat y} \times \tfrac{d\hat y}{dz}   \times \tfrac{dz}{dw} = (\hat y - y) \times \sigma(z) \times (1- \sigma(z)) \times x")  
+  - ![\tfrac{dL}{db} = \tfrac{dL}{d\hat y} \times \tfrac{d\hat y}{dz} \times \tfrac{dz}{db} = (\hat y - y) \times \sigma(z) \times (1- \sigma(z)) \times 1](https://latex.codecogs.com/svg.latex?%5Ctfrac%7BdL%7D%7Bdb%7D%20%3D%20%5Ctfrac%7BdL%7D%7Bd%5Chat%20y%7D%20%5Ctimes%20%5Ctfrac%7Bd%5Chat%20y%7D%7Bdz%7D%20%5Ctimes%20%5Ctfrac%7Bdz%7D%7Bdb%7D%20%3D%20%28%5Chat%20y%20-%20y%29%20%5Ctimes%20%5Csigma%28z%29%20%5Ctimes%20%281-%20%5Csigma%28z%29%29%20%5Ctimes%201 "\tfrac{dL}{db} = \tfrac{dL}{d\hat y} \times \tfrac{d\hat y}{dz} \times \tfrac{dz}{db} = (\hat y - y) \times \sigma(z) \times (1- \sigma(z)) \times 1")
 
-Let’s try
+``` mermaid
+flowchart LR 
+  x --wx + b--> z
+  z --sigmoid function--> y_hat  
+```
+
+``` python
+# Use backpropagation to find the optimal values of w and b --------------------
+# This example assumes we only have 1 data point i.e. (x, y) = (0.5, 1.0)
+
+# Sample data point  
+x = 0.5        
+y = 1.0        
+
+# Initial random parameters
+w = 0.3        
+b = 0.1     
+
+# Model hyperparameters  
+learning_rate = 0.1
+i = 1
+epoches = 20  
+
+# Create sigmoid activation function  
+def sigmoid(z):
+    return 1/(1 + np.exp(-z))  
+
+for i in range(epoches):    
+    # Step 1: Calculate the forward pass    
+    z = w * x + b      # Calculate linear combination
+    y_hat = sigmoid(z) # Calculate sigmoid activation function  
+
+    # Step 2: Compute model loss (mean squared error) 
+    loss = 0.5 * (y_hat - y) ** 2
+    
+    # Early stopping criterion if model loss is 0.01
+    if loss < 0.01:
+        print(f"""
+        Stopping early at epoch {i + 1}
+        Loss = {loss:.4f}, w = {w:.4f}, b = {b:.4f}
+        """)
+        break
+
+    # Step 3: Calculate the backward pass 
+    # Calculate individual gradients
+    dL_dy_hat = y_hat - y       
+    dy_hat_dz = sigmoid(z) * (1 - sigmoid(z))              
+    dz_dw = x
+    dz_db = 1
+
+    # Apply chain rule
+    dL_dw = dL_dy_hat * dy_hat_dz * dz_dw
+    dL_db = dL_dy_hat * dy_hat_dz * dz_db
+
+    # Step 4: Update model parameters 
+    w = w - learning_rate * dL_dw
+    b = b - learning_rate * dL_db
+
+    print(f"Epoch: {i + 1}, Loss = {loss:.4f}, w = {w:.4f}, b = {b:.4f}")
+```
+
+    Epoch: 1, Loss = 0.0958, w = 0.3054, b = 0.1108
+    Epoch: 2, Loss = 0.0944, w = 0.3107, b = 0.1215
+    Epoch: 3, Loss = 0.0930, w = 0.3160, b = 0.1320
+    Epoch: 4, Loss = 0.0916, w = 0.3213, b = 0.1425
+    Epoch: 5, Loss = 0.0902, w = 0.3264, b = 0.1529
+    Epoch: 6, Loss = 0.0889, w = 0.3316, b = 0.1632
+    Epoch: 7, Loss = 0.0876, w = 0.3367, b = 0.1734
+    Epoch: 8, Loss = 0.0863, w = 0.3417, b = 0.1834
+    Epoch: 9, Loss = 0.0850, w = 0.3467, b = 0.1934
+    Epoch: 10, Loss = 0.0838, w = 0.3517, b = 0.2033
+    Epoch: 11, Loss = 0.0826, w = 0.3566, b = 0.2131
+    Epoch: 12, Loss = 0.0814, w = 0.3614, b = 0.2228
+    Epoch: 13, Loss = 0.0802, w = 0.3662, b = 0.2325
+    Epoch: 14, Loss = 0.0790, w = 0.3710, b = 0.2420
+    Epoch: 15, Loss = 0.0779, w = 0.3757, b = 0.2514
+    Epoch: 16, Loss = 0.0768, w = 0.3804, b = 0.2607
+    Epoch: 17, Loss = 0.0757, w = 0.3850, b = 0.2700
+    Epoch: 18, Loss = 0.0747, w = 0.3896, b = 0.2792
+    Epoch: 19, Loss = 0.0736, w = 0.3941, b = 0.2882
+    Epoch: 20, Loss = 0.0726, w = 0.3986, b = 0.2972
+
+# Multiple data points and single neural network
+
+In reality, one forward pass involves processing all training data
+points and likewise for the backward pass. We can do this more
+efficiently using matrix multiplication.
+
+Let’s try the example above (a single neural unit and the sigmoid
+activation function) but with multiple data points.
+
+Let’s try 2 neurons
+
+LEt’s try 2 neurons in a layer

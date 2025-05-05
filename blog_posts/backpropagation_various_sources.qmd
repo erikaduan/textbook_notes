@@ -43,10 +43,11 @@ import math
 
 This is a review of backpropagation from the following blog posts and videos:
 
--   [Step by step guide to backpropagation](https://datamapu.com/posts/deep_learning/backpropagation/) by Datamapu\
--   [Backpropagation visual explainer](https://xnought.github.io/backprop-explainer/) by Donald Bertucci and Minsuk Kahng\
--   [StatQuest neural networks Youtube playlist](https://www.youtube.com/playlist?list=PLblh5JKOoLUIxGDQs4LFFD--41Vzf-ME1) by Josh Starmer\
--   [3Blue1Brown neural networks Youtube playlist](https://www.youtube.com/playlist?list=PLZHQObOWTQDNU6R1_67000Dx_ZCJB-3pi) by Grant Sanderson\
+-   [Step by step guide to backpropagation](https://datamapu.com/posts/deep_learning/backpropagation/) by Datamapu   
+-   [Backpropagation visual explainer](https://xnought.github.io/backprop-explainer/) by Donald Bertucci and Minsuk Kahng   
+-   [StatQuest neural networks Youtube playlist](https://www.youtube.com/playlist?list=PLblh5JKOoLUIxGDQs4LFFD--41Vzf-ME1) by Josh Starmer    
+-   [3Blue1Brown neural networks Youtube playlist](https://www.youtube.com/playlist?list=PLZHQObOWTQDNU6R1_67000Dx_ZCJB-3pi) by Grant Sanderson       
+-   [Tutorial for implementating a neural network from scratch](https://www.geeksforgeeks.org/implementation-of-neural-network-from-scratch-using-numpy/) by GeeksforGeeks    
 -   ChatGPT3 prompts for simple backpropagation examples
 
 # Derivatives
@@ -86,16 +87,16 @@ sp.diff(f_xy, y)
 
 The general steps of gradient descent are:
 
-1.  Take the derivative of the loss function. If the loss function has multiple parameters, you need to calculate the partial derivative of each parameter (the gradient of the loss function).\
-2.  Start with random values for all parameters to be estimated.\
-3.  Use the random values to calculate the value of the derivative or gradient.\
-4.  Calculate the step size, where step size = derivative $\times$ learning rate.\
-5.  Calculate the new parameter values, where new value = old value $-$ step size for loss functions.
+1.  Take the derivative of the loss function. If the loss function has multiple parameters, you need to calculate the partial derivative of each parameter (the gradient of the loss function).    
+2.  Start with random values for all parameters to be estimated.   
+3.  Use the random values to calculate the value of the derivative or gradient.    
+4.  Calculate the step size, where step size = derivative $\times$ learning rate.     
+5.  Calculate the new parameter values, where new value = old value $-$ step size for loss functions.     
 
 Let's try the simplest example of finding an optimal parameter using gradient descent.
 
--   **Loss function:** $f(x) = x^2$\
--   **Derivative**: $f'(x) = \tfrac{d}{dx} x^2= 2x$
+-   **Loss function:** $f(x) = x^2$    
+-   **Derivative**: $f'(x) = \tfrac{d}{dx} x^2= 2x$    
 
 We would like to find the value of $x$ for which $f(x)$ is the lowest. This is equivalent to finding $x$ where $\tfrac{d}{dx} x^2 = 0$.
 
@@ -130,8 +131,8 @@ for i in range(iterations):
 
 Let's try an example where we need to find two parameters.
 
--   **Loss function:** $f(x,y) = x^2 + 3y^2$\
--   **Gradient**: $\nabla f(x, y) = (2x, 6y)$
+-   **Loss function:** $f(x,y) = x^2 + 3y^2$     
+-   **Gradient**: $\nabla f(x, y) = (2x, 6y)$    
 
 We would like to find the values of $x$ and $y$ for which $f(x, y)$ is the lowest using gradient descent. We do this by travelling down the slope where $f'(x)$ and $f'(y)$ is the steepest to hopefully reach the global minima.
 
@@ -205,7 +206,7 @@ plt.show()
 ```
 
 
-# Backpropagation
+# Backpropagation   
 
 The general steps of training a neural network are:   
 
@@ -215,25 +216,25 @@ The general steps of training a neural network are:
 4. Iterate these steps until a specific stopping criterion is met.   
 
 
-# Single data point and single neural network   
+# Single data point and single neural unit      
 
-Let's try the simplest example with a single data point and a single neural unit:   
+Let's try the simplest example with a single data point and a single neural unit using the identity function (no additional transformation through the activation function).   
 
--   **Model parameters:** $w$ (weight) and $b$ (bias)  
--   **Loss function:** $L = \tfrac{1}{2} (\hat y - y)^2$      
--   **Activation function**: $\hat y = z$ where $z = wx + b$    
--   **Derivatives:**  
+```{mermaid}
+flowchart LR 
+  x --w*x + b--> z
+  z --identity function--> y_hat
+```
+
+-   **Model parameters:** $w$ (weight) and $b$ (bias)    
+-   **Loss function:** $L = \tfrac{1}{2} (\hat y - y)^2$         
+-   **Activation function**: $\hat y = z$ where $z = wx + b$        
+-   **Derivatives:**    
     - $\tfrac{dL}{d\hat y} = \tfrac{2}{2}(\hat y - y)^1 \times (1-0) = \hat y - y$    
     - Since $\hat y = z$, $\tfrac {d\hat y}{dz} = 1$      
     - We want to find $\tfrac{dL}{dw}$ and $\tfrac{dL}{db}$   
     - $\tfrac{dL}{dw} = \tfrac{dL}{d\hat y} \times \tfrac{d\hat y}{dz}   \times \tfrac{dz}{dw} = (\hat y - y) \times 1 \times x = x(\hat y - y)$      
-    - $\tfrac{dL}{db} = \tfrac{dL}{d\hat y} \times \tfrac{d\hat y}{dz} \times \tfrac{dz}{db} = (\hat y - y) \times 1 \times 1 = \hat y - y$          
-
-```{mermaid}
-flowchart LR 
-  x --wx + b--> z
-  z --identity function--> y_hat
-```
+    - $\tfrac{dL}{db} = \tfrac{dL}{d\hat y} \times \tfrac{d\hat y}{dz} \times \tfrac{dz}{db} = (\hat y - y) \times 1 \times 1 = \hat y - y$       
 
 ```{python}
 # Use backpropagation to find the optimal values of w and b --------------------
@@ -286,22 +287,22 @@ for i in range(epoches):
     print(f"Epoch: {i + 1}, Loss = {loss:.4f}, w = {w:.4f}, b = {b:.4f}")
 ```
 
-Let's try another example with a single data point, a single neural unit and the sigmoid activation function $\sigma(z)$:          
+Let's try another example with a single data point and a single neural unit using the sigmoid activation function $\sigma(z)$.   
 
--   **Model parameters:** $w$ (weight) and $b$ (bias)  
+```{mermaid}
+flowchart LR 
+  x --w*x + b--> z
+  z --sigmoid function--> y_hat  
+```
+
+-   **Model parameters:** $w$ and $b$   
 -   **Loss function:** $L = \tfrac{1}{2} (\hat y - y)^2$      
 -   **Activation function**: $\hat y = \sigma(z) = \tfrac{1}{1+e^{-z}}$ where $z = wx + b$     
 -   **Derivatives:**  
     - $\tfrac{dL}{d\hat y} = \hat y - y$    
-    - $\tfrac{d\hat y}{dz} = \tfrac{e^{-z}}{(1+e^{-z})^2} = \sigma(z) \times (1- \sigma(z))$   
+    - $\tfrac{d\hat y}{dz} = \tfrac{e^{-z}}{(1+e^{-z})^2} = \sigma(z) \times (1 - \sigma(z))$   
     - $\tfrac{dL}{dw} = \tfrac{dL}{d\hat y} \times \tfrac{d\hat y}{dz}   \times \tfrac{dz}{dw} = (\hat y - y) \times \sigma(z) \times (1- \sigma(z)) \times x$         
     - $\tfrac{dL}{db} = \tfrac{dL}{d\hat y} \times \tfrac{d\hat y}{dz} \times \tfrac{dz}{db} = (\hat y - y) \times \sigma(z) \times (1- \sigma(z)) \times 1$    
-
-```{mermaid}
-flowchart LR 
-  x --wx + b--> z
-  z --sigmoid function--> y_hat  
-```
 
 ```{python}
 # Use backpropagation to find the optimal values of w and b --------------------
@@ -361,23 +362,191 @@ for i in range(epoches):
 
 # Multiple data points and single neural network    
 
-In reality, one forward pass involves processing all training data points and likewise for the backward pass. We can do this more efficiently using matrix multiplication.   
+In reality, training data sets are large and we need to process many data points during each forward and backward pass. We can do this efficiently using matrix multiplication.   
 
-Let's try the example above (a single neural unit and the sigmoid activation function) but with multiple data points.      
+Let's try the example above (a single neural unit using the sigmoid activation function) but with multiple data points.      
 
 ```{python}
+# Use backpropagation using multiple data points -------------------------------
+# We store our data points inside a numpy array  
 
+# Store input data i.e. x_1 to x_n in a 1D numpy array    
+X = np.array(
+  [0.5, 0.8, 1.5, 0.4, 0.4, 1.0, 1.9]
+  )
+
+# Store output data i.e. y_1 to y_n in a 1D numpy array
+Y = np.array(
+  [1.0, 1.2, 1.2, 0.6, 0.5, 1.1, 1.3]
+  )
+
+# Initial random parameters
+w = 0.3        
+b = 0.1     
+
+# Model hyperparameters  
+learning_rate = 0.1
+i = 1
+epoches = 20  
+
+# Create sigmoid activation function that can input and output vectors 
+def sigmoid(z):
+    return 1/(1 + np.exp(-z))  
+
+for i in range(epoches):    
+    # Step 1: Calculate the forward pass    
+    z = w * X + b      # Calculate linear combination using scalar multiplication
+    y_hat = sigmoid(z) # Calculate sigmoid activation function  
+
+    # Step 2: Compute model loss (mean squared error) 
+    loss = 0.5 * (y_hat - y) ** 2
+    avg_loss = np.mean(loss)
+    
+    # Early stopping criterion if model loss is 0.01
+    if avg_loss < 0.01:  
+        print(f"""
+        Stopping early at epoch {i + 1}
+        Average loss = {avg_loss:.4f}, w = {w:.4f}, b = {b:.4f}
+        """)
+        break
+
+    # Step 3: Calculate the backward pass 
+    # Calculate individual gradients
+    dL_dy_hat = y_hat - y       
+    dy_hat_dz = sigmoid(z) * (1 - sigmoid(z))              
+    dz_dw = x
+    dz_db = 1
+
+    # Apply chain rule
+    dL_dw = dL_dy_hat * dy_hat_dz * dz_dw
+    dL_db = dL_dy_hat * dy_hat_dz * dz_db
+    
+    # Average over the dL_dw, dL_db and loss vectors  
+    # The expected outputs for w, b and loss are scalar. As X and Y are vectors,
+    # z, y_hat, loss and all derivative outputs are all vectors.  
+    # We need to average dL_dw, dL_db and loss to return a scalar for w and b
+    avg_dL_dw = np.mean(dL_dw)
+    avg_dL_db = np.mean(dL_db)
+    
+    # Step 4: Update model parameters 
+    w = w - learning_rate * avg_dL_dw
+    b = b - learning_rate * avg_dL_db
+
+    print(f"Epoch: {i + 1}, Average loss = {avg_loss:.4f}, w = {w:.4f}, b = {b:.4f}")
 ```
 
 
-Let's try 2 neurons  
+# Single data point and 2 neural units   
+
+Let's try a more complex example with 2 neurons organised one after another and using the sigmoid activation function. We now have 2 weights ($w_1, w_2$) and 2 biases ($b_1, b_2$) to estimate.    
+
+When there are multiple neurons, the notation $(z|a)$ becomes useful where $z$ is the neuronal input and $a$ is the neuronal output. In this example, $y_hat = a_2$.    
+
+```{mermaid}
+flowchart LR 
+  x --w_1*x + b_1--> z_1
+  z_1 --sigmoid function--> a_1 
+  
+  a_1 --w_2*a_1 + b_2--> z_2
+  z_2 --sigmoid function--> y_hat
+```
+
+Estimating $w_2$ and $b_2$ using $\tfrac{dL}{dw_2}$ and $\tfrac{dL}{db_2}$ is identical to the example above for a single neural unit. Estimating $w_1$ and $b_1$ requires further application of the chain rule.   
+
+-   **Model parameters:** $W = [w_1, w_2]$ and $B = [b_1, b_2]b$        
+-   **Loss function:** $L = \tfrac{1}{2} (\hat y - y)^2$    
+-   **Activation function**: $\sigma(z) = \tfrac{1}{1+e^{-z}}$         
+-   **Derivatives:**  
+    - $\tfrac{dL}{d\hat y} = \hat y - y$    
+    - $\tfrac{d}{dz} = \sigma(z) \times (1 - \sigma(z))$   
+    - $\tfrac{dL}{dw_2} = \tfrac{dL}{d\hat y} \times \tfrac{d\hat y}{dz_2}   \times \tfrac{dz_2}{dw_2} = (\hat y - y) \times \sigma(z_2) \times (1- \sigma(z_2)) \times x$         
+    - $\tfrac{dL}{db_2} = \tfrac{dL}{d\hat y} \times \tfrac{d\hat y}{dz_2} \times \tfrac{dz_2}{db_2} = (\hat y - y) \times \sigma(z_2) \times (1- \sigma(z_2)) \times 1$    
+    - $\tfrac{dL}{dw_1} = \tfrac{dL}{d\hat y} \times \tfrac{d\hat y}{dz_2}   \times \tfrac{dz_2}{da_1} \times \tfrac{da_1}{dz_1} \times \tfrac{dz_1}{dw_1}$      
+    - $\tfrac{dL}{db_1} = \tfrac{dL}{d\hat y} \times \tfrac{d\hat y}{dz_2} \times \tfrac{dz_2}{da_1} \times \tfrac{da_1}{dz_1} \times \tfrac{dz_1}{db_1}$    
+
+**Note:** As the derivative of the sigmoid function is represented in terms of the original sigmoid function, $\tfrac{d\hat y}{dz_2} = \sigma(z_2) \times (1- \sigma(z_2))$ and $\tfrac{da_1}{dz_1} = \sigma(z_1) \times (1 - \sigma(z_1))$. This makes applying the gradient rule more computationally efficient.    
 
 ```{python}
+# Use backpropagation to find the optimal values of w1, w2, b1 and b2 ----------
+# This example assumes we only have 1 data point i.e. (x, y) = (0.5, 1.0)
 
+# Sample data point
+x = 0.5
+y = 1.0
+
+# Initial random parameters
+w1 = 0.3
+w2 = 0.2
+b1 = 0.1
+b2 = 0.2
+
+# Model hyperparameters
+learning_rate = 0.1
+i = 1
+epoches = 20
+
+# Create sigmoid activation function
+def sigmoid(z):
+    return 1/(1 + np.exp(-z))
+
+for i in range(epoches):
+    # Step 1: Calculate the forward pass
+    z1 = w1 * x + b1    # Calculate 1st linear combination
+    a1 = sigmoid(z1)    # Calculate 1st sigmoid activation function
+    z2 = w2 * a1 + b2   # Calculate 2nd linear combination
+    y_hat = sigmoid(z2) # Calculate 2nd sigmoid activation function
+
+    # Step 2: Compute model loss (mean squared error)
+    loss = 0.5 * (y_hat - y) ** 2
+
+    # Early stopping criterion if model loss is 0.01
+    if loss < 0.01:
+        print(f"""
+        Stopping early at epoch {i + 1}
+        Loss = {loss:.4f}, W = [{w1:.4f}, {w2:.4f}], B = [{b1:.4f}, {b2:.4f}]  
+        """)
+        break
+
+    # Step 3: Calculate the backward pass
+    # Calculate individual gradients
+    dL_dy_hat = y_hat - y
+    dy_hat_dz2 = sigmoid(z2) * (1 - sigmoid(z2))   
+    dz2_dw2 = a1   
+    dz2_db2 = 1   
+    
+    dz2_da1 = w2  
+    da1_dz1 = sigmoid(z1) * (1 - sigmoid(z1)) 
+    dz1_dw1 = x
+    dz1_db1 = 1
+
+    # Apply chain rule
+    # First find dL_dw2 and dL_db2
+    dL_dw2 = dL_dy_hat * dy_hat_dz2 * dz2_dw2
+    dL_db2 = dL_dy_hat * dy_hat_dz2 * dz2_db2  
+    # Then find dL_dw1 and dL_db1   
+    dL_dw1 = dL_dy_hat * dy_hat_dz2 * dz2_da1 * da1_dz1 * dz1_dw1
+    dL_db1 = dL_dy_hat * dy_hat_dz2 * dz2_da1 * da1_dz1 * dz1_db1  
+
+    # Step 4: Update model parameters
+    w2 = w2 - learning_rate * dL_dw2
+    b2 = b2 - learning_rate * dL_db2
+    
+    w1 = w2 - learning_rate * dL_dw2
+    b1 = b1 - learning_rate * dL_db2
+
+    print(f"Epoch: {i + 1}, Loss = {loss:.4f}, W = [{w1:.4f}, {w2:.4f}], B = [{b1:.4f}, {b2:.4f}]")   
 ```
+
+
+#  
 
 LEt's try 2 neurons in a layer 
 
 ```{python}
 
 ```
+
+
+# Implementing neuronal network from scratch example   
+
+**Note:** LLMs like ChatGPT help speed up the revision of fundamental principles. Current free LLMs generate many small but egregious code errors, so using examples with pre-determined model parameters is a good safety check.     

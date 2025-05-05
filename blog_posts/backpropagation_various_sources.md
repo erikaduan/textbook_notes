@@ -1,14 +1,19 @@
 # Review of backpropagation
 Erika Duan
-2025-05-04
+2025-05-05
 
 - [Derivatives](#derivatives)
 - [Gradient descent](#gradient-descent)
 - [Backpropagation](#backpropagation)
 - [Single data point and single neural
-  network](#single-data-point-and-single-neural-network)
+  unit](#single-data-point-and-single-neural-unit)
 - [Multiple data points and single neural
   network](#multiple-data-points-and-single-neural-network)
+- [Single data point and 2 neural
+  units](#single-data-point-and-2-neural-units)
+- [](#section)
+- [Implementing neuronal network from scratch
+  example](#implementing-neuronal-network-from-scratch-example)
 
 ``` python
 # Import Python libraries ------------------------------------------------------
@@ -33,6 +38,9 @@ videos:
 - [3Blue1Brown neural networks Youtube
   playlist](https://www.youtube.com/playlist?list=PLZHQObOWTQDNU6R1_67000Dx_ZCJB-3pi)
   by Grant Sanderson  
+- [Tutorial for implementating a neural network from
+  scratch](https://www.geeksforgeeks.org/implementation-of-neural-network-from-scratch-using-numpy/)
+  by GeeksforGeeks  
 - ChatGPT3 prompts for simple backpropagation examples
 
 # Derivatives
@@ -299,10 +307,17 @@ The general steps of training a neural network are:
     function with respect to the neural network parameters.  
 4.  Iterate these steps until a specific stopping criterion is met.
 
-# Single data point and single neural network
+# Single data point and single neural unit
 
 Let’s try the simplest example with a single data point and a single
-neural unit:
+neural unit using the identity function (no additional transformation
+through the activation function).
+
+``` mermaid
+flowchart LR 
+  x --w*x + b--> z
+  z --identity function--> y_hat
+```
 
 - **Model parameters:** ![w](https://latex.codecogs.com/svg.latex?w "w")
   (weight) and ![b](https://latex.codecogs.com/svg.latex?b "b") (bias)  
@@ -323,12 +338,6 @@ neural unit:
     ![\tfrac{dL}{db}](https://latex.codecogs.com/svg.latex?%5Ctfrac%7BdL%7D%7Bdb%7D "\tfrac{dL}{db}")  
   - ![\tfrac{dL}{dw} = \tfrac{dL}{d\hat y} \times \tfrac{d\hat y}{dz}   \times \tfrac{dz}{dw} = (\hat y - y) \times 1 \times x = x(\hat y - y)](https://latex.codecogs.com/svg.latex?%5Ctfrac%7BdL%7D%7Bdw%7D%20%3D%20%5Ctfrac%7BdL%7D%7Bd%5Chat%20y%7D%20%5Ctimes%20%5Ctfrac%7Bd%5Chat%20y%7D%7Bdz%7D%20%20%20%5Ctimes%20%5Ctfrac%7Bdz%7D%7Bdw%7D%20%3D%20%28%5Chat%20y%20-%20y%29%20%5Ctimes%201%20%5Ctimes%20x%20%3D%20x%28%5Chat%20y%20-%20y%29 "\tfrac{dL}{dw} = \tfrac{dL}{d\hat y} \times \tfrac{d\hat y}{dz}   \times \tfrac{dz}{dw} = (\hat y - y) \times 1 \times x = x(\hat y - y)")  
   - ![\tfrac{dL}{db} = \tfrac{dL}{d\hat y} \times \tfrac{d\hat y}{dz} \times \tfrac{dz}{db} = (\hat y - y) \times 1 \times 1 = \hat y - y](https://latex.codecogs.com/svg.latex?%5Ctfrac%7BdL%7D%7Bdb%7D%20%3D%20%5Ctfrac%7BdL%7D%7Bd%5Chat%20y%7D%20%5Ctimes%20%5Ctfrac%7Bd%5Chat%20y%7D%7Bdz%7D%20%5Ctimes%20%5Ctfrac%7Bdz%7D%7Bdb%7D%20%3D%20%28%5Chat%20y%20-%20y%29%20%5Ctimes%201%20%5Ctimes%201%20%3D%20%5Chat%20y%20-%20y "\tfrac{dL}{db} = \tfrac{dL}{d\hat y} \times \tfrac{d\hat y}{dz} \times \tfrac{dz}{db} = (\hat y - y) \times 1 \times 1 = \hat y - y")
-
-``` mermaid
-flowchart LR 
-  x --wx + b--> z
-  z --identity function--> y_hat
-```
 
 ``` python
 # Use backpropagation to find the optimal values of w and b --------------------
@@ -391,12 +400,18 @@ for i in range(epoches):
             Loss = 0.0044, w = 1.6625, b = 1.5813
             
 
-Let’s try another example with a single data point, a single neural unit
-and the sigmoid activation function
-![\sigma(z)](https://latex.codecogs.com/svg.latex?%5Csigma%28z%29 "\sigma(z)"):
+Let’s try another example with a single data point and a single neural
+unit using the sigmoid activation function
+![\sigma(z)](https://latex.codecogs.com/svg.latex?%5Csigma%28z%29 "\sigma(z)").
+
+``` mermaid
+flowchart LR 
+  x --w*x + b--> z
+  z --sigmoid function--> y_hat  
+```
 
 - **Model parameters:** ![w](https://latex.codecogs.com/svg.latex?w "w")
-  (weight) and ![b](https://latex.codecogs.com/svg.latex?b "b") (bias)  
+  and ![b](https://latex.codecogs.com/svg.latex?b "b")  
 - **Loss function:**
   ![L = \tfrac{1}{2} (\hat y - y)^2](https://latex.codecogs.com/svg.latex?L%20%3D%20%5Ctfrac%7B1%7D%7B2%7D%20%28%5Chat%20y%20-%20y%29%5E2 "L = \tfrac{1}{2} (\hat y - y)^2")  
 - **Activation function**:
@@ -405,15 +420,9 @@ and the sigmoid activation function
   ![z = wx + b](https://latex.codecogs.com/svg.latex?z%20%3D%20wx%20%2B%20b "z = wx + b")  
 - **Derivatives:**
   - ![\tfrac{dL}{d\hat y} = \hat y - y](https://latex.codecogs.com/svg.latex?%5Ctfrac%7BdL%7D%7Bd%5Chat%20y%7D%20%3D%20%5Chat%20y%20-%20y "\tfrac{dL}{d\hat y} = \hat y - y")  
-  - ![\tfrac{d\hat y}{dz} = \tfrac{e^{-z}}{(1+e^{-z})^2} = \sigma(z) \times (1- \sigma(z))](https://latex.codecogs.com/svg.latex?%5Ctfrac%7Bd%5Chat%20y%7D%7Bdz%7D%20%3D%20%5Ctfrac%7Be%5E%7B-z%7D%7D%7B%281%2Be%5E%7B-z%7D%29%5E2%7D%20%3D%20%5Csigma%28z%29%20%5Ctimes%20%281-%20%5Csigma%28z%29%29 "\tfrac{d\hat y}{dz} = \tfrac{e^{-z}}{(1+e^{-z})^2} = \sigma(z) \times (1- \sigma(z))")  
+  - ![\tfrac{d\hat y}{dz} = \tfrac{e^{-z}}{(1+e^{-z})^2} = \sigma(z) \times (1 - \sigma(z))](https://latex.codecogs.com/svg.latex?%5Ctfrac%7Bd%5Chat%20y%7D%7Bdz%7D%20%3D%20%5Ctfrac%7Be%5E%7B-z%7D%7D%7B%281%2Be%5E%7B-z%7D%29%5E2%7D%20%3D%20%5Csigma%28z%29%20%5Ctimes%20%281%20-%20%5Csigma%28z%29%29 "\tfrac{d\hat y}{dz} = \tfrac{e^{-z}}{(1+e^{-z})^2} = \sigma(z) \times (1 - \sigma(z))")  
   - ![\tfrac{dL}{dw} = \tfrac{dL}{d\hat y} \times \tfrac{d\hat y}{dz}   \times \tfrac{dz}{dw} = (\hat y - y) \times \sigma(z) \times (1- \sigma(z)) \times x](https://latex.codecogs.com/svg.latex?%5Ctfrac%7BdL%7D%7Bdw%7D%20%3D%20%5Ctfrac%7BdL%7D%7Bd%5Chat%20y%7D%20%5Ctimes%20%5Ctfrac%7Bd%5Chat%20y%7D%7Bdz%7D%20%20%20%5Ctimes%20%5Ctfrac%7Bdz%7D%7Bdw%7D%20%3D%20%28%5Chat%20y%20-%20y%29%20%5Ctimes%20%5Csigma%28z%29%20%5Ctimes%20%281-%20%5Csigma%28z%29%29%20%5Ctimes%20x "\tfrac{dL}{dw} = \tfrac{dL}{d\hat y} \times \tfrac{d\hat y}{dz}   \times \tfrac{dz}{dw} = (\hat y - y) \times \sigma(z) \times (1- \sigma(z)) \times x")  
   - ![\tfrac{dL}{db} = \tfrac{dL}{d\hat y} \times \tfrac{d\hat y}{dz} \times \tfrac{dz}{db} = (\hat y - y) \times \sigma(z) \times (1- \sigma(z)) \times 1](https://latex.codecogs.com/svg.latex?%5Ctfrac%7BdL%7D%7Bdb%7D%20%3D%20%5Ctfrac%7BdL%7D%7Bd%5Chat%20y%7D%20%5Ctimes%20%5Ctfrac%7Bd%5Chat%20y%7D%7Bdz%7D%20%5Ctimes%20%5Ctfrac%7Bdz%7D%7Bdb%7D%20%3D%20%28%5Chat%20y%20-%20y%29%20%5Ctimes%20%5Csigma%28z%29%20%5Ctimes%20%281-%20%5Csigma%28z%29%29%20%5Ctimes%201 "\tfrac{dL}{db} = \tfrac{dL}{d\hat y} \times \tfrac{d\hat y}{dz} \times \tfrac{dz}{db} = (\hat y - y) \times \sigma(z) \times (1- \sigma(z)) \times 1")
-
-``` mermaid
-flowchart LR 
-  x --wx + b--> z
-  z --sigmoid function--> y_hat  
-```
 
 ``` python
 # Use backpropagation to find the optimal values of w and b --------------------
@@ -493,13 +502,260 @@ for i in range(epoches):
 
 # Multiple data points and single neural network
 
-In reality, one forward pass involves processing all training data
-points and likewise for the backward pass. We can do this more
+In reality, training data sets are large and we need to process many
+data points during each forward and backward pass. We can do this
 efficiently using matrix multiplication.
 
-Let’s try the example above (a single neural unit and the sigmoid
+Let’s try the example above (a single neural unit using the sigmoid
 activation function) but with multiple data points.
 
-Let’s try 2 neurons
+``` python
+# Use backpropagation using multiple data points -------------------------------
+# We store our data points inside a numpy array  
+
+# Store input data i.e. x_1 to x_n in a 1D numpy array    
+X = np.array(
+  [0.5, 0.8, 1.5, 0.4, 0.4, 1.0, 1.9]
+  )
+
+# Store output data i.e. y_1 to y_n in a 1D numpy array
+Y = np.array(
+  [1.0, 1.2, 1.2, 0.6, 0.5, 1.1, 1.3]
+  )
+
+# Initial random parameters
+w = 0.3        
+b = 0.1     
+
+# Model hyperparameters  
+learning_rate = 0.1
+i = 1
+epoches = 20  
+
+# Create sigmoid activation function that can input and output vectors 
+def sigmoid(z):
+    return 1/(1 + np.exp(-z))  
+
+for i in range(epoches):    
+    # Step 1: Calculate the forward pass    
+    z = w * X + b      # Calculate linear combination using scalar multiplication
+    y_hat = sigmoid(z) # Calculate sigmoid activation function  
+
+    # Step 2: Compute model loss (mean squared error) 
+    loss = 0.5 * (y_hat - y) ** 2
+    avg_loss = np.mean(loss)
+    
+    # Early stopping criterion if model loss is 0.01
+    if avg_loss < 0.01:  
+        print(f"""
+        Stopping early at epoch {i + 1}
+        Average loss = {avg_loss:.4f}, w = {w:.4f}, b = {b:.4f}
+        """)
+        break
+
+    # Step 3: Calculate the backward pass 
+    # Calculate individual gradients
+    dL_dy_hat = y_hat - y       
+    dy_hat_dz = sigmoid(z) * (1 - sigmoid(z))              
+    dz_dw = x
+    dz_db = 1
+
+    # Apply chain rule
+    dL_dw = dL_dy_hat * dy_hat_dz * dz_dw
+    dL_db = dL_dy_hat * dy_hat_dz * dz_db
+    
+    # Average over the dL_dw, dL_db and loss vectors  
+    # The expected outputs for w, b and loss are scalar. As X and Y are vectors,
+    # z, y_hat, loss and all derivative outputs are all vectors.  
+    # We need to average dL_dw, dL_db and loss to return a scalar for w and b
+    avg_dL_dw = np.mean(dL_dw)
+    avg_dL_db = np.mean(dL_db)
+    
+    # Step 4: Update model parameters 
+    w = w - learning_rate * avg_dL_dw
+    b = b - learning_rate * avg_dL_db
+
+    print(f"Epoch: {i + 1}, Average loss = {avg_loss:.4f}, w = {w:.4f}, b = {b:.4f}")
+```
+
+    Epoch: 1, Average loss = 0.0836, w = 0.3049, b = 0.1098
+    Epoch: 2, Average loss = 0.0822, w = 0.3097, b = 0.1195
+    Epoch: 3, Average loss = 0.0809, w = 0.3145, b = 0.1291
+    Epoch: 4, Average loss = 0.0796, w = 0.3193, b = 0.1385
+    Epoch: 5, Average loss = 0.0783, w = 0.3240, b = 0.1479
+    Epoch: 6, Average loss = 0.0771, w = 0.3286, b = 0.1572
+    Epoch: 7, Average loss = 0.0759, w = 0.3332, b = 0.1664
+    Epoch: 8, Average loss = 0.0747, w = 0.3377, b = 0.1754
+    Epoch: 9, Average loss = 0.0735, w = 0.3422, b = 0.1844
+    Epoch: 10, Average loss = 0.0724, w = 0.3466, b = 0.1933
+    Epoch: 11, Average loss = 0.0713, w = 0.3510, b = 0.2020
+    Epoch: 12, Average loss = 0.0702, w = 0.3554, b = 0.2107
+    Epoch: 13, Average loss = 0.0691, w = 0.3597, b = 0.2193
+    Epoch: 14, Average loss = 0.0681, w = 0.3639, b = 0.2278
+    Epoch: 15, Average loss = 0.0671, w = 0.3681, b = 0.2362
+    Epoch: 16, Average loss = 0.0661, w = 0.3722, b = 0.2445
+    Epoch: 17, Average loss = 0.0651, w = 0.3764, b = 0.2527
+    Epoch: 18, Average loss = 0.0641, w = 0.3804, b = 0.2608
+    Epoch: 19, Average loss = 0.0632, w = 0.3844, b = 0.2689
+    Epoch: 20, Average loss = 0.0623, w = 0.3884, b = 0.2768
+
+# Single data point and 2 neural units
+
+Let’s try a more complex example with 2 neurons organised one after
+another and using the sigmoid activation function. We now have 2 weights
+(![w_1, w_2](https://latex.codecogs.com/svg.latex?w_1%2C%20w_2 "w_1, w_2"))
+and 2 biases
+(![b_1, b_2](https://latex.codecogs.com/svg.latex?b_1%2C%20b_2 "b_1, b_2"))
+to estimate.
+
+When there are multiple neurons, the notation
+![(z\|a)](https://latex.codecogs.com/svg.latex?%28z%7Ca%29 "(z|a)")
+becomes useful where ![z](https://latex.codecogs.com/svg.latex?z "z") is
+the neuronal input and ![a](https://latex.codecogs.com/svg.latex?a "a")
+is the neuronal output. In this example,
+![y_hat = a_2](https://latex.codecogs.com/svg.latex?y_hat%20%3D%20a_2 "y_hat = a_2").
+
+``` mermaid
+flowchart LR 
+  x --w_1*x + b_1--> z_1
+  z_1 --sigmoid function--> a_1 
+  
+  a_1 --w_2*a_1 + b_2--> z_2
+  z_2 --sigmoid function--> y_hat
+```
+
+Estimating ![w_2](https://latex.codecogs.com/svg.latex?w_2 "w_2") and
+![b_2](https://latex.codecogs.com/svg.latex?b_2 "b_2") using
+![\tfrac{dL}{dw_2}](https://latex.codecogs.com/svg.latex?%5Ctfrac%7BdL%7D%7Bdw_2%7D "\tfrac{dL}{dw_2}")
+and
+![\tfrac{dL}{db_2}](https://latex.codecogs.com/svg.latex?%5Ctfrac%7BdL%7D%7Bdb_2%7D "\tfrac{dL}{db_2}")
+is identical to the example above for a single neural unit. Estimating
+![w_1](https://latex.codecogs.com/svg.latex?w_1 "w_1") and
+![b_1](https://latex.codecogs.com/svg.latex?b_1 "b_1") requires further
+application of the chain rule.
+
+- **Model parameters:**
+  ![W = \[w_1, w_2\]](https://latex.codecogs.com/svg.latex?W%20%3D%20%5Bw_1%2C%20w_2%5D "W = [w_1, w_2]")
+  and
+  ![B = \[b_1, b_2\]b](https://latex.codecogs.com/svg.latex?B%20%3D%20%5Bb_1%2C%20b_2%5Db "B = [b_1, b_2]b")  
+- **Loss function:**
+  ![L = \tfrac{1}{2} (\hat y - y)^2](https://latex.codecogs.com/svg.latex?L%20%3D%20%5Ctfrac%7B1%7D%7B2%7D%20%28%5Chat%20y%20-%20y%29%5E2 "L = \tfrac{1}{2} (\hat y - y)^2")  
+- **Activation function**:
+  ![\sigma(z) = \tfrac{1}{1+e^{-z}}](https://latex.codecogs.com/svg.latex?%5Csigma%28z%29%20%3D%20%5Ctfrac%7B1%7D%7B1%2Be%5E%7B-z%7D%7D "\sigma(z) = \tfrac{1}{1+e^{-z}}")  
+- **Derivatives:**
+  - ![\tfrac{dL}{d\hat y} = \hat y - y](https://latex.codecogs.com/svg.latex?%5Ctfrac%7BdL%7D%7Bd%5Chat%20y%7D%20%3D%20%5Chat%20y%20-%20y "\tfrac{dL}{d\hat y} = \hat y - y")  
+  - ![\tfrac{d}{dz} = \sigma(z) \times (1 - \sigma(z))](https://latex.codecogs.com/svg.latex?%5Ctfrac%7Bd%7D%7Bdz%7D%20%3D%20%5Csigma%28z%29%20%5Ctimes%20%281%20-%20%5Csigma%28z%29%29 "\tfrac{d}{dz} = \sigma(z) \times (1 - \sigma(z))")  
+  - ![\tfrac{dL}{dw_2} = \tfrac{dL}{d\hat y} \times \tfrac{d\hat y}{dz_2}   \times \tfrac{dz_2}{dw_2} = (\hat y - y) \times \sigma(z_2) \times (1- \sigma(z_2)) \times x](https://latex.codecogs.com/svg.latex?%5Ctfrac%7BdL%7D%7Bdw_2%7D%20%3D%20%5Ctfrac%7BdL%7D%7Bd%5Chat%20y%7D%20%5Ctimes%20%5Ctfrac%7Bd%5Chat%20y%7D%7Bdz_2%7D%20%20%20%5Ctimes%20%5Ctfrac%7Bdz_2%7D%7Bdw_2%7D%20%3D%20%28%5Chat%20y%20-%20y%29%20%5Ctimes%20%5Csigma%28z_2%29%20%5Ctimes%20%281-%20%5Csigma%28z_2%29%29%20%5Ctimes%20x "\tfrac{dL}{dw_2} = \tfrac{dL}{d\hat y} \times \tfrac{d\hat y}{dz_2}   \times \tfrac{dz_2}{dw_2} = (\hat y - y) \times \sigma(z_2) \times (1- \sigma(z_2)) \times x")  
+  - ![\tfrac{dL}{db_2} = \tfrac{dL}{d\hat y} \times \tfrac{d\hat y}{dz_2} \times \tfrac{dz_2}{db_2} = (\hat y - y) \times \sigma(z_2) \times (1- \sigma(z_2)) \times 1](https://latex.codecogs.com/svg.latex?%5Ctfrac%7BdL%7D%7Bdb_2%7D%20%3D%20%5Ctfrac%7BdL%7D%7Bd%5Chat%20y%7D%20%5Ctimes%20%5Ctfrac%7Bd%5Chat%20y%7D%7Bdz_2%7D%20%5Ctimes%20%5Ctfrac%7Bdz_2%7D%7Bdb_2%7D%20%3D%20%28%5Chat%20y%20-%20y%29%20%5Ctimes%20%5Csigma%28z_2%29%20%5Ctimes%20%281-%20%5Csigma%28z_2%29%29%20%5Ctimes%201 "\tfrac{dL}{db_2} = \tfrac{dL}{d\hat y} \times \tfrac{d\hat y}{dz_2} \times \tfrac{dz_2}{db_2} = (\hat y - y) \times \sigma(z_2) \times (1- \sigma(z_2)) \times 1")  
+  - ![\tfrac{dL}{dw_1} = \tfrac{dL}{d\hat y} \times \tfrac{d\hat y}{dz_2}   \times \tfrac{dz_2}{da_1} \times \tfrac{da_1}{dz_1} \times \tfrac{dz_1}{dw_1}](https://latex.codecogs.com/svg.latex?%5Ctfrac%7BdL%7D%7Bdw_1%7D%20%3D%20%5Ctfrac%7BdL%7D%7Bd%5Chat%20y%7D%20%5Ctimes%20%5Ctfrac%7Bd%5Chat%20y%7D%7Bdz_2%7D%20%20%20%5Ctimes%20%5Ctfrac%7Bdz_2%7D%7Bda_1%7D%20%5Ctimes%20%5Ctfrac%7Bda_1%7D%7Bdz_1%7D%20%5Ctimes%20%5Ctfrac%7Bdz_1%7D%7Bdw_1%7D "\tfrac{dL}{dw_1} = \tfrac{dL}{d\hat y} \times \tfrac{d\hat y}{dz_2}   \times \tfrac{dz_2}{da_1} \times \tfrac{da_1}{dz_1} \times \tfrac{dz_1}{dw_1}")  
+  - ![\tfrac{dL}{db_1} = \tfrac{dL}{d\hat y} \times \tfrac{d\hat y}{dz_2} \times \tfrac{dz_2}{da_1} \times \tfrac{da_1}{dz_1} \times \tfrac{dz_1}{db_1}](https://latex.codecogs.com/svg.latex?%5Ctfrac%7BdL%7D%7Bdb_1%7D%20%3D%20%5Ctfrac%7BdL%7D%7Bd%5Chat%20y%7D%20%5Ctimes%20%5Ctfrac%7Bd%5Chat%20y%7D%7Bdz_2%7D%20%5Ctimes%20%5Ctfrac%7Bdz_2%7D%7Bda_1%7D%20%5Ctimes%20%5Ctfrac%7Bda_1%7D%7Bdz_1%7D%20%5Ctimes%20%5Ctfrac%7Bdz_1%7D%7Bdb_1%7D "\tfrac{dL}{db_1} = \tfrac{dL}{d\hat y} \times \tfrac{d\hat y}{dz_2} \times \tfrac{dz_2}{da_1} \times \tfrac{da_1}{dz_1} \times \tfrac{dz_1}{db_1}")
+
+**Note:** As the derivative of the sigmoid function is represented in
+terms of the original sigmoid function,
+![\tfrac{d\hat y}{dz_2} = \sigma(z_2) \times (1- \sigma(z_2))](https://latex.codecogs.com/svg.latex?%5Ctfrac%7Bd%5Chat%20y%7D%7Bdz_2%7D%20%3D%20%5Csigma%28z_2%29%20%5Ctimes%20%281-%20%5Csigma%28z_2%29%29 "\tfrac{d\hat y}{dz_2} = \sigma(z_2) \times (1- \sigma(z_2))")
+and
+![\tfrac{da_1}{dz_1} = \sigma(z_1) \times (1 - \sigma(z_1))](https://latex.codecogs.com/svg.latex?%5Ctfrac%7Bda_1%7D%7Bdz_1%7D%20%3D%20%5Csigma%28z_1%29%20%5Ctimes%20%281%20-%20%5Csigma%28z_1%29%29 "\tfrac{da_1}{dz_1} = \sigma(z_1) \times (1 - \sigma(z_1))").
+This makes applying the gradient rule more computationally efficient.
+
+``` python
+# Use backpropagation to find the optimal values of w1, w2, b1 and b2 ----------
+# This example assumes we only have 1 data point i.e. (x, y) = (0.5, 1.0)
+
+# Sample data point
+x = 0.5
+y = 1.0
+
+# Initial random parameters
+w1 = 0.3
+w2 = 0.2
+b1 = 0.1
+b2 = 0.2
+
+# Model hyperparameters
+learning_rate = 0.1
+i = 1
+epoches = 20
+
+# Create sigmoid activation function
+def sigmoid(z):
+    return 1/(1 + np.exp(-z))
+
+for i in range(epoches):
+    # Step 1: Calculate the forward pass
+    z1 = w1 * x + b1    # Calculate 1st linear combination
+    a1 = sigmoid(z1)    # Calculate 1st sigmoid activation function
+    z2 = w2 * a1 + b2   # Calculate 2nd linear combination
+    y_hat = sigmoid(z2) # Calculate 2nd sigmoid activation function
+
+    # Step 2: Compute model loss (mean squared error)
+    loss = 0.5 * (y_hat - y) ** 2
+
+    # Early stopping criterion if model loss is 0.01
+    if loss < 0.01:
+        print(f"""
+        Stopping early at epoch {i + 1}
+        Loss = {loss:.4f}, W = [{w1:.4f}, {w2:.4f}], B = [{b1:.4f}, {b2:.4f}]  
+        """)
+        break
+
+    # Step 3: Calculate the backward pass
+    # Calculate individual gradients
+    dL_dy_hat = y_hat - y
+    dy_hat_dz2 = sigmoid(z2) * (1 - sigmoid(z2))   
+    dz2_dw2 = a1   
+    dz2_db2 = 1   
+    
+    dz2_da1 = w2  
+    da1_dz1 = sigmoid(z1) * (1 - sigmoid(z1)) 
+    dz1_dw1 = x
+    dz1_db1 = 1
+
+    # Apply chain rule
+    # First find dL_dw2 and dL_db2
+    dL_dw2 = dL_dy_hat * dy_hat_dz2 * dz2_dw2
+    dL_db2 = dL_dy_hat * dy_hat_dz2 * dz2_db2  
+    # Then find dL_dw1 and dL_db1   
+    dL_dw1 = dL_dy_hat * dy_hat_dz2 * dz2_da1 * da1_dz1 * dz1_dw1
+    dL_db1 = dL_dy_hat * dy_hat_dz2 * dz2_da1 * da1_dz1 * dz1_db1  
+
+    # Step 4: Update model parameters
+    w2 = w2 - learning_rate * dL_dw2
+    b2 = b2 - learning_rate * dL_db2
+    
+    w1 = w2 - learning_rate * dL_dw2
+    b1 = b1 - learning_rate * dL_db2
+
+    print(f"Epoch: {i + 1}, Loss = {loss:.4f}, W = [{w1:.4f}, {w2:.4f}], B = [{b1:.4f}, {b2:.4f}]")   
+```
+
+    Epoch: 1, Loss = 0.0893, W = [0.2116, 0.2058], B = [0.1103, 0.2103]
+    Epoch: 2, Loss = 0.0880, W = [0.2171, 0.2115], B = [0.1205, 0.2205]
+    Epoch: 3, Loss = 0.0866, W = [0.2227, 0.2171], B = [0.1306, 0.2306]
+    Epoch: 4, Loss = 0.0852, W = [0.2283, 0.2227], B = [0.1406, 0.2406]
+    Epoch: 5, Loss = 0.0838, W = [0.2339, 0.2283], B = [0.1506, 0.2506]
+    Epoch: 6, Loss = 0.0825, W = [0.2394, 0.2338], B = [0.1603, 0.2603]
+    Epoch: 7, Loss = 0.0812, W = [0.2449, 0.2393], B = [0.1700, 0.2700]
+    Epoch: 8, Loss = 0.0798, W = [0.2503, 0.2448], B = [0.1796, 0.2796]
+    Epoch: 9, Loss = 0.0786, W = [0.2558, 0.2503], B = [0.1891, 0.2891]
+    Epoch: 10, Loss = 0.0773, W = [0.2611, 0.2557], B = [0.1985, 0.2985]
+    Epoch: 11, Loss = 0.0761, W = [0.2665, 0.2611], B = [0.2078, 0.3078]
+    Epoch: 12, Loss = 0.0748, W = [0.2718, 0.2665], B = [0.2169, 0.3169]
+    Epoch: 13, Loss = 0.0737, W = [0.2771, 0.2718], B = [0.2260, 0.3260]
+    Epoch: 14, Loss = 0.0725, W = [0.2824, 0.2771], B = [0.2350, 0.3350]
+    Epoch: 15, Loss = 0.0713, W = [0.2876, 0.2824], B = [0.2439, 0.3439]
+    Epoch: 16, Loss = 0.0702, W = [0.2928, 0.2876], B = [0.2527, 0.3527]
+    Epoch: 17, Loss = 0.0691, W = [0.2980, 0.2928], B = [0.2613, 0.3613]
+    Epoch: 18, Loss = 0.0680, W = [0.3031, 0.2980], B = [0.2699, 0.3699]
+    Epoch: 19, Loss = 0.0669, W = [0.3082, 0.3031], B = [0.2784, 0.3784]
+    Epoch: 20, Loss = 0.0659, W = [0.3133, 0.3082], B = [0.2868, 0.3868]
+
+# 
 
 LEt’s try 2 neurons in a layer
+
+# Implementing neuronal network from scratch example
+
+**Note:** LLMs like ChatGPT help speed up the revision of fundamental
+principles. Current free LLMs generate many small but egregious code
+errors, so using examples with pre-determined model parameters is a good
+safety check.

@@ -1,6 +1,6 @@
 # Review of Transformers from Scratch
 Erika Duan
-2025-04-12
+2025-06-01
 
 - [Original uses of transformers](#original-uses-of-transformers)
 - [One-hot encoding](#one-hot-encoding)
@@ -15,6 +15,9 @@ Erika Duan
 - [Rest Stop and an Off Ramp](#rest-stop-and-an-off-ramp)
 - [Attention as matrix
   multiplication](#attention-as-matrix-multiplication)
+- [Second order sequence model as matrix
+  multiplications](#second-order-sequence-model-as-matrix-multiplications)
+- [Sequence completion](#sequence-completion)
 - [Key messages](#key-messages)
 - [Other resources](#other-resources)
 
@@ -36,10 +39,19 @@ size).
 
 Transformers were originally used for:
 
-- Sequence transduction - converting one sequence of tokens into another
-  sequence in another language.  
-- Sequence completion - given a starting prompt, output a sequence of
-  tokens in the same style.
+- **Sequence transduction** - converting one sequence of tokens into
+  another sequence in another language. The **encoder** takes an input
+  sequence of words and outputs a representational vector with
+  ‘attention’ weights and positional encoding applied. The **decoder**
+  takes the input from the encoder and outputs a sequence of words (by
+  predicting the next most likely word at each position along the
+  sequence). Language translation requires both the encoder and decoder
+  components.  
+- **Sequence completion** - given a starting prompt, output a sequence
+  of tokens in the same style. LLMs like ChatGPT only consist of decoder
+  components (which still use masked self-attention at each layer).
+
+![](https://d2l.ai/_images/transformer.svg)
 
 Sequence transduction requires:  
 + A **vocabulary** - the set of unique tokens that form our language.
@@ -173,12 +185,14 @@ then AB is
 ![m \times p](https://latex.codecogs.com/svg.latex?m%20%5Ctimes%20p "m \times p")
 in dimensions.
 
-Matrix multiplication can be used as a lookup table:
+Matrices can be used as a weights lookup table where:
 
 - Each row contains all the vector weights for a unique one-hot
   vector.  
-- Each column is a vector of all the word or token weights generated
-  from a unique corpus.
+- Each column lists all the different word or token weights generated
+  from a single corpus.  
+- A query matrix is multiplied with the weights matrix to output only
+  the weights of interest.
 
 ``` python
 # Use matrix multiplication as a lookup table ----------------------------------
@@ -190,9 +204,9 @@ simple_query = np.array([
   ]) 
 
 # Create the entire word weights matrix 
-# The first column contains all vector weights from corpus 1 and so forth 
-# A row contains all word weights for a unique one-hot vector 
-# Weights matrix row order follows the same word order as the one-hot vector
+# The first column contains all the different word weights from corpus 1  
+# A row contains all corpus word weights for a unique one-hot vector 
+# Weights matrix row order follows the same column order as the one-hot vector
 weights = np.array([
   [0.1, 0.5], # files
   [0.3, 0.2], # find
@@ -201,6 +215,7 @@ weights = np.array([
 ])
 
 # The dot product retrieves token weights for vectors in simple_query  
+# 2x4 @ 4x2 returns a 2x2 matrix 
 simple_query @ weights
 ```
 
@@ -224,9 +239,11 @@ command_1 = ["show", "me", "my", "directories", "please"]
 command_2 = ["show", "me", "my", "files", "please"]  
 command_3 = ["show", "me", "my", "photos", "please"]   
 
+# Extract unique words from all commands
 command_set = set(command_1)
 command_set.update(command_2, command_3)
 
+# Count vocabulary length
 command_vocab = sorted(command_set)
 command_vocab_length = len(command_set) 
 
@@ -245,8 +262,8 @@ print(
       
 
 A bag of words approach does not retain information about word sequence
-(the likelihood of word X being followed by word Y versus Z). A
-transition model is helpful for representing word sequences.
+(the likelihood of word Z being followed by word X versus Y). In
+contrast, a transition model is helpful for representing word sequences.
 
 ![](https://e2eml.school/images/transformers/markov_chain.png)
 
@@ -330,9 +347,8 @@ To predict the word after `ran`, we would have to look back 7 words
 behind `ran`. Generating an eighth order transition matrix with
 ![N^8](https://latex.codecogs.com/svg.latex?N%5E8 "N^8") rows is too
 cumbersome. To capture **long range word dependencies**, we can use a
-second order sequence model that captures the 2-word combinations of a
-word and the ![Nth](https://latex.codecogs.com/svg.latex?Nth "Nth")
-words that come before it.
+second order sequence model that captures all 2-word combinations of a
+word and the Nth words that come before it.
 
 ``` python
 # Generate list of 2-word combinations using a selected word and skip range ----
@@ -355,9 +371,9 @@ def list_combinations(sentence: str, word: str, num: int) -> list[tuple[str, str
 # Generate example -------------------------------------------------------------
 sentence = "Check the program log and find out whether it ran please"
 word = "ran"
-n = 8
+num = 8
 
-list_combinations(sentence, word, n)
+list_combinations(sentence, word, num)
 ```
 
     [('the', 'ran'), ('program', 'ran'), ('log', 'ran'), ('and', 'ran'), ('find', 'ran'), ('out', 'ran'), ('whether', 'ran'), ('it', 'ran')]
@@ -371,17 +387,18 @@ diagram below.
 ![](https://e2eml.school/images/transformers/feature_voting.png)
 
 This **second order sequence model with skips** can also be represented
-by a transition matrix, except that the individual values in a matrix no
-longer represent a probability.
+by a matrix, except that the individual values in a matrix no longer
+represent a probability. The weights matrix is no longer a transition
+matrix.
 
 ![](https://e2eml.school/images/transformers/transition_matrix_second_order_skips.png)  
-This is because each row no longer represents a unique position of the
+This is because each row no longer represents a unique position in the
 sequence. A unique position is now represented by multiple rows or
 **features**. For example, the sequence point `ran` is described by
 multiple 2-word pairs such as `the, ran`, `program, ran` etc.
 
-Each value in the matrix now represents a **vote**. Votes are summed
-column-wise and compared to determine the next word prediction.
+Each value in the weights matrix now represents a **vote**. Votes are
+summed column-wise and compared to determine the next word prediction.
 
 Most of the features also do not have any predictive power. Only the
 features `battery, ran` and `program, ran` determine whether the next
@@ -390,10 +407,11 @@ word in the sequence is `down` or `please`.
 To use a set of 2 word-pair features for next word prediction, we need
 to:
 
-1.  Extract all relevant 2-word pairs or features for a sequence of
-    interest using a one-hot vector.  
-2.  Matrix multiplication of the one-hot vector and transition matrix is
-    equivalent to finding the column sums of all the features.  
+1.  Contain all relevant 2-word pairs or features for a sequence of
+    interest using a one-hot vector (the Query vector).  
+2.  Matrix multiplication of the query vector and weights matrix is
+    equal to finding the total vote for each word in the vocabulary (the
+    column sums of the query-specific subset of the weights matrix).  
 3.  Choose the word with the highest vote as the predicted next word.
 
 ``` python
@@ -403,7 +421,7 @@ to:
 command_1 = "yellow leaves mean it is autumn"  
 command_2 = "green leaves mean it is spring"    
 
-# Extract all unique 2-word pairs as the rows for the transition matrix  
+# Extract all unique 2-word pairs as the rows for the weights matrix  
 combo_1 = list_combinations(command_1, "is", 4)
 combo_2 = list_combinations(command_2, "is", 4)
 combo_all = set(combo_1 + combo_2)
@@ -411,13 +429,13 @@ combo_all = set(combo_1 + combo_2)
 word_pairs = [list(tuple) for tuple in combo_all]
 word_pairs_matrix = np.array(sorted(word_pairs))
 
-# Extract all unique words as the columns for the transition matrix  
+# Extract all unique sorted words as the columns for the weights matrix  
 words_all = (command_1 + " " + command_2).split()
-vocab = sorted(set(words_all))
+vocab = sorted(set(words_all)) 
 
 # Manually construct the transition matrix    
 # vocab = ['autumn', 'green', 'is', 'it', 'leaves', 'mean', 'spring', 'yellow']
-command_t_matrix = np.array(
+weights_matrix = np.array(
   [
     [0, 0, 0, 0, 0, 0, 1, 0], # green, is 
     [0.5, 0, 0, 0, 0, 0, 0.5, 0], # it, is
@@ -433,8 +451,8 @@ command_2_features = np.array(
   [1, 1, 1, 1, 0]
 )
 
-# command_2_features is 1x5 and command_t_matrix is 5x8
-command_2_features @ command_t_matrix
+# command_2_features is 1x5 and weights_matrix is 5x8
+command_2_features @ weights_matrix
 ```
 
     array([1.5, 0. , 0. , 0. , 0. , 0. , 2.5, 0. ])
@@ -449,7 +467,7 @@ command_2_features @ command_t_matrix
 
 There is a major weakness to counting total votes for next word
 prediction. Imagine an outcome where the top 2 votes were 10 and 9.
-There is only a score difference of 0.1% between the selected versus
+There is only a score difference of 0.1 between the selected versus
 ignored word for prediction.
 
 Using total votes can make predictions seem more uncertain than they
@@ -471,7 +489,7 @@ features represented by 1s.
 
 ``` python
 # Re-examine features for sequence of interest ---------------------------------
-command_t_matrix = np.array(
+weights_matrix = np.array(
   [
     [0, 0, 0, 0, 0, 0, 1, 0], # green, is 
     [0.5, 0, 0, 0, 0, 0, 0.5, 0], # it, is
@@ -500,7 +518,7 @@ command_2_features * command_2_features_mask
 
 ``` python
 # Obtain masked next word prediction  
-(command_2_features * command_2_features_mask) @ command_t_matrix  
+(command_2_features * command_2_features_mask) @ weights_matrix  
 ```
 
     array([0., 0., 0., 0., 0., 0., 1., 0.])
@@ -518,26 +536,171 @@ transformers does.
 
 # Rest Stop and an Off Ramp
 
-When we think about implementing a useful model for sequence prediction,
-there are three practical considerations:
+When we think about implementing a useful **automated** model for
+sequence prediction, there are a few practical considerations:
 
 - Computers are great at **matrix multiplications**. Expressing
   computation as a matrix multiplication is extremely efficient.  
 - Every step needs to be **differentiable**, as all model parameters
   (i.e. transition probabilities and mask values) are learnt using [back
-  propagation](https://www.youtube.com/watch?v=Ilg3gGewQ5U). For any
-  small change in a parameter, we must be able to calculate the
+  propagation](https://www.youtube.com/watch?v=Ilg3gGewQ5U). Transformer
+  models have an incredibly large number of parameters to calculate.  
+- For any small change in a parameter, we must be able to calculate the
   corresponding change in the model error.  
 - The gradient needs to be **smooth** and **well conditioned** i.e. the
   slope doesn’t change very quickly when you make steps in any direction
   and changes are similar in every direction. This is a tricky condition
   to guarantee.
 
-``` python
-# Simple back propagation example ----------------------------------------------
-```
+In the code above, we had to manually calculate:
+
+- All the unique word pairs or features of a language i.e. the rows of
+  the weights matrix.  
+- The query vector.  
+- The mask for the query vector.  
+- The weights matrix.
+
+Transformers calculate all the values for these components progressively
+through each layer of the decoder.
 
 # Attention as matrix multiplication
+
+The weights matrix can be built by counting how often each 2-word pair
+or next word transition occurs in the training data set.
+
+To construct attention masks, we need to:
+
+- Stack the mask vectors for every word into a matrix.  
+- We use one-hot encoding of the most recent word to pull out its
+  corresponding mask.  
+- This mask lookup process is represented by
+  ![QK^T](https://latex.codecogs.com/svg.latex?QK%5ET "QK^T") in the
+  attention equation where
+  ![Attention(Q, K, V) = softmax(\tfrac{QK^T}{\sqrt{d_k}})](https://latex.codecogs.com/svg.latex?Attention%28Q%2C%20K%2C%20V%29%20%3D%20softmax%28%5Ctfrac%7BQK%5ET%7D%7B%5Csqrt%7Bd_k%7D%7D%29 "Attention(Q, K, V) = softmax(\tfrac{QK^T}{\sqrt{d_k}})")  
+- Q represents the single word query of interest.  
+- ![K^T](https://latex.codecogs.com/svg.latex?K%5ET "K^T") represents
+  the transposed matrix of mask vectors (the masks are stored in rows in
+  the transposed matrix).
+
+![](https://e2eml.school/images/transformers/mask_matrix_lookup.png)
+**Note:** There is an error in the diagram above and the
+feature-specific mask should be `[0, 0, ..., 1, 0, 0, 0]`.
+
+# Second order sequence model as matrix multiplications
+
+The result of our conceptual attention step is a modified query vector
+that contains:
+
+- The most recent word  
+- A small collection of words that appeared before the most recent word
+  (that were not masked out)
+
+We need to automatically translate this vector into word-pair features.
+In transformers, we can do this using a single layer fully connected
+neural network.
+
+Imagine that the attended query vector contains three words of interest:
+`[battery, program, ran]`.
+
+![](https://e2eml.school/images/transformers/feature_creation_layer.png)
+
+- Each neuron in the input layer represents one word or token from the
+  query vector.
+- Each neuron in the output layer represents one word-pair feature of
+  interest.  
+- In this example, input layer neurons have arbitrary weights of 1 or
+  -1, but these weights are optimised during model training. The weights
+  act to combine the presence and absence of a word into a set of 2-word
+  pairs or features.  
+- The input layer always has a bias neuron with a value of 1.
+
+This process can be represented by the following matrix multiplication
+step (of the query vector and the neural network’s weights matrix).
+
+![](https://e2eml.school/images/transformers/second_order_feature_battery.png)
+
+``` python
+# Create matrix multiplication representation of neural network ----------------
+# Each row in the neural network weights matrix represent a unique token from 
+# our query of interest. Here, the weights of the neural network are arbitrary.    
+# Our neural network contains 2 output neurons, which is why each input neuron
+# has two weights (nn_weights has two columns).     
+nn_weights = np.array([
+  [ 1, -1], # battery
+  [-1,  1], # program 
+  [ 1,  1], # run
+  [-1, -1]  # bias
+])
+
+# Example 1: The 'attended' query is [battery, run] ----------------------------       
+# The columns of the Query vector correspond to the rows of nn_weights
+Q1 = [1, 0, 1, 1] 
+
+# Matrix multiplication results in 1 for (battery, run) and -1 for (program, run)
+Q1 @ nn_weights   
+```
+
+    array([ 1, -1])
+
+``` python
+# Applying a ReLU activation function converts -1 into 0  
+np.maximum(0, Q1 @ nn_weights)
+```
+
+    array([1, 0])
+
+``` python
+# Example 2: The 'attended' query is [program, run] ----------------------------
+Q2 = [0, 1, 1, 1] 
+
+# Matrix multiplication results in -1 for (battery, run) and 1 for (program, run)
+Q2 @ nn_weights 
+```
+
+    array([-1,  1])
+
+``` python
+# Applying a ReLU activation function converts -1 into 0  
+np.maximum(0, Q2 @ nn_weights)
+```
+
+    array([0, 1])
+
+Applying a rectified linear unit (ReLU) activation function transforms
+any negative values into 0s. This cleans the matrix multiplication above
+so our result contains either 1s (a single feature vote) or 0s (feature
+absence).
+
+**Note:** We manually determined that two unique 2-word pairs would be
+produced from our query vector `[battery, program, ran]` and manually
+specified that the output layer should only contain 2 neurons. By using
+neural networks to generate word pair features, the neural network
+creates new features from different queries without requiring explicit
+instructions. A 3-word feature `ran, battery, program` could even be
+created if this combination occurred commonly enough in the attended
+query vector.
+
+Overall, the feed forward processing steps applied after attention is
+obtained are:
+
+1.  Feature creation (i.e. unique 2 word pairs) via matrix
+    multiplication  
+2.  Application of ReLU non-linearity  
+3.  Next word prediction via matrix multiplication (of the features
+    matrix and the weights matrix)
+
+![](https://e2eml.school/images/transformers/feedforward_equations.png)
+
+This step is referred to as the **Feed Forward** block in the
+transformer model.
+
+![](https://e2eml.school/images/transformers/architecture_feedforward.png)
+
+**Note:** Word-pair features do not account for word order, but we can
+use the co-occurrence of word-pair features (the unique set of word-pair
+features) to make decent predictions.
+
+# Sequence completion
 
 # Key messages
 

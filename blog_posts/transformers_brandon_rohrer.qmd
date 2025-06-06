@@ -47,15 +47,15 @@ It is useful to think of words as the fundamental units of natural language proc
 
 Transformers were originally used for:  
 
-+ **Sequence transduction** - converting one sequence of tokens into another sequence in another language. The **encoder** takes an input sequence of words and outputs a representational vector with 'attention' weights and positional encoding applied. The **decoder** takes the input from the encoder and outputs a sequence of words (by predicting the next most likely word at each position along the sequence). Language translation requires both the encoder and decoder components.      
-+ **Sequence completion** - given a starting prompt, output a sequence of tokens in the same style. LLMs like ChatGPT only consist of decoder components (which still use masked self-attention at each layer).          
++ **Sequence transduction** - converting one sequence of words into another sequence in another language. The **encoder** takes an input sequence of tokens and outputs a sequence of vectors in an embedded space. The **decoder** takes the input from the encoder and outputs a sequence of words (by predicting the next most likely word at each position along the sequence). Language translation requires both the encoder and decoder components.      
++ **Sequence completion** - given a starting prompt, output a sequence of tokens in the same style. LLMs like ChatGPT only consist of decoder components. Encoders and decoders both use a clever engineering trick called **masked self-attention** to generate their outputs.    
 
 ![](https://d2l.ai/_images/transformer.svg)
 
 Sequence transduction requires:  
-+ A **vocabulary** - the set of unique tokens that form our language. The vocabulary is created from the training data set.   
-+ A method to **convert** unique tokens into unique numbers (specifically vectors).     
-+ A method of **encoding token context** - ensuring that the word `bank` in `river bank` has a different numerical representation to the word `bank` in `bank mortgage`.        
++ A **vocabulary** - the set of unique words that form our language. The vocabulary needs to be created from a representative training data set.    
++ A method to **convert** unique words or tokens into unique numbers (specifically vectors).     
++ A method of **encoding word context** - ensuring that the word `bank` in `river bank` has a different numerical representation to the word `bank` in `bank mortgage`.        
 
 
 # One-hot encoding    
@@ -80,51 +80,34 @@ my = [0, 0, 0, 1]
 
 # The dot product    
 
-The [dot product](https://en.wikipedia.org/wiki/Dot_product) is a mathematical operation where $a\times b$ returns a 1-dimensional or scalar number given that $a$ and $b$ have the same vector length.       
+The [dot product](https://en.wikipedia.org/wiki/Dot_product) returns a 1-dimensional or scalar number given that $a$ and $b$ have the same vector length.       
 
 Let $a = [a_1, a_2, \cdots, a_n]$ and $b = [b_1, b_2, \cdots, b_n]$.    
 $$a \cdot b = \sum^n_{i=1} a_ib_i = (a_1+b_1) + (a_2+b_2) + \cdots + (a_n + b_n)$$    
 
-Dot products are useful summation and information retrieval tools for one-hot vectors:    
+Dot products are useful information retrieval tools for one-hot vectors:    
 
 + The dot product of any one-hot vector with itself is 1.  
 + The dot product of any one-hot vector with a different one-hot vector is 0.  
 + The dot product of a one-hot vector and a vector of word or token weights is useful for calculating how strongly a word is represented.  
 
 ```{python}
-# Create function to identify if a one-hot vector is the same or different -----
-def identify_ohe_vector(vector_1: np.ndarray, vector_2: np.ndarray) -> None: 
-  
-  # Check if both inputs are numpy arrays
-  if not isinstance(vector_1, np.ndarray) or not isinstance(vector_2, np.ndarray):
-    raise TypeError("Both inputs must be numpy arrays")
-  
-  # Check if both arrays are 1D
-  if vector_1.ndim != 1 or vector_2.ndim != 1:
-    raise ValueError("Both numpy arrays must be 1D")
-  
-  # Check that both arrays have the same length
-  if len(vector_1) != len(vector_2):
-    raise ValueError("Numpy arrays must have the same length")
-    
-  # Dot product of any one-hot vector with itself is 1
-  if vector_1 @ vector_2 == 1:
-    return f"One-hot encoded vectors are the same"
-  
-  # Dot product of any one-hot vector with a different vector is 0  
-  if vector_1 @ vector_2 == 0:
-    return f"One-hot encoded vectors are different"
+# Identify if a one-hot vector is the same or different ------------------------
+# The @ operator calculates the dot product if its inputs are 1D NumPy arrays   
 
-# Test function on simple vocabulary -------------------------------------------
-identify_ohe_vector(
-  np.array(find),
-  np.array(find)
-)
+# Vectors are identical but same in length
+np.array([0, 0, 1]) @ np.array([0, 0, 1])  
 
-identify_ohe_vector(
-  np.array(find),
-  np.array(my)
-)
+# Vectors are different but same in length
+np.array([1, 0, 0]) @ np.array([0, 0, 1]) 
+
+# The dot product cannot be calculated if vectors are different in length
+try: 
+  np.array([0, 0, 1, 0]) @ np.array([0, 0, 1])  
+except Exception as e:
+  print(f"Error type: {type(e).__name__}")
+  print(f"Error message: {e}")
+  print(f"Full error info: {type(e)}")
 ```
 
 ```{python}
@@ -149,24 +132,30 @@ np.array(find) @ weights
 
 The dot product is the building block of [matrix multiplication](https://en.wikipedia.org/wiki/Matrix_multiplication). If A is $m \times n$ and B is $n \times p$, then AB is $m \times p$ in dimensions.   
 
-Matrices can be used as a weights lookup table where:   
+Matrices can be used as a **weights lookup table** where:   
 
-+ Each row contains all the vector weights for a unique one-hot vector.   
-+ Each column lists all the different word or token weights generated from a single corpus.   
++ Each row stores a vector of weights for a unique one-hot vector.   
++ Each column stores the weights for a unique entity (the weights for each word in a vocabulary or the weights calculated from each text in a set of texts).         
 + A query matrix is multiplied with the weights matrix to output only the weights of interest.  
 
 ```{python}
 # Use matrix multiplication as a lookup table ----------------------------------
 # Create the vector query matrix 
-# Each row contains a unique one-hot vector of interest
+# Each row contains a unique one-hot vector of interest 
+files = [1, 0, 0, 0] 
+find = [0, 1, 0, 0] 
+local = [0, 0, 1, 0]
+my = [0, 0, 0, 1]
+
 simple_query = np.array([
   files,
   my
   ]) 
 
 # Create the entire word weights matrix 
-# The first column contains all the different word weights from corpus 1  
-# A row contains all corpus word weights for a unique one-hot vector 
+# The first column contains all word weights from text 1  
+# The second column contains all word weights from text 2
+# A row contains all word weights for a unique one-hot vector    
 # Weights matrix row order follows the same column order as the one-hot vector
 weights = np.array([
   [0.1, 0.5], # files
@@ -175,7 +164,7 @@ weights = np.array([
   [0.2, 0.2], # my
 ])
 
-# The dot product retrieves token weights for vectors in simple_query  
+# The dot product retrieves the weights for all one-hot vectors in simple_query  
 # 2x4 @ 4x2 returns a 2x2 matrix 
 simple_query @ weights
 ```
@@ -185,7 +174,7 @@ simple_query @ weights
 
 Language involves understanding a sequence rather than bag of words. We can represent small word sequences using a transition model.  
 
-Imagine if our corpus contained 3 commands:
+Imagine if our entire text (or corpus) contained 3 commands:
 
 + Show me my directories please.   
 + Show me my files please.   
@@ -223,17 +212,16 @@ The transition model above is a **first order Markov chain**, as the probabiliti
 The first order Markov chain can be expressed in matrix form:  
 
 + Each row represents a unique word in the vocabulary.  
-+ Each column stores the probability of a specific word occurring after the word of interest.      
++ Each column stores the probability of its represented word occurring after a word of interest.   
 + Individual rows sum up to 1 as probabilities always sum up to 1.  
 + All values fall between 0 and 1 as each value represents a probability.    
-+ The transition matrix above is a sparse matrix as there is only one place in the Markov chain where branching happens.    
++ The transition matrix above is a sparse (as opposed to dense) matrix as there is only one place in the Markov chain where branching happens.    
 
 ![](https://e2eml.school/images/transformers/transition_matrix.png) 
 
 ```{python}
 # Pull out transition probabilities for word of interest -----------------------  
-command_t_matrix = np.array(
-  [
+t_matrix = np.array([
     [0, 0, 0, 0, 0, 1, 0], # directories
     [0, 0, 0, 0, 0, 1, 0], # files
     [0, 0, 0, 1, 0, 0, 0], # me
@@ -241,15 +229,14 @@ command_t_matrix = np.array(
     [0, 0, 0, 0, 0, 1, 0], # photos
     [0, 0, 0, 0, 0, 0, 0], # please
     [0, 0, 1, 0, 0, 0, 0] # show
-  ]
-)
+  ])
 
 # Look up a word of interest via its one-hot vector  
 my = np.array([0, 0, 0, 1, 0, 0, 0])
 
-# Extract probabilities of next word via matrix multiplication  
+# Extract next word probabilities for "my" via matrix multiplication  
 # 1x7 vector query @ 7x7 transition matrix to output row of interest
-my @ command_t_matrix
+my @ t_matrix
 ```
 
 
@@ -279,7 +266,7 @@ Imagine another corpus of 2 longer computer commands:
 + Check the program log and find out whether it ran please  
 + Check the battery log and find out whether it ran down please    
 
-To predict the word after `ran`, we would have to look back 7 words behind `ran`. Generating an eighth order transition matrix with $N^8$ rows is too cumbersome. To capture **long range word dependencies**, we can use a second order sequence model that captures all 2-word combinations of a word and the Nth words that come before it.      
+To predict the word after `ran`, we would have to look 7 words behind `ran`. Generating an eighth order transition matrix with $N^8$ rows is too cumbersome. To capture **long range word dependencies**, we can use a second order sequence model that captures all 2-word combinations of a word and the Nth words that come before it.      
 
 ```{python}
 # Generate list of 2-word combinations using a selected word and skip range ----
@@ -307,23 +294,23 @@ num = 8
 list_combinations(sentence, word, num)
 ```
 
-We can visualise the relationship between each 2-word pair and the following word of interest using the flow diagram below. A non-zero weight indicates an occurrence of the word following the specific 2-word pair. Larger non-zero weights are represented by thicker lines in the diagram below.    
+We can visualise the relationship between each 2-word pair and the next word in the sequence using the flow diagram below. A non-zero weight indicates an occurrence of the word following the specific 2-word pair. Larger non-zero weights are represented by thicker lines in the diagram below.    
 
 ![](https://e2eml.school/images/transformers/feature_voting.png)   
 
 This **second order sequence model with skips** can also be represented by a matrix, except that the individual values in a matrix no longer represent a probability. The weights matrix is no longer a transition matrix.    
 
 ![](https://e2eml.school/images/transformers/transition_matrix_second_order_skips.png)   
-This is because each row no longer represents a unique position in the sequence. A unique position is now represented by multiple rows or **features**. For example, the sequence point `ran` is described by multiple 2-word pairs such as `the, ran`, `program, ran` etc.   
+This is because each row no longer represents a unique position in the sequence. Any unique position in the sequence is now represented by **multiple rows** or **features**. For example, the sequence position for `ran` is described by multiple 2-word pairs such as `(the, ran)`, `(program, ran)`, `(log, ran)` and etc.   
 
 Each value in the weights matrix now represents a **vote**. Votes are summed column-wise and compared to determine the next word prediction.    
 
-Most of the features also do not have any predictive power. Only the features `battery, ran` and `program, ran` determine whether the next word in the sequence is `down` or `please`.    
+Most features also do not have any predictive power. Only the features `battery, ran` and `program, ran` determine whether the next word in the sequence is `down` or `please`.    
 
 To use a set of 2 word-pair features for next word prediction, we need to:  
 
-1. Contain all relevant 2-word pairs or features for a sequence of interest using a one-hot vector (the Query vector).  
-2. Matrix multiplication of the query vector and weights matrix is equal to finding the total vote for each word in the vocabulary (the  column sums of the query-specific subset of the weights matrix).      
+1. Represent all relevant 2-word pairs for a sequence of interest using a one-hot vector (the query vector).  
+2. Multiply the query vector and weights matrix. Matrix multiplication of the query vector and weights matrix is equal to finding the total query-relevant vote for every word in the vocabulary (calculating the column sums of the query-specific rows of the weights matrix).      
 3. Choose the word with the highest vote as the predicted next word.  
 
 ```{python}
@@ -336,14 +323,16 @@ command_2 = "green leaves mean it is spring"
 # Extract all unique 2-word pairs as the rows for the weights matrix  
 combo_1 = list_combinations(command_1, "is", 4)
 combo_2 = list_combinations(command_2, "is", 4)
-combo_all = set(combo_1 + combo_2)
+combo_all = set(combo_1 + combo_2) # Outputs are tuples  
 
 word_pairs = [list(tuple) for tuple in combo_all]
 word_pairs_matrix = np.array(sorted(word_pairs))
+word_pairs_matrix
 
 # Extract all unique sorted words as the columns for the weights matrix  
 words_all = (command_1 + " " + command_2).split()
 vocab = sorted(set(words_all)) 
+vocab
 
 # Manually construct the transition matrix    
 # vocab = ['autumn', 'green', 'is', 'it', 'leaves', 'mean', 'spring', 'yellow']
@@ -363,21 +352,23 @@ command_2_features = np.array(
   [1, 1, 1, 1, 0]
 )
 
-# command_2_features is 1x5 and weights_matrix is 5x8
+# Step 2: command_2_features is 1x5 and weights_matrix is 5x8
 command_2_features @ weights_matrix
 
 # The word with the highest vote of 2.5 is "spring"  
 # This is our predicted next word  
 ```
 
+**Note:** we had to manually create 1) all 2-word pairs from our corpus, 2) the weights matrix, and 3) the query vector representing our sequence of interest. These steps are all automated in transformer models.    
+
 
 # Masking   
 
-There is a major weakness to counting total votes for next word prediction. Imagine an outcome where the top 2 votes were 10 and 9. There is only a score difference of 0.1 between the selected versus ignored word for prediction.   
+There is a major weakness to counting total votes for next word prediction. Imagine an outcome where the top 2 votes had scores of 10 and 9. There is only a comparative difference of 0.1 between the scores for the predicted versus ignored word.     
 
-Using total votes can make predictions seem more uncertain than they are, as votes from uninformative features are also counted. Very small differences in total votes can then be lost in the statistical noise of gigantic LLMs.    
+Using total votes can make predictions seem more uncertain than they are, as votes from uninformative features are also counted. Very small differences in total votes can then be lost among the random noise of gigantic LLMs.    
 
-**Uninformative features** are features that assign equal probability to all words in the vocabulary. In our example above, 3 out of 4 or 75% of all features were uninformative!      
+**Uninformative features** are features that assign equal probability to a set of words in the vocabulary. In our example above, 3 out of 4 or 75% of all features were uninformative!      
 
 We can sharpen our prediction by forcing uninformative features to 0, so they cannot contribute to the overall vote. We do this by creating a **mask**, which is a one-hot vector of the same length as the features vector with uninformative features represented by 0s and informative features represented by 1s.    
 
@@ -424,25 +415,25 @@ This process of selective masking forms the **attention** component of transform
 When we think about implementing a useful **automated** model for sequence prediction, there are a few practical considerations:   
 
 + Computers are great at **matrix multiplications**. Expressing computation as a matrix multiplication is extremely efficient.   
-+ Every step needs to be **differentiable**, as all model parameters (i.e. transition probabilities and mask values) are learnt using [back propagation](https://www.youtube.com/watch?v=Ilg3gGewQ5U). Transformer models have an incredibly large number of parameters to calculate.   
++ Every step needs to be **differentiable**, as all model parameters (i.e. feature weights and mask values) are learnt using [back propagation](https://www.youtube.com/watch?v=Ilg3gGewQ5U). Transformer models have an incredibly large number of parameters to calculate.   
 + For any small change in a parameter, we must be able to calculate the corresponding change in the model error.    
 + The gradient needs to be **smooth** and **well conditioned** i.e. the slope doesn't change very quickly when you make steps in any direction and changes are similar in every direction. This is a tricky condition to guarantee.    
 
 In the code above, we had to manually calculate:  
 
-+ All the unique word pairs or features of a language i.e. the rows of the weights matrix.   
-+ The query vector.  
-+ The mask for the query vector.   
-+ The weights matrix.   
++ All the unique word pairs or features of a language i.e. what the rows of the weights matrix represent         
++ The query vector      
++ The mask for the query vector       
++ The weights matrix       
 
-Transformers calculate all the values for these components progressively through each layer of the decoder.      
+Transformers automatically calculate and optimise all the values for these components progressively through each layer of the decoder.      
 
 
 # Attention as matrix multiplication   
 
-The weights matrix can be built by counting how often each 2-word pair or next word transition occurs in the training data set. 
+The weights matrix can be built by counting how often each 2-word pair and next word transition occurs in the training data set.   
 
-To construct attention masks, we need to:      
+However, to construct attention masks, we need to:      
 
 + Stack the mask vectors for every word into a matrix.  
 + We use one-hot encoding of the most recent word to pull out its corresponding mask.  
@@ -469,7 +460,7 @@ Imagine that the attended query vector contains three words of interest: `[batte
 
 + Each neuron in the input layer represents one word or token from the query vector. 
 + Each neuron in the output layer represents one word-pair feature of interest.  
-+ In this example, input layer neurons have arbitrary weights of 1 or -1, but these weights are optimised during model training. The weights act to combine the presence and absence of a word into a set of 2-word pairs or features.      
++ In this example, input layer neurons have arbitrary weights of 1 or -1, but these weights are optimised during model training. The weights act to distribute the presence and absence of individual input words across a set of 2-word pairs.      
 + The input layer always has a bias neuron with a value of 1.     
 
 This process can be represented by the following matrix multiplication step (of the query vector and the neural network's weights matrix).     
@@ -479,7 +470,7 @@ This process can be represented by the following matrix multiplication step (of 
 ```{python}
 # Create matrix multiplication representation of neural network ----------------
 # Each row in the neural network weights matrix represent a unique token from 
-# our query of interest. Here, the weights of the neural network are arbitrary.    
+# our vocabulary. Here, the weights of the neural network are arbitrary.    
 # Our neural network contains 2 output neurons, which is why each input neuron
 # has two weights (nn_weights has two columns).     
 nn_weights = np.array([
@@ -513,7 +504,7 @@ Applying a rectified linear unit (ReLU) activation function transforms any negat
 
 **Note:** We manually determined that two unique 2-word pairs would be produced from our query vector `[battery, program, ran]` and manually specified that the output layer should only contain 2 neurons. By using neural networks to generate word pair features, the neural network creates new features from different queries without requiring explicit instructions. A 3-word feature `ran, battery, program` could even be created if this combination occurred commonly enough in the attended query vector.       
 
-Overall, the feed forward processing steps applied after attention is obtained are:       
+Overall, the feed forward processing steps applied after attention is obtained are:   
 
 1. Feature creation (i.e. unique 2 word pairs) via matrix multiplication    
 2. Application of ReLU non-linearity    
@@ -521,25 +512,249 @@ Overall, the feed forward processing steps applied after attention is obtained a
 
 ![](https://e2eml.school/images/transformers/feedforward_equations.png)     
 
-This step is referred to as the **Feed Forward** block in the transformer model.   
+These steps are collectively referred to as the **Feed Forward** block in the transformer model.   
 
 ![](https://e2eml.school/images/transformers/architecture_feedforward.png)    
 
-**Note:** Word-pair features do not account for word order, but we can use the co-occurrence of word-pair features (the unique set of word-pair features) to make decent predictions.     
+**Note:** Word-pair features do not account for word order, but we can use the co-occurrence of word-pair features (the unique set of different word-pair features) to make decent predictions.     
 
 
-# Sequence completion   
+# Sequence completion    
+
+We need additional things for decoders to generate a long sequence (through next word prediction):   
+
++ A **prompt** or example text to give the decoder a running start and the context on which to build the rest of the sequence. This is the input that is fed into the decoder.    
++ A **mask** is also required to ensure that decoders only make predictions using words behind (and not in front of) the sequence position of interest.      
++ Once the decoder has a prompt, it calculates a forward pass and returns a set of predicted probability distributions of words. There is one probability distribution for each next word in the vocabulary.  
++ A **stochastic** method of selecting the next predicted word following the prompt. Examples are temperature sampling (changing a parameter which flattens the distribution of values outputted by the softmax activation function) and top-k sampling (restricting random sampling to the top k words).     
++ The next word gets added to the sequence and this becomes the new input for the decoder (and this process repeats until the end of the sequence is reached).          
 
 
+# Embeddings   
+
+To build a stable transition language model, we would need:   
+
++ To represent all words in a language of interest. For a vocabulary size of 50000 words, we would need $50000^2$ 2-word pair features to build a simple first order transition model.  
++ We need training data which contains multiple examples of every potential sequence of interest.    
+
+To reduce the dimensions of our vocabulary, words are taken and projected into a lower-dimensional space. These projections are called **embeddings**.     
+
+A good embedding groups words with similar meaning together. A model that works with embeddings learns patterns in the embedding space. What the model learns about one word is then applied to all words in its local neighbourhood and this also reduces the amount of training data required.          
+
+Choosing the dimensions of the embedding space is an art. A smaller number of dimensions increases computational efficiency but decreases semantic accuracy (as the distance between different versus similar meaning words is decreased).      
+
+Embeddings are created by matrix multiplication of a one-hot vector and an embedding projection matrix.     
+
+![](https://e2eml.school/images/transformers/embedding_projection.png)    
+
+```{python}
+# Project words into embeddings using matrix multiplication --------------------
+ohe_word_vector = np.array(
+  # Each column represents a unique word in the vocabulary
+  # [program, ran, battery, and, the, please]   
+  [0, 0, 0, 1, 0, 0]
+)
+
+embedding_projection = np.array([
+  # The number of rows is equal to the number of columns in ohe_word_vector
+  # The number of columns represents the dimensions of the embeddings
+  [0.1, 0.1],
+  [0.2, 0.2],
+  [0.3, 0.3],
+  [0.4, 0.4],
+  [0.5, 0.5],
+  [0.6, 0.6]
+])
+
+# Output the embedding for the word 'and'   
+ohe_word_vector @ embedding_projection
+```
+
+**Note:** The values in the embedding projection matrix are automatically calculated by the transformer model (and other word embedding models) during model training. When we use a commercial LLM, we use these fixed matrix values obtained during model training. This means that the model's language pattern recognition skills are 'frozen' and dependent on what it was trained on.    
+
+ 
+# Positional encoding   
+
+The position of each word in the input sequence is introduced by adding **positional encoding** or a circular perturbation. For each position, the word is moved in the same distance but at a difference angle.    
+
+![](https://e2eml.school/images/transformers/positional_encoding.png)   
 
 
+# De-embeddings   
+
+De-embedding is the process of converting embeddings into words from the original vocabulary. This process is also done using matrix multiplication.   
+
+```{python}
+# Convert embeddings into words using matrix multiplication --------------------
+# Embedding for the word `and`
+embedding = np.array(
+  [0.4, 0.4]
+)
+
+deembedding_projection = np.array([
+  # Row number is equal to the embedding column number (embedding dimension) 
+  # Column number is equal to the vocabulary size  
+  [0.1, 0.2, 0.3, 1.2, 0.1, 0.2],
+  [0.1, 0.2, 0.3, 1.3, 0.2, 0.1]
+])
+
+# Word order in original vocabulary [program, ran, battery, and, the, please]     
+embedding @ deembedding_projection
+```
+
+Contrary to the opposite of the word embedding process, we do not output a one-hot encoded vector with many 0s and a 1 in the position of the represented word.   
+
+The output vector has nearly all non-zero values. In the example above, the word `and` has the highest value and we expect words that are embedded near `and` also have moderately high values.     
+
+If an embedding maps well to several different words, we might not want to choose the word with the highest value every time. It is useful to look several words ahead and consider all possibilities for a sentence, before selecting the final word choice. To do this, we need to convert the de-embedding results into a pseudo-probability distribution.   
 
 
+# Softmax activation function   
 
+The soft maximum or **softmax** activation function is calculated as $\tfrac{e^{x_i}}{\sum^n_{j=1}{e^{x_j}}}$.      
+
+It is useful because:   
+
++ It converts the values in the de-embedded vector into ones between 0 and 1 that sum to 1 (like a probability distribution).     
++ This makes it easier to compare the likelihood of different words or multi-word sequences being selected.    
++ If one word scores much higher than the others, softmax exaggerates this difference. If multiple words have similarly high probabilities, softmax will preserve this similarity.   
++ Softmax is differentiable and supports backpropagation.   
+
+Altogether, the final de-embedding process comprises de-embedding projection and a softmax transformation.   
+
+![](https://e2eml.school/images/transformers/architecture_de_embedding.png)    
+
+
+# Multi-head attention   
+
+Imagine we have:   
+
++ A vocabulary size of 13 i.e. `N = 13`.   
++ A maximum sequence length of 12 i.e. `n = 12`.    
++ An arbitrary number of dimensions in the embedding space i.e. `d_model = 512`.    
+
+The original **input matrix** is constructed by:   
+
++ Representing each word in the sequence as a one-hot encoded vector.   
++ Stacking or concatenating each vector as a row in the input matrix.  
++ The input matrix has dimensions `(n, N)`.   
+
+The embedding matrix has dimensions `(N, d_model)` and the embedded word sequence therefore has dimensions `(n, d_model)`.    
+
+![](https://e2eml.school/images/transformers/matrix_multiply_shape.png)     
+
+Positional encoding is then added to each value in the matrix, so the matrix dimensions are still `(n, d_model)`.   
+
+The embedded word sequence is then processed by the attention layers and is outputted in the same dimension i.e. `(n, d_model)`.   
+
+The de-embedding process restores the matrix dimensions to `(n, N)` and provides a pseudo-probability for every word in the vocabulary at every position in the sequence.   
+
+![](https://e2eml.school/images/transformers/matrix_shapes.png)   
+
+A complication of applying a softmax function after an attention mask is that the softmax output tends to focus on a single element. In natural language processing, we can easily imagine a single word like `it` referring or 'attending' to multiple words like `red bouncy ball`.    
+
+To have multiple words in 'mind' when predicting the next word, we need to simultaneously run multiple instances of attention. This component, called **multi-head attention**, increases the computational load of model training.   
+
+For maximal computational efficiency, **multi-head attention** also uses matrix multiplication to project values into a lower-dimensional embedding space:   
+
++ Dimensions in the embedding space for keys and queries i.e. `d_k`.   
++ Dimensions in the embedding space used for values i.e. `d_v`.   
++ The number of attention heads i.e. `h`.    
+
+![](https://e2eml.school/images/transformers/architecture_multihead.png)    
+
++ The `(n, d_model)` sequence of embedded words is the input of the multi-head attention layer.   
++ For each head, the matrices $W_v$, $W_q$ and $W_k$ then transform the embedded words into the matrices $V$, $Q$ and $K$ (the values, queries and keys matrices).   
++ K and Q have the same dimensions `(n, d_k)`.   
++ V has the dimension `(n, d_v)`.     
++ Each head has different $W_v$, $W_q$ and $W_k$ matrix values, meaning that each head can focus on a different area of the embedded space.   
++ Following the application of attention, the outputs of each head are concatenated together into a larger matrix with dimensions `(n, h * d_v)`.    
++ To output a matrix with dimensions `(n, d_model)`, the last matrix multiplication transformation requires a matrix with dimensions `(h * d_v, d_model)`.    
+
+These steps are summarised in the equation below.  
+
+![](https://e2eml.school/images/transformers/multihead_attention_equation.png)      
+
+
+# Single head attention revisited    
+
+In the simple example from [our manually created queries matrix](#attention-as-matrix-multiplication), one row in the queries matrix (Q) represented one word in the vocabulary space.   
+
+Because Q actually has the dimensions `(n, d_k)`, one row represents one point in the embedded space, which is near a group of words with similar meaning and/or usage. This means that attention involves a relationship between word groups rather than individual words.   
+
+![](https://e2eml.school/images/transformers/architecture_single_head.png)   
+
++ The product of $QK^T$ is a matrix with dimensions `(n, n)`.   
++ Arbitrarily dividing every element of this matrix by $\sqrt{d_k})$ prevents the magnitude of the values from growing wildly, which helps backpropagation to find more optimal model parameters.   
++ Following the softmax transformation (which tends to focus on a single element of interest), the `(n, n)` matrix approximately maps each word in the sequence to another word in the sequence, where high values indicates the other words that a word should be focused on when predicting the next word in the sequence.   
++ This is the filter that then gets applied to the values matrix, which outputs a reduced collection of attended values with dimensions `(n, n)`.         
++ As attention is calculated using matrix multiplication, a **mask block** is also used to set the attention paid to all words past the current position to negative infinity. This mask block is also a matrix with dimensions `(n, n)` and it is applied through element-by-element multiplication.   
+
+**Note:** Attention is a word-embeddings-in-position to word-embeddings-in-position relationship, rather than a real word-to-word relationship.    
+
+
+# Skip connection   
+
+Skip connections occur after the multi-head attention and feed forward blocks. In skip connections, a copy of the input of the attention or feed forward component is added to the output of the attention or feed forward component.   
+
+![](https://e2eml.school/images/transformers/architecture_add_norm.png)   
+Skip connections are used to:   
+
++ Help keep the gradient smooth. Since attention works as a filter, small changes in the input may be randomly filtered out during the attention step and create 'dead spots' in the gradient where it is flat. Adding a copy of the inputs to the outputs helps to smooth out the gradient so backpropagation can find optimal model parameters.    
++ Preserves the original input sequence. Even with multiple attention heads, there is no guarantee that a word will attend to its own position. A skip connection takes the original word and manually adds it back into the signal.    
+
+
+# Layer normalisation    
+
+Layer normalisation transforms all the values of a matrix to have a mean of 0 and a standard deviation of 1.   
+
+Neural networks are much more sensitive to the magnitude and distribution of input signals than some other machine learning algorithms. Normalisation is commonly used in deep learning to ensure a consistent distribution of signal values is passed through each layer of a multi-layer neural network.   
+
+
+# Multiple layers    
+
+Finding a good set of neural network parameters relies on random luck and the existence of multiple paths to a good solution.    
+
+Having a single attention layer (one multi-head attention block and one feed forward block) only allows one path to finding a good set of transformer parameters.    
+
+Having multiple attention layers, each using the output of the previous layer as its input, is similar to setting up a production line where multiple workers have an opportunity to fix a problem (by optimising the model's loss function).    
+
+Skip connections and layer normalisation enable the production line to run smoothly by ensuring that a smooth gradient exists throughout each layer.       
+
+
+# Cross-attention    
+
+The cross-attention block is the connection between the encoder and decoder stacks. Cross-attention operates like self-attention except:  
+
++ The key matrix K and value matrix V are based on the output of the final encoder layer.     
++ The query matrix Q is still calculated from the results of the previous decoder layer.   
+
+For tasks like language translation, this is the channel for information from the source sequence to integrate with the output of decoder layers. The same embedded source sequence is provided to every layer of the decoder.   
+
+
+# Tokenisation using byte pair encoding     
+
+Byte pair encoding works by:  
+
++ Assigning every unique character a unique code or byte.  
++ Scanning through representative data to group together the most common pair of bytes. This group is assigned a new byte.   
++ The byte is substituted back into the data and the process is repeated.    
+
+This automated process of tokenisation is useful as:  
+
++ Multi-character bytes can be combined with other multi-character bytes to obtain new bytes that represent longer sequences of characters.   
++ There is no hard limit to the length of characters that a byte can represent. Bytes will grow as long as required to represent commonly repeated sequences.  
++ Byte codes for single characters always exist so typos can still be represented by combinations of different bytes.     
+
+When you use byte pair encoding, you get to assign the vocabulary size. The vocabulary size need to be big enough that the character strings grow long enough to capture the semantic content of the text.   
+
+After a byte pair encoder is trained or borrowed, it can pre-process the input sequence of words into a sequence of tokens (which are the real inputs of natural language processing models like LLMs).    
 
 
 # Key messages   
 
-
-# Other resources   
-
++ Attention masks are a numerical mimic of how words in a sentence (like 'it') often refer to other words (like 'red bouncy ball'). Calculating attention masks simultaneously (instead of sequentially) for each word is also more computationally efficient. An analogy for how attention masks work may be skim reading - some people can obtain a 'good-enough' approximation of text by scanning through to focus on key words.    
++ Transformer models act more like a production line of workers individually hoping to maximise their chances of reducing overall model error than a centralised all-knowing artificial brain.   
++ Transformer models work by manipulating and learning patterns about embedding spaces rather than words or facts. An embedding is like a region in space where words that have similar meanings or usage patterns hang out. Training a model to produce useful embeddings is more of an art than a science.       
++ Like any tool that involves human fiddling, some transformer design choices are arbitrary rather than theory driven and naturally profound. For example, dividing values by $\sqrt{d_k})$ during self-attention and using skip connections and layer normalisation.      
++ When we are using a LLM like ChatGPT4, we are still using a pre-trained model with fixed parameters. We do not get the chance to fine-tune ChatGPT4 to create better word embeddings about our field of interest. For niche domains, this may be a problem. This is also why regulation for LLM companies to truthfully state their model training dataset sources benefit LLM consumers.        

@@ -1,0 +1,60 @@
+---
+title: "Child document template"
+format: gfm
+
+execute:
+  message: false
+  warning: false
+---
+
+```{r}
+#| echo: false
+# Extract data set of interest -------------------------------------------------
+# This code is executed silently as echo is set to false 
+sample_iris_data <- withr::with_seed(
+  seed = 111,
+  dplyr::sample_n(iris, 6)
+)
+```
+
+### Frequency table for variable: `r x`   
+
+The frequency table for `r x` is displayed below.  
+
+```{r}
+#| echo: false
+#| output: asis
+# Output table -----------------------------------------------------------------
+sample_iris_data |>
+  dplyr::count(!!ensym(x)) |>
+  knitr::kable()
+```
+
+
+### Plot for variable: `r x`   
+
+The plot for `r x` is displayed below.  
+
+```{r}
+#| echo: false
+#| output: true
+# Output histogram if variable is numeric and bar plot if otherwise ------------
+library(ggplot2) # Useful if the parent notebook does not require ggplot2
+
+plot_iris <- function(x) {
+  if (is.numeric(sample_iris_data[[x]])) {
+    sample_iris_data |>
+      ggplot() +
+      geom_histogram(aes(x = !!ensym(x))) +
+      theme_minimal()
+  } else {
+    sample_iris_data |>
+      ggplot() +
+      geom_bar(aes(x = !!ensym(x))) +
+      theme_minimal()
+  }
+}
+
+# ggplot object needs to be explicitly printed
+print(plot_iris(x))
+```

@@ -1,0 +1,29 @@
+---
+title: "Building RAPs with R - Part 2.11"
+author: "Erika Duan"
+date: "`r Sys.Date()`"   
+
+execute:
+  eval: false
+  echo: true
+  output: false
+  message: false
+  warning: false
+
+format:
+  gfm:
+    toc: true
+---
+
+```{r}
+#| echo: false 
+
+# Load required R packages -----------------------------------------------------
+pak::pkg_install(c("dplyr", "ggplot2", "tidyr"))
+```
+
+
+# Packaging your code     
+
+This is where my own coding deviates from the textbook. 
+

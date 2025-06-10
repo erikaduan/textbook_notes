@@ -20,8 +20,8 @@ Erika Duan
     - [Plot for variable: Species](#plot-for-variable-species)
   - [Generate report templates using parameterised
     reports](#generate-report-templates-using-parameterised-reports)
-  - [Good packages for printing
-    tables](#good-packages-for-printing-tables)
+- [Good packages for printing
+  tables](#good-packages-for-printing-tables)
 - [Other resources](#other-resources)
 
 # Writing reports for data projects
@@ -118,19 +118,19 @@ evaluation](https://adv-r.hadley.nz/evaluation.html) behaviours when we
 create custom functions that use `dplyr` functions for data manipulation
 or plotting:
 
-- Our function input is often a column name, which we can either store
-  as a string or **bare symbol** (unquoted column name).  
-- We want our custom function to evaluate the column name as an
-  **expression** and not a character string.  
+- Our function input is often a column name that we store as a **bare
+  symbol** (unquoted column name).  
+- We want our custom tidyverse function to evaluate the column name as a
+  symbol and not a character string.  
 - We may want to apply this custom function to multiple column names
   using `purrr::map()`.
 
 There are two different scenarios to be aware of:
 
-- Writing a custom function that takes a bare symbol (an unquoted column
-  name) as its input i.e. `print_count_table(iris, Species)`. The
-  conversion of the unquoted column name is executed inside the
-  function.  
+- Writing a custom function that takes a bare symbol as its input
+  i.e. `print_count_table(iris, Species)`. The conversion of the bare
+  symbol into a symbol (for code injection and execution) is found
+  inside the function.  
 - Writing a custom function that takes one or multiple character strings
   (of column names) as its input. The character string(s) must first be
   converted into a bare symbol before the function is executed.
@@ -161,7 +161,7 @@ print_count_table(mtcars, cyl)
 
 ``` r
 # The code print_count_table(mtcars, "cyl") outputs nonsense identical to what 
-# mtcars |> count("cyl") would do.       
+# mtcars |> count("cyl") would do.  
 ```
 
 Creating custom functions using `{{}}` is perfectly fine but has a
@@ -230,7 +230,7 @@ I recommend skipping `knitr::knit_expand()` as it has limited use (it
 only renders text) and is less readable than directly creating creating
 custom report templates.
 
-When using custom functions to print outputs to the console,
+When using custom functions to print outputs to the console, use
 `invisible(lapply())` or `purrr:walk()` to remove NULL outputs.
 
 ## Generate report templates using child documents
@@ -238,7 +238,7 @@ When using custom functions to print outputs to the console,
 [Child
 documents](https://bookdown.org/yihui/rmarkdown-cookbook/child-document.html)
 are smaller `.Rmd` or `.Qmd` notebooks that can be embedded into the
-parent notebook i.e. the final report template. The function
+parent notebook i.e. the final report. The function
 `knitr::knit_child()` can be used to compile child documents inside a
 code chunk in the parent notebook.
 
@@ -249,7 +249,7 @@ code quirks.
 - We can only use `lapply()` and not `purrr::map()` with
   `knitr::knit_child()`.
 - The child template must use `!!rlang::ensym()` instead of `{{}}` or
-  the custom functions will not work correctly.  
+  the custom tidyverse functions will not work correctly.  
 - For outputs to be printed correctly, the parent document code chunk
   must be set to `output: asis` and the relevant child document code
   chunks set to `output: asis` for tables and `output: true` for plots.
@@ -304,17 +304,18 @@ The plot for Species is displayed below.
 ![](raps_part_1_7_files/figure-commonmark/unnamed-chunk-25-1.png)
 
 In practice, this method feels very fiddly and I find it more intuitive
-to use YAML parameters (where single reports for each variable of
-interest are useful). YAML parameters also accept multiple parameters as
-analytical inputs.
+to use YAML parameters (when individual reports for different variable
+categories are useful). YAML parameters also accept multiple parameters
+as analytical inputs.
 
 ## Generate report templates using parameterised reports
 
 Parameterised reports are useful when you want to generate separate
 reports for each parameter of interest. An example of a parameterised
-report is [here](./raps_part_1_7_parameterised_report.Rmd).  
+report is [here](./raps_part_1_7_parameterised_report.Rmd).
+
 **Note:** You can directly use parameter keys inside tidyverse functions
-without worrying about tidy evaluation behaviours like `{{}}`.
+without worrying about tidy evaluation requirements like `{{}}`.
 
 To set up parameterised reports:
 
@@ -370,7 +371,7 @@ lapply(
 )
 ```
 
-## Good packages for printing tables
+# Good packages for printing tables
 
 These packages work consistently across HTML, PDF or Microsoft Word
 outputs.

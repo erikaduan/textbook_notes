@@ -94,7 +94,7 @@ Although `renv` requires users to manually reproduce the original operating syst
 | Reproduce the original R version | Docker or `conda` |   
 | Reproduce other operating system tools required for R package compilation | Docker or `conda` |       
 | Install project-specific R package dependencies | `renv` |     
-| Install project-specific Python package dependencies if our workflow uses Python via `reticulate` | ? |   
+| Install project-specific Python package dependencies if our workflow uses Python via `reticulate` | `uv` via `reticulate` |    
 
 
 # Other hacks   

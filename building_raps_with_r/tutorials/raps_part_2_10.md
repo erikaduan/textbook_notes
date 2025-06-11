@@ -1,6 +1,6 @@
 # Building RAPs with R - Part 2.10
 Erika Duan
-2023-09-17
+2025-06-11
 
 - [Recording package versions with
   `renv`](#recording-package-versions-with-renv)
@@ -103,12 +103,12 @@ testing is important.
 
 # What we need for full project reproducibility
 
-| Requirement                                                                                       | Tools required    |
-|:--------------------------------------------------------------------------------------------------|:------------------|
-| Reproduce the original R version                                                                  | Docker or `conda` |
-| Reproduce other operating system tools required for R package compilation                         | Docker or `conda` |
-| Install project-specific R package dependencies                                                   | `renv`            |
-| Install project-specific Python package dependencies if our workflow uses Python via `reticulate` | ?                 |
+| Requirement | Tools required |
+|:---|:---|
+| Reproduce the original R version | Docker or `conda` |
+| Reproduce other operating system tools required for R package compilation | Docker or `conda` |
+| Install project-specific R package dependencies | `renv` |
+| Install project-specific Python package dependencies if our workflow uses Python via `reticulate` | `uv` via `reticulate` |
 
 # Other hacks
 

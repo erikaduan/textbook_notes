@@ -1,6 +1,6 @@
 # Building RAPs with R - Part 1.3
 Erika Duan
-2025-06-08
+2025-06-10
 
 - [Project goal](#project-goal)
 - [Project code](#project-code)
@@ -117,7 +117,6 @@ renamed_raw_data <- raw_data |>
   mutate(locality = str_trim(locality)) |>
   select(year, locality, n_offers, starts_with("average"))
 
-
 str(renamed_raw_data)
 # ------------------------------------------------------------------------------
 # Step 3: Check string values in the locality column and normalise the spelling
@@ -139,8 +138,7 @@ no_typo_renamed_raw_data <- renamed_raw_data |>
                            locality),
          locality = ifelse(grepl("P.tange", locality),
                            "P?tange",
-                           locality)
-         ) |>
+                           locality)) |>
   mutate(across(starts_with("average"), as.numeric)) |>
   filter(!grepl("Source", locality)) # Remove locality rows labelled 'source'
 # ------------------------------------------------------------------------------
@@ -172,17 +170,23 @@ country_level_data <- full_join(country_level, offers_country) |>
 # ------------------------------------------------------------------------------
 # Step 5: Validate data set completeness i.e. whether the data set captures all
 # communes by comparing against a reference data set of communes  
-current_communes <- "https://en.wikipedia.org/wiki/List_of_communes_of_Luxembourg" |>
-  rvest::read_html() |>
+
+# As Wikipedia tables keep updating, for convenience, the link we are scrapping 
+# from is a frozen snapshot of the relevant Wikipedia pages.  
+current_communes <- "https://is.gd/lux_communes" |>
+  rvest::read_html(url) |>
   rvest::html_table() |>
-  purrr::pluck(1) |>
-  janitor::clean_names()
+  purrr::pluck(2) |>
+  janitor::clean_names() |>
+  filter(name_2 != "Name") |>
+  rename(commune = name_2) |>
+  mutate(commune = str_remove(commune, " .$"))
 
 # Test if all communes from the reference data set exist in our prices data set
 setdiff(unique(commune_level_data$locality), current_communes$commune)
 
 # Extract a table of former communes from the reference data set
-former_communes <- "https://en.wikipedia.org/wiki/Communes_of_Luxembourg#Former_communes" |>  
+former_communes <- "https://is.gd/lux_former_communes" |>  
   rvest::read_html() |>
   rvest::html_table() |>
   purrr::pluck(3) |>
@@ -199,11 +203,11 @@ communes <- unique(c(former_communes$name, current_communes$commune))
 # Rename communes to ensure that our prices data set and reference data set use
 # the same spelling for individual communes  
 # Note that which() does not recognise regex symbols like . and ?  
+communes[which(communes == "Clemency")] <- "Clémency"
 communes[which(communes == "Redange")] <- "Redange-sur-Attert"
 communes[which(communes == "Erpeldange-sur-Sûre")] <- "Erpeldange"
-communes[which(communes == "Luxembourg-City")] <- "Luxembourg"
+communes[which(communes == "Luxembourg City")] <- "Luxembourg"
 communes[which(communes == "Käerjeng")] <- "Kaerjeng"
-communes[which(communes == "Pétange")] <- "P?tange"
 
 # We expect the output to be empty (it is not as Clémency is not in communes) 
 setdiff(unique(commune_level_data$locality), communes)

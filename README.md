@@ -19,6 +19,7 @@ This repository contains personal notes made whilst reading open-source statisti
     + [Part 2.9](./building_raps_with_r/tutorials/raps_part_2_9.md) - Code review   
     + [Part 2.10](./building_raps_with_r/tutorials/raps_part_2_10.md) - R package versioning with `renv`    
     + [Part 2.11](./building_raps_with_r/tutorials/raps_part_2_11.md) - Building R packages     
+    + [Part 2.12](./building_raps_with_r/tutorials/raps_part_2_12.md) - Unit tests and assertions        
 
 <p>  
 

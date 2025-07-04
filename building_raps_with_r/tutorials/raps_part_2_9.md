@@ -1,6 +1,6 @@
 # Building RAPs with R - Part 2.9
 Erika Duan
-2025-06-10
+2025-06-22
 
 - [Rewriting our analytical project](#rewriting-our-analytical-project)
   - [Script 1](#script-1)
@@ -19,8 +19,10 @@ revised notebook solution can be found
 [here](https://raw.githubusercontent.com/b-rodrigues/rap4all/master/rmds/save_data.Rmd).
 
 Script 1 features steps for raw data set extraction and data set
-cleaning. I have changed some data object names so no data objects are
-rewritten during the data cleaning steps.
+cleaning. In the original script, I changed some data object names so no
+data objects are rewritten during the data cleaning steps. For
+convenience, the revised script for script 1 can also be found
+[here](./revised_script_01.R).
 
 The first two steps from the original code are below.
 
@@ -352,7 +354,7 @@ communes[which(communes == "Erpeldange-sur-Sûre")] <- "Erpeldange"
 communes[which(communes == "Luxembourg City")] <- "Luxembourg"
 communes[which(communes == "Käerjeng")] <- "Kaerjeng"
 
-# We expect the output to be empty (it is not as Clémency is not in communes) 
+# We expect the output to be empty 
 setdiff(unique(commune_level_data$locality), communes)
 ```
 
@@ -444,7 +446,8 @@ rm(list = ls())
 ## Script 2
 
 Script 2 features data transformation steps for price index calculations
-and plot generation.
+and plot generation. For convenience, the revised script for script 2
+can also be found [here](./revised_script_02.R).
 
 The first step of the original code is below.
 

@@ -9,6 +9,8 @@ Invalid Date
   - [The Rocker project](#the-rocker-project)
 - [Using Docker-based R and RStudio from the
   browser](#using-docker-based-r-and-rstudio-from-the-browser)
+- [Using Docker-based R directly from your Positron
+  IDE](#using-docker-based-r-directly-from-your-positron-ide)
 - [Other resources](#other-resources)
 
 # What is Docker?
@@ -83,8 +85,8 @@ central Docker images repository.
 
 A [`docker-compose.yml`
 file](https://stackoverflow.com/questions/29480099/whats-the-difference-between-docker-compose-vs-dockerfile)
-also uses the instructions listed in your Dockerfile if the `build`
-command exists in `docker-compose.yml`. It is additionally used to:
+directly uses the instructions listed in your Dockerfile through the
+`build` command. It is additionally used to:
 
 - Issue multiple Docker command line interface (CLI) commands more
   quickly  
@@ -139,54 +141,71 @@ faster download times.
 We can run R and RStudio inside an existing Docker image built by the
 Rocker Project following instructions from Andrew Heiss’ blog post on
 [the
-topic](https://www.andrewheiss.com/blog/2025/07/05/positron-ssh-docker/).
+topic](https://www.andrewheiss.com/blog/2025/07/05/positron-ssh-docker/#how-to-use-docker-based-r-normally).
 
-Andrew Hiess’s instructions on using [Docker
-Compose](https://github.com/andrewheiss/lemon-lucifer?tab=readme-ov-file#method-1-docker-compose)
+Briefly, the steps are:
 
-Example of Dockerfile and docker-compose.yml
-(https://github.com/andrewheiss/silent-skywalk/tree/main/docker)
+- Install a [minimal viable
+  example](https://github.com/andrewheiss/positron-docker) of a Docker
+  project repository.  
+- Install [Docker
+  Desktop](https://docs.docker.com/desktop/setup/install/windows-install/)
+  to access a repository of open-source Docker images.  
+- Install an
+  [extension](https://open-vsx.org/extension/ms-azuretools/vscode-containers)
+  to more easily work with Docker via your Visual Studio IDE.  
+- Build your Docker container from the `docker-compose-basic.yml` file.
 
-To test how using R inside a Docker image works, use instructions from
-Andrew Heiss’ blog at
-(https://www.andrewheiss.com/blog/2025/07/05/positron-ssh-docker/).
+**What it achieves:**
 
-What it achieves:  
-+ We can run R version 4.5.0 and access an RStudio IDE from
-http://localhost:8787  
-+ Our main project directory is ‘mounted’ or linked into the container.
-So we can update all project code from inside the Docker image.
+- We can run R version 4.5.0, the `tidyverse` set of packages and some
+  development tools like `quarto` and `pandoc` insider a Docker
+  container.  
+- We can directly access the container through an RStudio IDE from
+  http://localhost:8787.  
+- Our local `.project` subdirectory (in our local Docker project code
+  repository) is [bind
+  mounted](https://docs.docker.com/engine/storage/bind-mounts/) to a
+  location in the container. This means that the container has write
+  access to files in our local project directory by default.
 
-1.  Install repository https://github.com/andrewheiss/positron-docker#
-2.  Install Docker Desktop on computer.
-    https://docs.docker.com/desktop/setup/install/windows-install/
-    Docker Desktop 4.55.0 was installed on my computer. This lets me
-    download a Windows Subsystem for Linux.  
-3.  If using Positron, ensure you install the Container Tools extension
-    https://open-vsx.org/extension/ms-azuretools/vscode-containers The
-    easiest way is to install it through the Extensions Pane through the
-    Positron IDE.  
-4.  Open a docker compose yml file and compose up (equivalent of typing
-    docker compose -f docker-compose-basic.yml up -d into the
-    terminal).  
-5.  
+This way of working is useful when you want to complete analysis or
+write code on your local computer and then test code reproducibility by
+running your final product inside a container.
 
-Note from the docker compose yml file /project:/home/rstudio/project
+**Note:** Because we are working inside a Docker image, settings that
+you make inside the image (including RStudio IDE settings) will
+disappear the next time you run your Docker image.
 
-- in your local repository, it takes the directory ./project and mounts
-  that as home/rstudio/project inside your docker container’s RStudio
-  IDE and container directory
-- the magic is that any edits made in your docker container will then be
-  saved in your local project directory on your local computer.  
-- Because you are working inside a Docker image - many settings that you
-  make and persist locally will disappear the next time you run your
-  docker image (unless you make specific changes in your docker compose
-  file).  
-- Old way using docker compose: ‘I generally do all my coding and
-  writing and analysis on my local computer and then try running it in
-  the container at the end.’’
+# Using Docker-based R directly from your Positron IDE
 
-1.  A whole local Positron window can run on a remote server.
+A downside of using Docker-based R and RStudio from the browser for code
+development is that it feels like coding using someone else’s computer
+(that lacks your personal productivity adjustments).
+
+The Positron IDE supports [remote SSH
+sessions](https://positron.posit.co/remote-ssh.html), where the Positron
+user interface runs on the local machine whilst the Positron back end
+runs on a remote machine or locally hosted Docker container.
+
+![](.figures/raps_part_2_14-positron_remote_ssh_setup.png)
+
+Briefly, the additional steps are:
+
+- Create a custom `Dockerfile` and install and configure an SSH server
+  on it. The SSH server connection can be set up to require either a
+  password or public key for authentication.  
+- Check that you have a public SSH key in `~/.ssh` on your local
+  computer.
+- Add a `positron-docker` connection in `~/.ssh/config`.  
+- After building this modified Docker image, connect to your Docker
+  image through your IDE’s terminal using
+  `ssh rstudio@localhost -p 2222` or `ssh positron-docker`.
+
+**Note:** This provides a Positron console session that uses the version
+of R and R packages available inside your Docker container. The new
+`docker-compose.yml` file still uses a bind-mount from your `./project`
+subdirectory to a location in the container.
 
 # Other resources
 

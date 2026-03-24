@@ -30,8 +30,8 @@ pacman::p_load(here,
 The principle behind `renv` is very simple:  
 
 + Install the required R package.  
-+ Obtain a snapshot of the R version, all R packages used and their versions in the `renv.lock` file. This JSON file should be saved at the root of your project and an example can be found [here](https://github.com/erikaduan/abs_labour_force_report/blob/main/renv.lock).     
-+ This snapshot can then be used to restore the project library in the future without interfering with other packages installed on your local machine.   
++ Obtain a snapshot of your R version, all R packages used and their versions in the `renv.lock` file. This JSON file should be saved at the root of your project and an example can be found [here](https://github.com/erikaduan/abs_labour_force_report/blob/main/renv.lock).     
++ This snapshot can then be used to restore R package versions in your project library without interfering with R package versions installed on your local machine.   
 
 **Note:** the last feature occurs as `renv` creates a new R library for each project, which means that you can install multiple versions of a package i.e. `dplyr` on your local machine and `renv` tracks the specific `dplyr` version required for each project.    
 
@@ -61,7 +61,7 @@ renv::restore()
 # Type Y again to install required R packages for the project
 ```
 
-The operation `renv::restore()` can fail in one machine but succeed in another. This is because different machines may also have different operating system tools that `renv` fails to account for. This includes:  
+The operation `renv::restore()` can fail in one machine but succeed in another. This is because different machines may also have different R versions and/or operating system tools that `renv` fails to account for. This includes:    
 
 + The R version of your machine      
 + C/C++ package dependencies for R package compilation like [`Rtools`](https://cran.r-project.org/bin/windows/Rtools/)      
@@ -69,7 +69,7 @@ The operation `renv::restore()` can fail in one machine but succeed in another. 
 Although `renv` requires users to manually reproduce the original operating system for guaranteed reproducibility, it is still useful for:   
 
 + Managing package requirements and dependencies at the project level.    
-+ Moving away from using a single system-wide library for multiple projects (bad practice).  
++ Moving away from using a single system-wide library for multiple projects (bad practice).   
 + Providing an R and R package installation blueprint for Docker via `renv.lock`.    
 
 
@@ -99,7 +99,7 @@ Although `renv` requires users to manually reproduce the original operating syst
 
 # Other hacks   
 
-In the absence of a `renv.lock` file, you can use `groundhog` or `rang` to download the R package versions that existed at a certain date in time.  
+In the absence of a `renv.lock` file, you can use `groundhog` or `rang` to download the R package versions that existed at a certain date in time.   
 
 ```{r}
 # Install the most recent R package version available at a specific date -------

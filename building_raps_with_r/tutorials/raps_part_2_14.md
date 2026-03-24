@@ -188,7 +188,7 @@ sessions](https://positron.posit.co/remote-ssh.html), where the Positron
 user interface runs on the local machine whilst the Positron back end
 runs on a remote machine or locally hosted Docker container.
 
-![](.figures/raps_part_2_14-positron_remote_ssh_setup.png)
+![](./figures/raps_part_2_14-positron_remote_ssh_setup.png)
 
 Briefly, the additional steps are:
 
